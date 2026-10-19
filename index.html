@@ -182,14 +182,30 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .cta-final p{font-size:15px;margin:10px 0 18px}
   footer{padding:36px 0 90px}
   .fcols{grid-template-columns:1fr;gap:22px;margin-bottom:24px}
-  .wa-float,.ai-float{width:50px;height:50px;right:14px;font-size:22px}
-  .wa-float{bottom:14px}
-  .ai-float{bottom:72px}
-  .ai-box{right:10px;left:10px;width:auto;bottom:130px;height:min(68dvh,460px);border-radius:16px}
+  .wa-float,.ai-float{width:48px;height:48px;right:12px;font-size:20px}
+  .wa-float{bottom:12px}
+  .ai-float{bottom:68px}
+  .ai-box{
+    left:auto;
+    right:12px;
+    width:min(300px,calc(100vw - 24px));
+    bottom:124px;
+    height:min(38vh,300px);
+    max-height:300px;
+    border-radius:14px;
+  }
+  .ai-hd{padding:10px 12px}
+  .ai-hd b{font-size:13px}
+  .ai-msgs{padding:10px}
+  .ai-bubble{font-size:13px;padding:8px 10px}
+  .ai-form{padding:8px}
+  .ai-form input{padding:9px 10px;font-size:16px}
+  .ai-form button{padding:9px 12px;font-size:13px}
 }
 @media(max-width:420px){
   .hero h1{font-size:22px}
   .phone{display:none}
+  .ai-box{height:min(34vh,260px);max-height:260px;width:min(280px,calc(100vw - 24px))}
 }
 </style>
 </head>
