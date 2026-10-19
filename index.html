@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WalkCheck — Recorridos profesionales de propiedades</title>
-<meta name="description" content="WalkCheck: recorridos mensuales documentados para administradores de condominios. MTG Pro: gestión completa para compañías de handyman.">
+<meta name="description" content="WalkCheck: recorridos mensuales documentados para administradores de condominios. Fotos, reportes y equipo en una sola app.">
 <style>
 :root{
   --navy:#0E2A47; --navy2:#0A1F36; --navy3:#16467E;
@@ -94,15 +94,6 @@ nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
 .plan li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
 .plan .btn{width:100%;text-align:center}
 .fine{text-align:center;color:#8FA9C9;font-size:14px;margin-top:28px}
-/* ===== MTG PRO ===== */
-.mtg{background:linear-gradient(140deg,#101418,#1d2733);color:#fff;border-radius:28px;padding:60px;margin-top:70px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
-.mtg h2{color:#fff;text-align:left;font-size:32px}
-.mtg .tag{display:inline-block;background:#FF6B00;color:#fff;font-weight:800;font-size:13px;padding:7px 18px;border-radius:20px;margin-bottom:16px;letter-spacing:.5px}
-.mtg p{color:#B9C6D6;font-size:17px;margin:14px 0 24px}
-.mtg ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
-.mtg li{display:flex;gap:10px;font-size:15.5px;color:#E6EDF5}
-.mtg li::before{content:"✓";color:#FF6B00;font-weight:800;flex:none}
-.mtg .price{font-size:40px;font-weight:800}.mtg .price small{font-size:16px;color:#B9C6D6;font-weight:600}
 /* ===== FAQ ===== */
 .faq{max-width:760px;margin:40px auto 0}
 .faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;padding:0;overflow:hidden}
@@ -149,7 +140,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .hd-right .btn{display:none}
   .lang-toggle{padding:6px 10px;font-size:12px}
   .hero{padding:36px 0 40px}
-  .hero .wrap,.pillar,.mtg{grid-template-columns:1fr;gap:22px}
+  .hero .wrap,.pillar{grid-template-columns:1fr;gap:22px}
   .hero h1{font-size:26px;letter-spacing:-.3px}
   .hero p.sub{font-size:15px;margin:12px 0 18px}
   .hero-cta{flex-direction:column}
@@ -170,11 +161,6 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .plan{padding:24px 20px}
   .plan.pop{transform:none;border-width:3px}
   .plan .price{font-size:34px}
-  .mtg{padding:24px 18px;margin-top:36px;border-radius:18px;gap:20px}
-  .mtg h2{font-size:22px}
-  .mtg p{font-size:15px}
-  .mtg ul{grid-template-columns:1fr}
-  .mtg .price{font-size:28px}
   .faq summary{padding:14px 16px;font-size:15px}
   .cta-final{padding:32px 18px;margin:40px 0;border-radius:18px}
   .cta-final h2{font-size:22px}
@@ -201,7 +187,6 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <div class="dd"><span data-i18n="navProd">Producto ▾</span>
         <div class="dd-menu">
           <a href="#pilares"><b data-i18n="ddWc">WalkCheck</b><small data-i18n="ddWcS">Recorridos de condominios</small></a>
-          <a href="#mtgpro"><b>MTG Pro</b><small data-i18n="ddMtgS">Gestión para handymen</small></a>
         </div>
       </div>
       <a href="#precios" data-i18n="navPrecios">Precios</a>
@@ -353,73 +338,46 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
     <p class="lede" data-i18n="prS">Elige el plan según tus edificios. Cambia o cancela cuando quieras.</p>
     <div class="plans">
       <div class="plan">
-        <h3>Core</h3>
-        <div class="price">$29<small data-i18n="perMo">/mes</small></div>
-        <p class="desc" data-i18n="coreD">Para empezar con un edificio.</p>
+        <h3>Starter</h3>
+        <div class="price">$49.99<small data-i18n="perMo">/mes</small></div>
+        <p class="desc" data-i18n="coreD">For small teams</p>
         <ul>
-          <li data-i18n="core1">1 edificio</li>
+          <li data-i18n="core1">Up to 5 users</li>
           <li data-i18n="core2">Walkthroughs ilimitados</li>
           <li data-i18n="core3">Checklist por áreas + fotos</li>
           <li data-i18n="core4">Reporte por WhatsApp</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Core ($29/mes)" href="#" data-i18n="planCta">Empezar</a>
+        <a class="btn btn-green wa-plan" data-plan="Starter ($49.99/mes)" href="#" data-i18n="planCta">Empezar</a>
       </div>
       <div class="plan pop">
-        <span class="pop-tag" data-i18n="popTag">★ MÁS POPULAR</span>
-        <h3>Connect</h3>
-        <div class="price">$99<small data-i18n="perMo2">/mes</small></div>
-        <p class="desc" data-i18n="connD">Para administradores con varios edificios.</p>
+        <span class="pop-tag" data-i18n="popTag">★ MOST POPULAR</span>
+        <h3>Growth</h3>
+        <div class="price">$99.99<small data-i18n="perMo2">/mes</small></div>
+        <p class="desc" data-i18n="connD">For growing teams</p>
         <ul>
-          <li data-i18n="conn1">5 edificios</li>
-          <li data-i18n="conn2">Todo lo de Core</li>
+          <li data-i18n="conn1">Up to 25 users</li>
+          <li data-i18n="conn2">Todo lo de Starter</li>
           <li data-i18n="conn3">Equipo con usuarios y contraseñas</li>
           <li data-i18n="conn4">Panel web para la oficina</li>
           <li data-i18n="conn5">Calendario de inspecciones</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Connect ($99/mes)" href="#" data-i18n="planCta2">Empezar</a>
+        <a class="btn btn-green wa-plan" data-plan="Growth ($99.99/mes)" href="#" data-i18n="planCta2">Empezar</a>
       </div>
       <div class="plan">
-        <h3>Grow</h3>
-        <div class="price">$199<small data-i18n="perMo3">/mes</small></div>
-        <p class="desc" data-i18n="growD">Para compañías en crecimiento.</p>
+        <h3>Scale</h3>
+        <div class="price">$199.99<small data-i18n="perMo3">/mes</small></div>
+        <p class="desc" data-i18n="growD">For large organizations</p>
         <ul>
-          <li data-i18n="grow1">Edificios ilimitados</li>
-          <li data-i18n="grow2">Todo lo de Connect</li>
+          <li data-i18n="grow1">Unlimited users</li>
+          <li data-i18n="grow2">Todo lo de Growth</li>
           <li data-i18n="grow3">Equipo ilimitado</li>
           <li data-i18n="grow4">Soporte prioritario</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Grow ($199/mes)" href="#" data-i18n="planCta3">Empezar</a>
+        <a class="btn btn-green wa-plan" data-plan="Scale ($199.99/mes)" href="#" data-i18n="planCta3">Empezar</a>
       </div>
     </div>
+    <p class="fine" data-i18n="prTrial">Note: Trial month available — $49.99 for the first month on any plan.</p>
     <p class="fine" data-i18n="prFine">Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp</p>
-
-    <div class="mtg" id="mtgpro">
-      <div>
-        <span class="tag">MTG PRO</span>
-        <h2 data-i18n="mtgT">¿Tienes una compañía de handyman?</h2>
-        <p data-i18n="mtgS">MTG Pro es nuestra app hermana para compañías de mantenimiento y reparaciones.</p>
-        <ul>
-          <li data-i18n="mtg1">Cotizaciones profesionales</li>
-          <li data-i18n="mtg2">Facturas (invoices)</li>
-          <li data-i18n="mtg3">Calendario de trabajos</li>
-          <li data-i18n="mtg4">Equipo con roles</li>
-          <li data-i18n="mtg5">Directorio de clientes</li>
-          <li data-i18n="mtg6">Reportes con fotos y GPS</li>
-        </ul>
-        <div class="price">$249<small data-i18n="perMo4">/mes</small></div>
-        <br><br>
-        <a class="btn btn-wa wa-plan" data-plan="MTG Pro ($249/mes)" href="#" data-i18n="mtgCta">💬 Pedir MTG Pro</a>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd" style="background:linear-gradient(135deg,#7A2E00,#FF6B00)"><b>🔧 <span>MTG Pro</span></b><br><small data-i18n="mtgPhS">Trabajos de hoy</small></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="mtgPh1">Reparación drywall — Cotizado</span></div>
-          <div class="chk"><span class="dot pend">·</span><span data-i18n="mtgPh2">Pintura apto 4B — Agendado</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="mtgPh3">Plomería — Facturado</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:#FF6B00" data-i18n="mtgPhBtn">＋ Nuevo trabajo</div></div>
-      </div></div></div>
-    </div>
   </div>
 </section>
 
@@ -454,7 +412,6 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <div>
         <h4 data-i18n="ftP">Producto</h4>
         <a href="#pilares">WalkCheck</a>
-        <a href="#mtgpro">MTG Pro</a>
         <a href="#precios" data-i18n="ftPr">Precios</a>
       </div>
       <div>
@@ -494,20 +451,20 @@ function waLink(msg){ return "https://wa.me/"+WA_NUMBER+"?text="+encodeURICompon
 var lang = "es";
 var STR = {
   es: {
-    hero:"Hola, quiero información de WalkCheck.",
-    ventas:"Hola, quiero hablar con ventas de WalkCheck.",
-    plan:function(p){ return "Hola, me interesa el plan "+p+" de WalkCheck. ¿Cómo empezamos?"; }
+    hero:"Hola, vi WalkCheck en walkcheck.app y quiero una demo",
+    ventas:"Hola, vi WalkCheck en walkcheck.app y quiero una demo",
+    plan:function(p){ return "Hola, vi WalkCheck en walkcheck.app y quiero una demo del plan "+p; }
   },
   en: {
-    hero:"Hi, I'd like info about WalkCheck.",
-    ventas:"Hi, I'd like to talk to WalkCheck sales.",
-    plan:function(p){ return "Hi, I'm interested in the "+p+" WalkCheck plan. How do we start?"; }
+    hero:"Hi, I saw WalkCheck on walkcheck.app and I want a demo",
+    ventas:"Hi, I saw WalkCheck on walkcheck.app and I want a demo",
+    plan:function(p){ return "Hi, I saw WalkCheck on walkcheck.app and I want a demo of the "+p+" plan"; }
   }
 };
 var I18N = {
 es:{
 navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navCta:"Hablar con Ventas",
-aiTitle:"Asistente WalkCheck",aiPh:"Pregunta lo que quieras…",aiSend:"Enviar",aiHello:"Hola. Pregúntame de WalkCheck o de lo que quieras.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
+aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck y a agendar una demo. Si quieres hablar ya, toca el botón verde de WhatsApp.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
 heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
 heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
 heroCta1:"💬 Agenda una demo",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · Te activamos por WhatsApp",
@@ -541,17 +498,15 @@ p4b:"Compara fotos del mes anterior contra el actual",
 p4c:"Abre cualquier inspección pasada en segundos",
 p4d:"Tus datos guardados en la nube, siempre disponibles",
 m4t:"2026",m4btn:"Abrir inspección de octubre",
-prT:"Precios simples, sin sorpresas",prS:"Elige el plan según tus edificios. Cambia o cancela cuando quieras.",
-perMo:"/mes",perMo2:"/mes",perMo3:"/mes",perMo4:"/mes",
+prT:"Precios simples, sin sorpresas",prS:"Elige el plan según tu equipo. Cambia o cancela cuando quieras.",
+perMo:"/mes",perMo2:"/mes",perMo3:"/mes",
 popTag:"★ MÁS POPULAR",
-coreD:"Para empezar con un edificio.",core1:"1 edificio",core2:"Walkthroughs ilimitados",core3:"Checklist por áreas + fotos",core4:"Reporte por WhatsApp",
-connD:"Para administradores con varios edificios.",conn1:"5 edificios",conn2:"Todo lo de Core",conn3:"Equipo con usuarios y contraseñas",conn4:"Panel web para la oficina",conn5:"Calendario de inspecciones",
-growD:"Para compañías en crecimiento.",grow1:"Edificios ilimitados",grow2:"Todo lo de Connect",grow3:"Equipo ilimitado",grow4:"Soporte prioritario",
+coreD:"Para equipos pequeños",core1:"Hasta 5 usuarios",core2:"Walkthroughs ilimitados",core3:"Checklist por áreas + fotos",core4:"Reporte por WhatsApp",
+connD:"Para equipos en crecimiento",conn1:"Hasta 25 usuarios",conn2:"Todo lo de Starter",conn3:"Equipo con usuarios y contraseñas",conn4:"Panel web para la oficina",conn5:"Calendario de inspecciones",
+growD:"Para organizaciones grandes",grow1:"Usuarios ilimitados",grow2:"Todo lo de Growth",grow3:"Equipo ilimitado",grow4:"Soporte prioritario",
 planCta:"Empezar",planCta2:"Empezar",planCta3:"Empezar",
+prTrial:"Nota: mes de prueba disponible — $49.99 el primer mes en cualquier plan.",
 prFine:"Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp",
-mtgT:"¿Tienes una compañía de handyman?",mtgS:"MTG Pro es nuestra app hermana para compañías de mantenimiento y reparaciones.",
-mtg1:"Cotizaciones profesionales",mtg2:"Facturas (invoices)",mtg3:"Calendario de trabajos",mtg4:"Equipo con roles",mtg5:"Directorio de clientes",mtg6:"Reportes con fotos y GPS",
-mtgCta:"💬 Pedir MTG Pro",mtgPhS:"Trabajos de hoy",mtgPh1:"Reparación drywall — Cotizado",mtgPh2:"Pintura apto 4B — Agendado",mtgPh3:"Plomería — Facturado",mtgPhBtn:"＋ Nuevo trabajo",
 faqT:"Preguntas frecuentes",
 fq1:"¿Cómo empiezo?",fa1:"Escríbenos por WhatsApp, te registramos y activamos tu cuenta. En minutos estás haciendo tu primer recorrido.",
 fq2:"¿Necesito tarjeta de crédito?",fa2:"No. Todo se coordina por WhatsApp, sin formularios complicados.",
@@ -563,7 +518,7 @@ ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",f
 },
 en:{
 navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navCta:"Talk to Sales",
-aiTitle:"WalkCheck Assistant",aiPh:"Ask anything…",aiSend:"Send",aiHello:"Hi. Ask me about WalkCheck or anything else.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
+aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck and booking a demo. To talk now, tap the green WhatsApp button.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
 heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
 heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",
 heroCta1:"💬 Book a demo",heroCta2:"See pricing",heroNote:"No credit card · We activate you via WhatsApp",
@@ -597,17 +552,15 @@ p4b:"Compare last month's photos against the current one",
 p4c:"Open any past inspection in seconds",
 p4d:"Your data saved in the cloud, always available",
 m4t:"2026",m4btn:"Open October inspection",
-prT:"Simple pricing, no surprises",prS:"Choose the plan that fits your buildings. Change or cancel anytime.",
-perMo:"/mo",perMo2:"/mo",perMo3:"/mo",perMo4:"/mo",
+prT:"Simple pricing, no surprises",prS:"Choose the plan that fits your team. Change or cancel anytime.",
+perMo:"/mo",perMo2:"/mo",perMo3:"/mo",
 popTag:"★ MOST POPULAR",
-coreD:"To start with one building.",core1:"1 building",core2:"Unlimited walkthroughs",core3:"Checklists by area + photos",core4:"WhatsApp report",
-connD:"For managers with several buildings.",conn1:"5 buildings",conn2:"Everything in Core",conn3:"Team with logins & passwords",conn4:"Web panel for the office",conn5:"Inspection calendar",
-growD:"For growing companies.",grow1:"Unlimited buildings",grow2:"Everything in Connect",grow3:"Unlimited team",grow4:"Priority support",
+coreD:"For small teams",core1:"Up to 5 users",core2:"Unlimited walkthroughs",core3:"Checklists by area + photos",core4:"WhatsApp report",
+connD:"For growing teams",conn1:"Up to 25 users",conn2:"Everything in Starter",conn3:"Team with logins & passwords",conn4:"Web panel for the office",conn5:"Inspection calendar",
+growD:"For large organizations",grow1:"Unlimited users",grow2:"Everything in Growth",grow3:"Unlimited team",grow4:"Priority support",
 planCta:"Get started",planCta2:"Get started",planCta3:"Get started",
+prTrial:"Note: Trial month available — $49.99 for the first month on any plan.",
 prFine:"No contracts · No credit card to start · We activate you via WhatsApp",
-mtgT:"Run a handyman company?",mtgS:"MTG Pro is our sister app for maintenance and repair companies.",
-mtg1:"Professional quotes",mtg2:"Invoices",mtg3:"Job calendar",mtg4:"Team with roles",mtg5:"Client directory",mtg6:"Reports with photos & GPS",
-mtgCta:"💬 Get MTG Pro",mtgPhS:"Today's jobs",mtgPh1:"Drywall repair — Quoted",mtgPh2:"Painting apt 4B — Scheduled",mtgPh3:"Plumbing — Invoiced",mtgPhBtn:"＋ New job",
 faqT:"Frequently asked questions",
 fq1:"How do I start?",fa1:"Message us on WhatsApp, we register and activate your account. In minutes you're doing your first walkthrough.",
 fq2:"Do I need a credit card?",fa2:"No. Everything is handled via WhatsApp, no complicated forms.",
@@ -666,7 +619,7 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el asistente de WalkCheck (walkcheck.app). Responde en el idioma del usuario. Puedes responder cualquier pregunta general, y también sobre WalkCheck: recorridos de condominios con fotos, reportes WhatsApp, panel web, planes Core 1 edificio, Connect 5 edificios, Grow ilimitado, 15 días de prueba, activación por WhatsApp +1 305 582 4136, app Android/iPhone, roles Owner/Manager/Worker. Sé breve y claro."
+    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: recorridos de condominios, fotos, reportes, precios Starter $49.99/mes (hasta 5 usuarios), Growth $99.99/mes (hasta 25, más popular), Scale $199.99/mes (usuarios ilimitados), mes de prueba $49.99 el primer mes en cualquier plan, app y cómo agendar una demo. Nunca inventes otros productos. Tu meta es cerrar la demo por WhatsApp. Si preguntan de otro tema, redirige a WalkCheck o al botón verde de WhatsApp. Sé breve."
 });
 const chat = model.startChat();
 let sent = 0;
