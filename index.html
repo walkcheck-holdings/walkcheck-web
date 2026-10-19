@@ -125,6 +125,20 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 /* ===== WA FLOAT ===== */
 .wa-float{position:fixed;right:22px;bottom:22px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--wa);display:flex;align-items:center;justify-content:center;font-size:30px;text-decoration:none;box-shadow:0 10px 28px rgba(37,211,102,.5);transition:.15s}
 .wa-float:hover{transform:scale(1.08)}
+.ai-float{position:fixed;right:22px;bottom:96px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
+.ai-float:hover{transform:scale(1.08);background:var(--navy3)}
+.ai-box{position:fixed;right:22px;bottom:172px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
+.ai-box.on{display:flex}
+.ai-hd{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.ai-hd b{flex:1;font-size:15px}
+.ai-hd button{background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+.ai-msgs{flex:1;overflow:auto;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.ai-bubble{max-width:88%;padding:10px 12px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap}
+.ai-bubble.bot{background:#fff;color:var(--txt);border:1px solid var(--line);align-self:flex-start}
+.ai-bubble.me{background:var(--navy);color:#fff;align-self:flex-end}
+.ai-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
+.ai-form input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px}
+.ai-form button{background:var(--green);color:var(--navy2);border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}
 @media(max-width:900px){
   nav.main{display:none}
   .hero .wrap,.pillar,.mtg{grid-template-columns:1fr}
@@ -418,6 +432,18 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   </div>
 </footer>
 
+<button class="ai-float" id="aiOpen" type="button" aria-label="Asistente IA">✦</button>
+<div class="ai-box" id="aiBox" role="dialog" aria-label="Asistente WalkCheck">
+  <div class="ai-hd">
+    <b data-i18n="aiTitle">Asistente WalkCheck</b>
+    <button type="button" id="aiClose" aria-label="Cerrar">×</button>
+  </div>
+  <div class="ai-msgs" id="aiMsgs"></div>
+  <form class="ai-form" id="aiForm">
+    <input id="aiInput" autocomplete="off" maxlength="800" data-i18n-ph="aiPh" placeholder="Pregunta lo que quieras…">
+    <button type="submit" data-i18n="aiSend">Enviar</button>
+  </form>
+</div>
 <a class="wa-float" id="waFloat" href="#" aria-label="WhatsApp">💬</a>
 
 <script>
@@ -439,6 +465,7 @@ var STR = {
 var I18N = {
 es:{
 navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navCta:"Hablar con Ventas",
+aiTitle:"Asistente WalkCheck",aiPh:"Pregunta lo que quieras…",aiSend:"Enviar",aiHello:"Hola. Pregúntame de WalkCheck o de lo que quieras.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
 heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
 heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
 heroCta1:"💬 Agenda una demo",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · Te activamos por WhatsApp",
@@ -494,6 +521,7 @@ ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",f
 },
 en:{
 navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navCta:"Talk to Sales",
+aiTitle:"WalkCheck Assistant",aiPh:"Ask anything…",aiSend:"Send",aiHello:"Hi. Ask me about WalkCheck or anything else.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
 heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
 heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",
 heroCta1:"💬 Book a demo",heroCta2:"See pricing",heroNote:"No credit card · We activate you via WhatsApp",
@@ -567,12 +595,79 @@ function applyLang(){
     var k = el.getAttribute("data-i18n");
     if(d[k] !== undefined) el.innerHTML = d[k];
   });
+  document.querySelectorAll("[data-i18n-ph]").forEach(function(el){
+    var k = el.getAttribute("data-i18n-ph");
+    if(d[k] !== undefined) el.placeholder = d[k];
+  });
   document.documentElement.lang = lang;
   document.querySelector(".lang-toggle").textContent = (lang==="es") ? "EN" : "ES";
   refreshWa();
 }
 function toggleLang(){ lang = (lang==="es") ? "en" : "es"; applyLang(); }
 applyLang();
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-ai.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+
+const app = initializeApp(firebaseConfig);
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+const model = getGenerativeModel(ai, {
+  model: "gemini-flash-latest",
+  systemInstruction:
+    "Eres el asistente de WalkCheck (walkcheck.app). Responde en el idioma del usuario. Puedes responder cualquier pregunta general, y también sobre WalkCheck: recorridos de condominios con fotos, reportes WhatsApp, panel web, planes Core 1 edificio, Connect 5 edificios, Grow ilimitado, 15 días de prueba, activación por WhatsApp +1 305 582 4136, app Android/iPhone, roles Owner/Manager/Worker. Sé breve y claro."
+});
+const chat = model.startChat();
+let sent = 0;
+const MAX = 20;
+
+function bubble(text, who) {
+  const el = document.createElement("div");
+  el.className = "ai-bubble " + who;
+  el.textContent = text;
+  document.getElementById("aiMsgs").appendChild(el);
+  el.scrollIntoView({ behavior: "smooth", block: "end" });
+  return el;
+}
+
+function hello() {
+  const box = document.getElementById("aiMsgs");
+  if (box.childElementCount === 0) bubble(I18N[lang].aiHello, "bot");
+}
+
+document.getElementById("aiOpen").addEventListener("click", () => {
+  document.getElementById("aiBox").classList.add("on");
+  hello();
+  document.getElementById("aiInput").focus();
+});
+document.getElementById("aiClose").addEventListener("click", () => {
+  document.getElementById("aiBox").classList.remove("on");
+});
+document.getElementById("aiForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("aiInput");
+  const text = (input.value || "").trim();
+  if (!text || sent >= MAX) return;
+  input.value = "";
+  sent += 1;
+  bubble(text, "me");
+  const wait = bubble(I18N[lang].aiWait, "bot");
+  try {
+    const result = await chat.sendMessage(text);
+    wait.textContent = result.response.text();
+  } catch (err) {
+    wait.textContent = I18N[lang].aiErr;
+  }
+});
 </script>
 </body>
 </html>
