@@ -14,8 +14,8 @@
   --line:#E3EAF2; --radius:16px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:#fff;line-height:1.6}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:#fff;line-height:1.6;overflow-x:hidden;max-width:100%}
 .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
 /* ===== HEADER ===== */
 header{position:sticky;top:0;z-index:50;background:var(--navy);box-shadow:0 2px 12px rgba(0,0,0,.25)}
@@ -140,13 +140,55 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 .ai-form input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px}
 .ai-form button{background:var(--green);color:var(--navy2);border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}
 @media(max-width:900px){
+  .wrap{padding:0 16px}
   nav.main{display:none}
-  .hero .wrap,.pillar,.mtg{grid-template-columns:1fr}
-  .hero h1{font-size:34px}
-  .plans{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
-  .plan.pop{transform:none}
-  .fcols{grid-template-columns:1fr 1fr}
-  .phone{width:260px}.screen{height:520px}
+  .hd{height:56px;gap:10px}
+  .logo{font-size:18px}
+  .logo .lg{width:30px;height:30px;font-size:16px;border-radius:8px}
+  .hd-right{gap:8px}
+  .hd-right .btn{display:none}
+  .lang-toggle{padding:6px 10px;font-size:12px}
+  .hero{padding:36px 0 40px}
+  .hero .wrap,.pillar,.mtg{grid-template-columns:1fr;gap:22px}
+  .hero h1{font-size:26px;letter-spacing:-.3px}
+  .hero p.sub{font-size:15px;margin:12px 0 18px}
+  .hero-cta{flex-direction:column}
+  .hero-cta .btn{width:100%;text-align:center;padding:12px 16px;font-size:15px}
+  .trust{gap:10px 14px;margin-top:18px}
+  .trust div{font-size:13px}
+  .phone{width:210px}
+  .screen{height:400px}
+  .sec{padding:48px 0}
+  .sec h2{font-size:24px}
+  .sec .lede{font-size:15px}
+  .tabs{margin:20px 0;gap:8px}
+  .tab{padding:8px 12px;font-size:13px}
+  .pillar{padding:20px;border-radius:16px;gap:18px}
+  .pillar h3{font-size:20px}
+  .feat li{font-size:14.5px;margin-bottom:10px}
+  .plans{grid-template-columns:1fr;max-width:100%;margin-top:28px;gap:28px}
+  .plan{padding:24px 20px}
+  .plan.pop{transform:none;border-width:3px}
+  .plan .price{font-size:34px}
+  .mtg{padding:24px 18px;margin-top:36px;border-radius:18px;gap:20px}
+  .mtg h2{font-size:22px}
+  .mtg p{font-size:15px}
+  .mtg ul{grid-template-columns:1fr}
+  .mtg .price{font-size:28px}
+  .faq summary{padding:14px 16px;font-size:15px}
+  .cta-final{padding:32px 18px;margin:40px 0;border-radius:18px}
+  .cta-final h2{font-size:22px}
+  .cta-final p{font-size:15px;margin:10px 0 18px}
+  footer{padding:36px 0 90px}
+  .fcols{grid-template-columns:1fr;gap:22px;margin-bottom:24px}
+  .wa-float,.ai-float{width:50px;height:50px;right:14px;font-size:22px}
+  .wa-float{bottom:14px}
+  .ai-float{bottom:72px}
+  .ai-box{right:10px;left:10px;width:auto;bottom:130px;height:min(68dvh,460px);border-radius:16px}
+}
+@media(max-width:420px){
+  .hero h1{font-size:22px}
+  .phone{display:none}
 }
 </style>
 </head>
