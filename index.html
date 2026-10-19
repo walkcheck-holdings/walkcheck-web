@@ -78,22 +78,24 @@ nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
 .feat li{display:flex;gap:12px;margin-bottom:14px;font-size:16px}
 .feat li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
 /* ===== PRECIOS ===== */
-#precios{background:var(--navy2);color:#fff}
-#precios h2{color:#fff}
-#precios .lede{color:#BFD6F2}
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px;align-items:stretch}
-.plan{background:#fff;color:var(--txt);border-radius:20px;padding:36px 30px;position:relative;display:flex;flex-direction:column}
-.plan.pop{border:4px solid var(--green);transform:scale(1.04);box-shadow:0 24px 60px rgba(122,193,66,.25)}
-.pop-tag{position:absolute;top:-17px;left:50%;transform:translateX(-50%);background:var(--green);color:#0A1F36;font-weight:800;font-size:13px;padding:7px 20px;border-radius:20px;letter-spacing:.5px;white-space:nowrap}
-.plan h3{font-size:21px}
-.plan .price{font-size:44px;font-weight:800;margin:10px 0 2px}
-.plan .price small{font-size:16px;color:var(--mut);font-weight:600}
-.plan .desc{color:var(--mut);font-size:14.5px;margin-bottom:20px}
-.plan ul{list-style:none;margin-bottom:28px;flex:1}
-.plan li{display:flex;gap:10px;margin-bottom:11px;font-size:15px}
-.plan li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
+#precios{background:#F4F7FB;color:var(--navy)}
+#precios h2{color:var(--navy3);font-size:36px}
+#precios .lede{color:var(--mut)}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;align-items:stretch}
+.plan{background:#fff;color:var(--txt);border-radius:16px;padding:28px 24px;position:relative;display:flex;flex-direction:column;border:1.5px solid #D6E0EE;box-shadow:0 8px 24px rgba(14,42,71,.06)}
+.plan.pop{border:2px solid #2F6FED;padding-top:44px;box-shadow:0 12px 32px rgba(47,111,237,.18)}
+.pop-tag{position:absolute;top:0;left:0;right:0;background:#2F6FED;color:#fff;font-weight:800;font-size:12px;padding:8px 12px;letter-spacing:.4px;text-align:center;border-radius:14px 14px 0 0}
+.plan h3{font-size:22px;color:var(--navy)}
+.plan .price{font-size:42px;font-weight:800;margin:8px 0 2px;color:var(--navy3)}
+.plan .price small{font-size:14px;color:var(--mut);font-weight:600}
+.plan .desc{color:#2F6FED;font-size:14px;font-weight:700;margin-bottom:16px}
+.plan ul{list-style:none;margin-bottom:22px;flex:1}
+.plan li{display:flex;gap:10px;margin-bottom:10px;font-size:14.5px}
+.plan li::before{content:"✓";color:#2F6FED;font-weight:800;flex:none}
 .plan .btn{width:100%;text-align:center}
-.fine{text-align:center;color:#8FA9C9;font-size:14px;margin-top:28px}
+.btn-blue{background:#2F6FED;color:#fff}
+.btn-blue:hover{background:#2158C7;transform:translateY(-1px)}
+.fine{text-align:center;color:var(--mut);font-size:13.5px;margin-top:22px}
 /* ===== FAQ ===== */
 .faq{max-width:760px;margin:40px auto 0}
 .faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;padding:0;overflow:hidden}
@@ -159,7 +161,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .feat li{font-size:14.5px;margin-bottom:10px}
   .plans{grid-template-columns:1fr;max-width:100%;margin-top:28px;gap:28px}
   .plan{padding:24px 20px}
-  .plan.pop{transform:none;border-width:3px}
+  .plan.pop{transform:none}
   .plan .price{font-size:34px}
   .faq summary{padding:14px 16px;font-size:15px}
   .cta-final{padding:32px 18px;margin:40px 0;border-radius:18px}
@@ -334,50 +336,50 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 
 <section class="sec" id="precios">
   <div class="wrap">
-    <h2 data-i18n="prT">Precios simples, sin sorpresas</h2>
-    <p class="lede" data-i18n="prS">Elige el plan según tus edificios. Cambia o cancela cuando quieras.</p>
+    <h2 data-i18n="prT">WalkCheck Pricing</h2>
+    <p class="lede" data-i18n="prS">Choose the plan that’s right for your team. All plans include core safety &amp; compliance monitoring.</p>
     <div class="plans">
       <div class="plan">
         <h3>Starter</h3>
-        <div class="price">$49.99<small data-i18n="perMo">/mes</small></div>
+        <div class="price">$49.99<small data-i18n="perMo">/month</small></div>
         <p class="desc" data-i18n="coreD">For small teams</p>
         <ul>
           <li data-i18n="core1">Up to 5 users</li>
-          <li data-i18n="core2">Walkthroughs ilimitados</li>
-          <li data-i18n="core3">Checklist por áreas + fotos</li>
-          <li data-i18n="core4">Reporte por WhatsApp</li>
+          <li data-i18n="core2">Core walkthrough checklists</li>
+          <li data-i18n="core3">Email support</li>
+          <li data-i18n="core4">Basic analytics &amp; reporting</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Starter ($49.99/mes)" href="#" data-i18n="planCta">Empezar</a>
+        <a class="btn btn-outline wa-plan" data-plan="Starter ($49.99/mes)" href="#" data-i18n="planCta">Get Started</a>
       </div>
       <div class="plan pop">
-        <span class="pop-tag" data-i18n="popTag">★ MOST POPULAR</span>
+        <span class="pop-tag" data-i18n="popTag">Most Popular</span>
         <h3>Growth</h3>
-        <div class="price">$99.99<small data-i18n="perMo2">/mes</small></div>
+        <div class="price">$99.99<small data-i18n="perMo2">/month</small></div>
         <p class="desc" data-i18n="connD">For growing teams</p>
         <ul>
           <li data-i18n="conn1">Up to 25 users</li>
-          <li data-i18n="conn2">Todo lo de Starter</li>
-          <li data-i18n="conn3">Equipo con usuarios y contraseñas</li>
-          <li data-i18n="conn4">Panel web para la oficina</li>
-          <li data-i18n="conn5">Calendario de inspecciones</li>
+          <li data-i18n="conn2">Custom checklists &amp; templates</li>
+          <li data-i18n="conn3">Priority support</li>
+          <li data-i18n="conn4">Advanced analytics &amp; exports</li>
+          <li data-i18n="conn5">Integrations: Slack, Teams</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Growth ($99.99/mes)" href="#" data-i18n="planCta2">Empezar</a>
+        <a class="btn btn-blue wa-plan" data-plan="Growth ($99.99/mes)" href="#" data-i18n="planCta2">Start Free Trial</a>
       </div>
       <div class="plan">
         <h3>Scale</h3>
-        <div class="price">$199.99<small data-i18n="perMo3">/mes</small></div>
+        <div class="price">$199.99<small data-i18n="perMo3">/month</small></div>
         <p class="desc" data-i18n="growD">For large organizations</p>
         <ul>
           <li data-i18n="grow1">Unlimited users</li>
-          <li data-i18n="grow2">Todo lo de Growth</li>
-          <li data-i18n="grow3">Equipo ilimitado</li>
-          <li data-i18n="grow4">Soporte prioritario</li>
+          <li data-i18n="grow2">Custom workflows &amp; roles</li>
+          <li data-i18n="grow3">Dedicated success manager</li>
+          <li data-i18n="grow4">API access &amp; SSO</li>
+          <li data-i18n="grow5">Advanced compliance reporting</li>
         </ul>
-        <a class="btn btn-green wa-plan" data-plan="Scale ($199.99/mes)" href="#" data-i18n="planCta3">Empezar</a>
+        <a class="btn btn-outline wa-plan" data-plan="Scale ($199.99/mes)" href="#" data-i18n="planCta3">Contact Sales</a>
       </div>
     </div>
     <p class="fine" data-i18n="prTrial">Note: Trial month available — $49.99 for the first month on any plan.</p>
-    <p class="fine" data-i18n="prFine">Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp</p>
   </div>
 </section>
 
@@ -498,15 +500,14 @@ p4b:"Compara fotos del mes anterior contra el actual",
 p4c:"Abre cualquier inspección pasada en segundos",
 p4d:"Tus datos guardados en la nube, siempre disponibles",
 m4t:"2026",m4btn:"Abrir inspección de octubre",
-prT:"Precios simples, sin sorpresas",prS:"Elige el plan según tu equipo. Cambia o cancela cuando quieras.",
+prT:"Precios WalkCheck",prS:"Elige el plan para tu equipo. Todos incluyen monitoreo de seguridad y cumplimiento.",
 perMo:"/mes",perMo2:"/mes",perMo3:"/mes",
-popTag:"★ MÁS POPULAR",
-coreD:"Para equipos pequeños",core1:"Hasta 5 usuarios",core2:"Walkthroughs ilimitados",core3:"Checklist por áreas + fotos",core4:"Reporte por WhatsApp",
-connD:"Para equipos en crecimiento",conn1:"Hasta 25 usuarios",conn2:"Todo lo de Starter",conn3:"Equipo con usuarios y contraseñas",conn4:"Panel web para la oficina",conn5:"Calendario de inspecciones",
-growD:"Para organizaciones grandes",grow1:"Usuarios ilimitados",grow2:"Todo lo de Growth",grow3:"Equipo ilimitado",grow4:"Soporte prioritario",
-planCta:"Empezar",planCta2:"Empezar",planCta3:"Empezar",
+popTag:"Más popular",
+coreD:"Para equipos pequeños",core1:"Hasta 5 usuarios",core2:"Checklists de recorrido",core3:"Soporte por email",core4:"Analítica e informes básicos",
+connD:"Para equipos en crecimiento",conn1:"Hasta 25 usuarios",conn2:"Checklists y plantillas custom",conn3:"Soporte prioritario",conn4:"Analítica avanzada y exportaciones",conn5:"Integraciones: Slack, Teams",
+growD:"Para organizaciones grandes",grow1:"Usuarios ilimitados",grow2:"Flujos y roles a medida",grow3:"Success manager dedicado",grow4:"API y SSO",grow5:"Reportes de cumplimiento avanzados",
+planCta:"Empezar",planCta2:"Empezar prueba gratis",planCta3:"Hablar con ventas",
 prTrial:"Nota: mes de prueba disponible — $49.99 el primer mes en cualquier plan.",
-prFine:"Sin contratos · Sin tarjeta de crédito para empezar · Te activamos por WhatsApp",
 faqT:"Preguntas frecuentes",
 fq1:"¿Cómo empiezo?",fa1:"Escríbenos por WhatsApp, te registramos y activamos tu cuenta. En minutos estás haciendo tu primer recorrido.",
 fq2:"¿Necesito tarjeta de crédito?",fa2:"No. Todo se coordina por WhatsApp, sin formularios complicados.",
@@ -552,15 +553,14 @@ p4b:"Compare last month's photos against the current one",
 p4c:"Open any past inspection in seconds",
 p4d:"Your data saved in the cloud, always available",
 m4t:"2026",m4btn:"Open October inspection",
-prT:"Simple pricing, no surprises",prS:"Choose the plan that fits your team. Change or cancel anytime.",
-perMo:"/mo",perMo2:"/mo",perMo3:"/mo",
-popTag:"★ MOST POPULAR",
-coreD:"For small teams",core1:"Up to 5 users",core2:"Unlimited walkthroughs",core3:"Checklists by area + photos",core4:"WhatsApp report",
-connD:"For growing teams",conn1:"Up to 25 users",conn2:"Everything in Starter",conn3:"Team with logins & passwords",conn4:"Web panel for the office",conn5:"Inspection calendar",
-growD:"For large organizations",grow1:"Unlimited users",grow2:"Everything in Growth",grow3:"Unlimited team",grow4:"Priority support",
-planCta:"Get started",planCta2:"Get started",planCta3:"Get started",
+prT:"WalkCheck Pricing",prS:"Choose the plan that’s right for your team. All plans include core safety &amp; compliance monitoring.",
+perMo:"/month",perMo2:"/month",perMo3:"/month",
+popTag:"Most Popular",
+coreD:"For small teams",core1:"Up to 5 users",core2:"Core walkthrough checklists",core3:"Email support",core4:"Basic analytics &amp; reporting",
+connD:"For growing teams",conn1:"Up to 25 users",conn2:"Custom checklists &amp; templates",conn3:"Priority support",conn4:"Advanced analytics &amp; exports",conn5:"Integrations: Slack, Teams",
+growD:"For large organizations",grow1:"Unlimited users",grow2:"Custom workflows &amp; roles",grow3:"Dedicated success manager",grow4:"API access &amp; SSO",grow5:"Advanced compliance reporting",
+planCta:"Get Started",planCta2:"Start Free Trial",planCta3:"Contact Sales",
 prTrial:"Note: Trial month available — $49.99 for the first month on any plan.",
-prFine:"No contracts · No credit card to start · We activate you via WhatsApp",
 faqT:"Frequently asked questions",
 fq1:"How do I start?",fa1:"Message us on WhatsApp, we register and activate your account. In minutes you're doing your first walkthrough.",
 fq2:"Do I need a credit card?",fa2:"No. Everything is handled via WhatsApp, no complicated forms.",
