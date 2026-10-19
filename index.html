@@ -132,6 +132,19 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 .ai-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
 .ai-form input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px}
 .ai-form button{background:var(--green);color:var(--navy2);border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}
+.modal-bg{position:fixed;inset:0;background:rgba(10,31,54,.55);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:18px;width:min(440px,100%);padding:24px;max-height:90vh;overflow:auto;box-shadow:0 24px 60px rgba(14,42,71,.3)}
+.modal h3{font-size:22px;margin-bottom:6px;color:var(--navy)}
+.modal p.hint{color:var(--mut);font-size:14px;margin-bottom:16px}
+.modal label{display:block;font-size:13px;font-weight:700;margin:10px 0 6px}
+.modal input,.modal select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px}
+.modal .err{color:#C62828;font-size:13.5px;margin-top:10px;min-height:1.2em}
+.modal .ok{display:none;text-align:center;padding:12px 0}
+.modal .ok.on{display:block}
+.modal .ok h4{font-size:18px;margin-bottom:8px}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+.modal-actions .btn{flex:1;text-align:center}
 @media(max-width:900px){
   .wrap{padding:0 16px}
   nav.main{display:none}
@@ -349,7 +362,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
           <li data-i18n="core3">Email support</li>
           <li data-i18n="core4">Basic analytics &amp; reporting</li>
         </ul>
-        <a class="btn btn-outline wa-plan" data-plan="Starter ($49.99/mes)" href="#" data-i18n="planCta">Get Started</a>
+        <a class="btn btn-outline js-register" data-plan="starter" href="#" data-i18n="planCta">Get Started</a>
       </div>
       <div class="plan pop">
         <span class="pop-tag" data-i18n="popTag">Most Popular</span>
@@ -363,7 +376,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
           <li data-i18n="conn4">Advanced analytics &amp; exports</li>
           <li data-i18n="conn5">Integrations: Slack, Teams</li>
         </ul>
-        <a class="btn btn-blue wa-plan" data-plan="Growth ($99.99/mes)" href="#" data-i18n="planCta2">Start Free Trial</a>
+        <a class="btn btn-blue js-register" data-plan="growth" href="#" data-i18n="planCta2">Start Free Trial</a>
       </div>
       <div class="plan">
         <h3>Scale</h3>
@@ -376,7 +389,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
           <li data-i18n="grow4">API access &amp; SSO</li>
           <li data-i18n="grow5">Advanced compliance reporting</li>
         </ul>
-        <a class="btn btn-outline wa-plan" data-plan="Scale ($199.99/mes)" href="#" data-i18n="planCta3">Contact Sales</a>
+        <a class="btn btn-outline js-register" data-plan="scale" href="#" data-i18n="planCta3">Contact Sales</a>
       </div>
     </div>
     <p class="fine" data-i18n="prTrial">Note: Trial month available — $49.99 for the first month on any plan.</p>
@@ -446,6 +459,38 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   </form>
 </div>
 <a class="wa-float" id="waFloat" href="#" aria-label="WhatsApp">💬</a>
+<div class="modal-bg" id="regModal">
+  <div class="modal" role="dialog" aria-labelledby="regTitle">
+    <div id="regFormWrap">
+      <h3 id="regTitle">Crear cuenta WalkCheck</h3>
+      <p class="hint">Usa este email y contraseña para entrar luego en la app.</p>
+      <label for="regCompany">Nombre de la empresa</label>
+      <input id="regCompany" autocomplete="organization" required>
+      <label for="regEmail">Email</label>
+      <input id="regEmail" type="email" autocomplete="email" required>
+      <label for="regPass">Contraseña</label>
+      <input id="regPass" type="password" autocomplete="new-password" minlength="6" required>
+      <label for="regPlan">Plan</label>
+      <select id="regPlan">
+        <option value="starter">Starter — $49.99/mes</option>
+        <option value="growth">Growth — $99.99/mes</option>
+        <option value="scale">Scale — $199.99/mes</option>
+      </select>
+      <div class="err" id="regErr"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="regCancel">Cancelar</button>
+        <button type="button" class="btn btn-blue" id="regSubmit">Register</button>
+      </div>
+    </div>
+    <div class="ok" id="regOk">
+      <h4>Cuenta creada</h4>
+      <p>Descarga el app WalkCheck e inicia sesión con el mismo email y contraseña. No te registres otra vez.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-green" id="regDone">Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 var WA_NUMBER = "13055824136";
@@ -603,6 +648,8 @@ applyLang();
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-ai.js";
 
 const firebaseConfig = {
@@ -615,6 +662,87 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function openRegister(plan) {
+  document.getElementById("regErr").textContent = "";
+  document.getElementById("regFormWrap").style.display = "block";
+  document.getElementById("regOk").classList.remove("on");
+  if (plan) document.getElementById("regPlan").value = plan;
+  document.getElementById("regModal").classList.add("on");
+}
+function closeRegister() {
+  document.getElementById("regModal").classList.remove("on");
+}
+document.querySelectorAll(".js-register").forEach((a) => {
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    openRegister(a.getAttribute("data-plan") || "starter");
+  });
+});
+document.getElementById("regCancel").addEventListener("click", closeRegister);
+document.getElementById("regDone").addEventListener("click", closeRegister);
+document.getElementById("regModal").addEventListener("click", (e) => {
+  if (e.target.id === "regModal") closeRegister();
+});
+document.getElementById("regSubmit").addEventListener("click", async () => {
+  const company = document.getElementById("regCompany").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const password = document.getElementById("regPass").value;
+  const plan = document.getElementById("regPlan").value;
+  const err = document.getElementById("regErr");
+  err.textContent = "";
+  if (!company || !email || password.length < 6) {
+    err.textContent = "Completa empresa, email y una contraseña de 6+ caracteres.";
+    return;
+  }
+  const btn = document.getElementById("regSubmit");
+  btn.disabled = true;
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
+    const compRef = doc(collection(db, "companies"));
+    const trialEnd = Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000));
+    await setDoc(compRef, {
+      id: compRef.id,
+      name: company,
+      status: "pending",
+      adminUid: uid,
+      plan,
+      createdAt: serverTimestamp(),
+      trial_start: serverTimestamp(),
+      trial_end: trialEnd,
+      is_paid: false
+    });
+    await setDoc(doc(db, "users", uid), {
+      uid,
+      email,
+      plan,
+      status: "trial",
+      companyId: compRef.id,
+      username: email.split("@")[0],
+      displayName: company,
+      role: "admin",
+      mustChangePassword: false,
+      createdAt: serverTimestamp()
+    });
+    document.getElementById("regFormWrap").style.display = "none";
+    document.getElementById("regOk").classList.add("on");
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "auth/email-already-in-use") {
+      err.textContent = "Ese email ya tiene cuenta. Entra en el app con la misma contraseña.";
+    } else if (code === "auth/unauthorized-domain") {
+      err.textContent = "Este dominio no está autorizado en Firebase Auth. Agrega walkcheck.app en Authentication > Settings.";
+    } else {
+      err.textContent = (e && e.message) ? e.message : "No se pudo registrar.";
+    }
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
