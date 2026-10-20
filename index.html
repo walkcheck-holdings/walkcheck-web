@@ -43,6 +43,8 @@ nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
 .btn-sm{padding:10px 20px;font-size:14.5px}
 .lang-toggle{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:13.5px}
 .lang-toggle:hover{border-color:#fff}
+.btn-enter{border:1.5px solid rgba(255,255,255,.45);color:#fff;background:transparent;padding:10px 18px;font-size:14.5px;border-radius:12px;text-decoration:none;font-weight:700}
+.btn-enter:hover{border-color:#fff;color:#fff}
 /* ===== HERO ===== */
 .hero{background:linear-gradient(160deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);color:#fff;padding:88px 0 96px;position:relative;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
@@ -225,6 +227,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
     </nav>
     <div class="hd-right">
       <button class="lang-toggle" onclick="toggleLang()">EN</button>
+      <a class="btn-enter" href="/app/" data-i18n="navEnter">Entrar</a>
       <a class="btn btn-green btn-sm" id="waHd" href="#" data-i18n="navCta">Hablar con Ventas</a>
     </div>
   </div>
@@ -443,6 +446,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <div>
         <h4 data-i18n="ftP">Producto</h4>
         <a href="#pilares">WalkCheck</a>
+        <a href="/app/" data-i18n="navEnter">Entrar</a>
         <a href="#precios" data-i18n="ftPr">Precios</a>
       </div>
       <div>
@@ -526,7 +530,7 @@ var STR = {
 };
 var I18N = {
 es:{
-navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navCta:"Hablar con Ventas",
+navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",navCta:"Hablar con Ventas",
 aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck y a agendar una demo. Si quieres hablar ya, toca el botón verde de WhatsApp.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
 heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
 heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
@@ -579,7 +583,7 @@ ctaT:"Empieza tu primer recorrido hoy",ctaS:"Escríbenos y te activamos en minut
 ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
 },
 en:{
-navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navCta:"Talk to Sales",
+navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",navCta:"Talk to Sales",
 aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck and booking a demo. To talk now, tap the green WhatsApp button.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
 heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
 heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · Entrar</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  header { background: #4CAF50; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+  .card h3 { margin: 0 0 4px; }
+  .muted { color: #777; font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
+  .b-ok { background: #e6f4ea; color: #1b7f3b; }
+  .b-warn { background: #fff3e0; color: #b26a00; }
+  .b-urg { background: #fdecea; color: #b3261e; }
+  .finding { border-left: 4px solid #ff9800; }
+  .finding.urgent { border-left-color: #d32f2f; background: #fff8f8; }
+  .photos { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .photos img { width: 160px; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+  .photos .cap { font-size: 11px; color: #777; text-align: center; }
+  .back { background: none; border: none; color: #2E7D32; font-size: 15px; cursor: pointer; padding: 0 0 12px; }
+  pre.report { white-space: pre-wrap; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 14px; font-size: 14px; line-height: 1.6; }
+  .btn { background: #4CAF50; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn.green { background: #1b7f3b; }
+  input[type=email], input[type=password], input[type=text], input[type=number] { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; }
+  #login .card { max-width: 380px; margin: 60px auto; }
+  .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="/" style="color:#fff;text-decoration:none">Walkcheck</a></h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="roleChip" class="muted" style="color:#fff"></span>
+    <button id="btnLogout" hidden>Cerrar sesión</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LOGIN -->
+  <div id="login">
+    <div class="card">
+      <h3>Entrar a Walkcheck</h3>
+      <p class="muted">Un solo login. Jefe ve el panel; trabajador ve sus visitas.</p>
+      <input type="email" id="email" placeholder="Correo" autocomplete="username">
+      <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+      <button class="btn" id="btnLogin">Entrar</button>
+      <div class="err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" hidden>
+    <div id="viewJobs" hidden></div>
+    <div id="viewBuildings"></div>
+    <div id="viewMonths" hidden></div>
+    <div id="viewDetail" hidden></div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIGURACIÓN: pega aquí tu firebaseConfig ============
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+// ====================================================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const AREAS = [
+  {icon:'🚶', name:'Pasillos y escaleras', items:[
+    {t:'Objetos personales', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Basura u obstáculos en el paso', ok:'Sin basura', bad:'Con basura'},
+    {t:'Pisos', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Barandas', ok:'Firmes', bad:'Flojas'}]},
+  {icon:'🚪', name:'Entradas y lobby', items:[
+    {t:'Puertas', ok:'Cierran bien', bad:'No cierran'},
+    {t:'Cerraduras', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Cristales', ok:'Sin roturas', bad:'Rotos'},
+    {t:'Luces', ok:'Encendidas', bad:'Apagadas'},
+    {t:'Limpieza del área', ok:'Limpia', bad:'Sucia'}]},
+  {icon:'💡', name:'Luces', items:[
+    {t:'Pasillos', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Escaleras', ok:'Iluminadas', bad:'Sin luz'},
+    {t:'Entradas y lobby', ok:'Iluminados', bad:'Sin luz'},
+    {t:'Estacionamiento', ok:'Iluminado', bad:'Sin luz'}]},
+  {icon:'🧱', name:'Paredes, techos y concreto', items:[
+    {t:'Grietas o desprendimientos', ok:'Sin grietas', bad:'Con grietas'},
+    {t:'Humedad o filtraciones', ok:'Sin humedad', bad:'Con humedad'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Varillas expuestas', ok:'Sin varillas', bad:'Con varillas'}]},
+  {icon:'🧯', name:'Equipos de seguridad', items:[
+    {t:'Extintores', ok:'Visibles y accesibles', bad:'Faltan o bloqueados'},
+    {t:'Gabinetes contra incendios', ok:'En orden', bad:'En desorden'},
+    {t:'Alarmas', ok:'Sin daño', bad:'Dañadas'},
+    {t:'Salidas de emergencia', ok:'Despejadas', bad:'Bloqueadas'}]},
+  {icon:'🅿️', name:'Estacionamientos', items:[
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones', ok:'Sin filtraciones', bad:'Con filtraciones'},
+    {t:'Concreto', ok:'Buen estado', bad:'Mal estado'},
+    {t:'Basura o condiciones', ok:'Limpio y seguro', bad:'Sucio o inseguro'}]},
+  {icon:'🗑️', name:'Cuartos de basura y servicio', items:[
+    {t:'Acumulación de basura', ok:'Sin acumulación', bad:'Acumulada'},
+    {t:'Objetos almacenados', ok:'Sin objetos', bad:'Con objetos'},
+    {t:'Filtraciones u olores', ok:'Sin filtraciones', bad:'Con filtraciones'}]},
+  {icon:'🏊', name:'Piscina, patios y áreas comunes', items:[
+    {t:'Limpieza general', ok:'Adecuada', bad:'Deficiente'},
+    {t:'Mantenimiento', ok:'Al día', bad:'Atrasado'},
+    {t:'Condiciones', ok:'Seguras', bad:'Inseguras'}]},
+];
+function itemLabel(i, j, st){
+  const it = AREAS[i].items[j];
+  return it.t + ': ' + (st===2 ? it.bad : it.ok);
+}
+function nombreMes(ym){ const p = ym.split('-'); return MESES[parseInt(p[1])-1] + ' ' + p[0]; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fl(f){ return f.floor ? 'Piso ' + esc(f.floor) + ' · ' : ''; }
+
+const $ = id => document.getElementById(id);
+function show(id){
+  ['viewJobs','viewBuildings','viewMonths','viewDetail'].forEach(v => $(v).hidden = (v !== id));
+}
+
+let profile = { role: 'worker', companyId: '', displayName: '' };
+function isBoss(){
+  const email = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
+  if (email === 'maikelramirez55@gmail.com') return true;
+  return ['owner','admin','manager','supervisor','editor'].includes(String(profile.role||'').toLowerCase());
+}
+function isSuper(){
+  return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
+}
+
+// ---------- Auth ----------
+$('btnLogin').onclick = async () => {
+  $('loginErr').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+  } catch(e){ $('loginErr').textContent = 'No se pudo entrar: ' + e.message; }
+};
+$('btnLogout').onclick = () => auth.signOut();
+auth.onAuthStateChanged(async user => {
+  $('login').hidden = !!user;
+  $('app').hidden = !user;
+  $('btnLogout').hidden = !user;
+  $('roleChip').textContent = '';
+  if (!user) return;
+  const doc = await db.collection('users').doc(user.uid).get();
+  profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
+  const role = String(profile.role || 'worker');
+  $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
+  if (isBoss()) loadBuildings();
+  else loadWorkerJobs();
+});
+
+function jobWhen(j){
+  const t = j.appointmentStart || j.startTime || j.appointment_start;
+  if (!t) return 'Sin hora';
+  if (t.toDate) {
+    const d = t.toDate();
+    return d.toLocaleDateString('es-US') + ' · ' + d.toLocaleTimeString('es-US',{hour:'numeric',minute:'2-digit'});
+  }
+  return String(t);
+}
+
+async function loadWorkerJobs(){
+  show('viewJobs');
+  $('viewJobs').innerHTML = '<p class="muted">Cargando tus visitas…</p>';
+  const uid = auth.currentUser.uid;
+  const cid = profile.companyId || '';
+  let snap;
+  try {
+    if (cid) snap = await db.collection('jobs').where('companyId','==',cid).get();
+    else snap = await db.collection('jobs').where('assignedUid','==',uid).get();
+  } catch(e) {
+    $('viewJobs').innerHTML = `<div class="card"><p class="err">${esc(e.message)}</p></div>`;
+    return;
+  }
+  const mine = [];
+  snap.forEach(d => {
+    const j = {id:d.id, ...d.data()};
+    if (!cid || j.assignedUid === uid || j.createdBy === uid || !j.assignedUid) mine.push(j);
+  });
+  mine.sort((a,b) => String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  let html = `<h2>Tus visitas</h2><p class="muted">${esc(profile.displayName||auth.currentUser.email)}</p>`;
+  if (!mine.length) html += '<div class="card"><p class="muted">No hay visitas asignadas.</p></div>';
+  mine.forEach(j => {
+    const title = j.title || j.company_name || j.companyName || 'Visita';
+    const addr = j.address || '';
+    const st = j.status === 'completed' || j.status === 'closed' ? 'Completada' : 'Abierta';
+    html += `<div class="card">
+      <h3>${esc(title)}</h3>
+      <p class="muted">${esc(addr)}</p>
+      <p class="muted">${esc(jobWhen(j))}</p>
+      <span class="badge ${st==='Completada'?'b-ok':'b-warn'}">${st}</span>
+    </div>`;
+  });
+  $('viewJobs').innerHTML = html;
+}
+
+// ---------- Edificios ----------
+let buildings = {};
+async function loadBuildings(){
+  show('viewBuildings');
+  let snap;
+  if (isSuper()) {
+    snap = await db.collection('buildings').get();
+  } else if (profile.companyId) {
+    snap = await db.collection('buildings').where('companyId','==',profile.companyId).get();
+  } else {
+    snap = { empty: true, forEach(){} };
+  }
+  buildings = {};
+  let html = `<h2>Panel · ${esc(profile.displayName || 'Admin')}</h2>
+  <p class="muted">Compañía: ${esc(profile.companyId || 'todas')}</p>
+  <div class="card">
+    <h3>＋ Nuevo edificio</h3>
+    <input type="text" id="nbName" placeholder="Nombre del edificio">
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="flex:1;"><label class="muted">Pisos</label><input type="number" id="nbFloors" value="1" min="1" max="100"></div>
+      <div style="flex:2;"><button class="btn" onclick="addBuilding()">Agregar</button></div>
+    </div>
+  </div>`;
+  if (snap.empty) html += '<div class="card"><p class="muted">Todavía no hay edificios sincronizados desde el teléfono.</p></div>';
+  snap.forEach(d => {
+    const b = d.data(); buildings[d.id] = Object.assign({id:d.id}, b);
+    html += `<div class="card clickable" onclick="loadMonths('${d.id}')">
+      <h3>🏢 ${esc(b.name)}</h3><p class="muted">Ver recorridos →</p></div>`;
+  });
+  $('viewBuildings').innerHTML = html;
+}
+
+// ---------- Meses ----------
+async function loadMonths(buildingId){
+  show('viewMonths');
+  $('viewMonths').innerHTML = '<p class="muted">Cargando…</p>';
+  const snap = await db.collection('walkthroughs')
+    .where('buildingId','==',buildingId).get();
+  const list = [];
+  snap.forEach(d => list.push({id:d.id, ...d.data()}));
+  list.sort((a,b) => String(b.yearMonth||'').localeCompare(String(a.yearMonth||'')));
+  const b = buildings[buildingId] || {name:''};
+  let html = `<button class="back" onclick="loadBuildings()">← Edificios</button>
+    <h2>${esc(b.name)}</h2>`;
+  if (!list.length) html += '<div class="card"><p class="muted">Sin recorridos todavía.</p></div>';
+  list.forEach(w => {
+    const urg = (w.findings||[]).filter(f=>f.urgent).length;
+    html += `<div class="card clickable" onclick="loadDetail('${w.id}')">
+      <h3>📋 ${nombreMes(w.yearMonth)}</h3>
+      <p class="muted">${(w.findings||[]).length} hallazgo(s)</p>
+      ${urg?`<span class="badge b-urg">🚨 ${urg} urgente(s)</span>`:''}</div>`;
+  });
+  window._months = {}; list.forEach(w => window._months[w.id] = w);
+  $('viewMonths').innerHTML = html;
+}
+
+// ---------- Agregar edificio desde el panel ----------
+async function addBuilding(){
+  const name = document.getElementById('nbName').value.trim();
+  const floors = Math.min(100, Math.max(1, parseInt(document.getElementById('nbFloors').value) || 1));
+  if (!name){ alert('Escribe el nombre del edificio'); return; }
+  const ref = db.collection('buildings').doc();
+  await ref.set({
+    id: ref.id,
+    name: name,
+    floors: floors,
+    companyId: profile.companyId || '',
+  });
+  loadBuildings();
+}
+
+// ---------- Detalle ----------
+function areaStatus(w, i, floor){
+  const findings = (w.findings||[]).filter(f => f.areaIndex===i && (floor ? f.floor===floor : true));
+  if (findings.length) return {t: findings.length + ' hallazgo(s)', c:'b-warn'};
+  let ok = 0, bad = 0;
+  for (let j=0;j<AREAS[i].items.length;j++){
+    // Clave nueva por piso ('PB-0-0'), con fallback a clave vieja ('0-0').
+    // 1 = bien ✓, 2 = mal ✗.
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===1) ok++;
+    if (s===2) bad++;
+  }
+  if (bad>0) return {t: bad + ' punto(s) mal', c:'b-urg'};
+  if (ok === AREAS[i].items.length) return {t:'Sin problemas', c:'b-ok'};
+  return {t:'Pendiente', c:''};
+}
+
+function badItems(w, i, floor){
+  const out = [];
+  for (let j=0;j<AREAS[i].items.length;j++){
+    const s = w.itemStatus && (w.itemStatus[floor+'-'+i+'-'+j] ?? w.itemStatus[i+'-'+j]);
+    if (s===2) {
+      const note = (w.itemNotes && (w.itemNotes[floor+'-'+i+'-'+j] || w.itemNotes[i+'-'+j])) || '';
+      out.push({label: itemLabel(i, j, 2), note: note});
+    }
+  }
+  return out;
+}
+
+function findingCard(f){
+  const area = AREAS[f.areaIndex] ? AREAS[f.areaIndex].icon+' '+AREAS[f.areaIndex].name : '';
+  // Fotos: modelo nuevo (photos[]/photoUrls[], hasta 6) con fallback al viejo.
+  // Solo URLs http sirven en web; las rutas locales del teléfono no cargan.
+  let urls = [];
+  if (f.photoUrls && f.photoUrls.length) {
+    urls = f.photoUrls.filter(u => u && String(u).startsWith('http'));
+  }
+  if (!urls.length && f.photos && f.photos.length) {
+    urls = f.photos.filter(p => p && String(p).startsWith('http'));
+  }
+  if (!urls.length) {
+    const g = f.photoGeneralUrl || ((f.photoGeneral||'').startsWith('http') ? f.photoGeneral : null);
+    const c = f.photoCloseupUrl || ((f.photoCloseup||'').startsWith('http') ? f.photoCloseup : null);
+    if (g) urls.push(g);
+    if (c) urls.push(c);
+  }
+  let ph = '';
+  if (urls.length){
+    ph = '<div class="photos">';
+    urls.forEach((u, idx) => {
+      ph += `<div><a href="${u}" target="_blank"><img src="${u}" loading="lazy"></a><div class="cap">Foto ${idx+1}</div></div>`;
+    });
+    ph += '</div>';
+  }
+  return `<div class="card finding ${f.urgent?'urgent':''}">
+    ${f.urgent?'<span class="badge b-urg">🚨 URGENTE</span> ':''}
+    <h3>${fl(f)}${esc(f.location || f.itemLabel || '')}</h3>
+    <p class="muted">${esc(area)}${f.itemLabel && f.location ? ' · '+esc(f.itemLabel):''}</p>
+    <p>${esc(f.description)}</p>${ph}</div>`;
+}
+
+function buildReport(w, bname, floors){
+  let t = `REPORTE WALKTHROUGH — ${bname}\nMes: ${nombreMes(w.yearMonth)}\n\n`;
+  // No listar hallazgos vacíos (sin descripción, ubicación ni fotos).
+  const isEmptyF = f => !(f.description||'').trim() && !(f.location||'').trim() &&
+    !((f.photoUrls||[]).length || (f.photos||[]).filter(p=>String(p).startsWith('http')).length || f.photoGeneralUrl || f.photoCloseupUrl);
+  const urg = (w.findings||[]).filter(f=>f.urgent && !isEmptyF(f));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && !isEmptyF(f));
+  const floorOrder = ['PB'];
+  for (let i=1;i<=(floors||1);i++) floorOrder.push(String(i));
+  const fh = fl2 => fl2==='PB' ? 'PLANTA BAJA' : 'PISO '+fl2;
+  if (urg.length){
+    t += `🚨 HALLAZGOS URGENTES (${urg.length}):\n`;
+    urg.forEach(f => t += `• [${AREAS[f.areaIndex].name}] ${fl(f)}${f.location}: ${f.description}\n`);
+    t += '\n';
+  }
+  floorOrder.forEach(fl2 => {
+    const ff = rest.filter(f => f.floor===fl2);
+    if (!ff.length) return;
+    t += `📋 ${fh(fl2)} (${ff.length}):\n`;
+    ff.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
+    t += '\n';
+  });
+  const noFloor = rest.filter(f => !f.floor);
+  if (noFloor.length){
+    t += `📋 SIN PISO ASIGNADO (${noFloor.length}):\n`;
+    noFloor.forEach(f => {
+      const loc = f.location ? f.location+': ' : '';
+      t += `• [${AREAS[f.areaIndex].name}] ${loc}${f.description}\n`;
+    });
+    t += '\n';
+  }
+  const okAreas = [];
+  floorOrder.forEach(fl2 => {
+    AREAS.forEach((a,i) => { if (areaStatus(w,i,fl2).c==='b-ok') okAreas.push(`${fh(fl2)} · ${a.icon} ${a.name}`); });
+  });
+  // Puntos marcados como mal (✗) por piso.
+  floorOrder.forEach(fl2 => {
+    const bad = [];
+    AREAS.forEach((a,i) => {
+      badItems(w,i,fl2).forEach(b => bad.push(`• [${a.name}] ${b.label}${b.note ? ' — ' + b.note : ''}`));
+    });
+    if (!bad.length) return;
+    t += `⚠️ ${fh(fl2)} — PUNTOS MAL (${bad.length}):\n`;
+    bad.forEach(x => t += x + '\n');
+    t += '\n';
+  });
+  t += `✅ ÁREAS SIN PROBLEMAS (${okAreas.length}):\n`;
+  okAreas.forEach(a => t += `• ${a}\n`);
+  return t;
+}
+
+let _selFloor = null;
+
+async function loadDetail(wid, floor){
+  show('viewDetail');
+  const w = window._months[wid];
+  const bld = Object.values(buildings).find(b=>b.id===w.buildingId) || {};
+  const bname = bld.name || '';
+  const nFloors = bld.floors || 1;
+  if (floor !== undefined) _selFloor = floor;
+  if (!_selFloor) _selFloor = 'PB';
+  const fl2 = _selFloor;
+  const fh = f => f==='PB' ? 'Planta baja' : 'Piso '+f;
+
+  let html = `<button class="back" onclick="show('viewMonths')">← Recorridos</button>
+    <h2>${esc(bname)} · ${nombreMes(w.yearMonth)}</h2>
+    <div class="card"><h3>🏢 ${fh(fl2)}</h3><div style="display:flex;gap:8px;flex-wrap:wrap;">`;
+  const floors = ['PB'];
+  for (let i=1;i<=nFloors;i++) floors.push(String(i));
+  floors.forEach(f => {
+    html += `<button class="btn" style="width:auto;padding:8px 16px;${f===fl2?'':'background:#90a4ae;'}" onclick="loadDetail('${wid}','${f}')">${f==='PB'?'PB':'P'+f}</button>`;
+  });
+  html += `</div></div>`;
+
+  const urg = (w.findings||[]).filter(f=>f.urgent && (!f.floor || f.floor===fl2));
+  const rest = (w.findings||[]).filter(f=>!f.urgent && f.floor===fl2);
+  if (urg.length){ html += '<h3>🚨 Urgentes</h3>'; urg.forEach(f => html += findingCard(f)); }
+  if (rest.length){ html += `<h3>📋 Hallazgos · ${fh(fl2)}</h3>`; rest.forEach(f => html += findingCard(f)); }
+  if (!urg.length && !rest.length) html += `<div class="card"><p class="muted">Sin hallazgos en ${fh(fl2)} este mes.</p></div>`;
+
+  const badHtml = [];
+  AREAS.forEach((a,i) => {
+    badItems(w,i,fl2).forEach(b => badHtml.push(`<div class="card finding"><h3>✗ ${esc(a.icon)} ${esc(a.name)}</h3><p><b>${esc(b.label)}</b>${b.note ? `<br>📝 ${esc(b.note)}` : ''}</p></div>`));
+  });
+  if (badHtml.length) html += `<h3>⚠️ Puntos marcados como mal</h3>` + badHtml.join('');
+
+  html += '<h3>Estado por área</h3><div class="grid2">';
+  AREAS.forEach((a,i) => {
+    const s = areaStatus(w,i,fl2);
+    html += `<div class="card"><h3>${a.icon} ${a.name}</h3><span class="badge ${s.c}">${s.t}</span></div>`;
+  });
+  html += '</div>';
+
+  const rep = buildReport(w, bname, nFloors);
+  html += `<h3>Reporte del mes</h3><div class="card">
+    <pre class="report" id="repText">${esc(rep)}</pre>
+    <button class="btn green" onclick="navigator.clipboard.writeText(document.getElementById('repText').innerText);this.textContent='¡Copiado!';">📋 Copiar reporte</button>
+  </div>`;
+  $('viewDetail').innerHTML = html;
+}
+</script>
+</body>
+</html>
