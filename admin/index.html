@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · SUPER ADMIN</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; }
+  header { background: #34C759; color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+  header a, header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; }
+  .muted { color: #8E8E93; font-size: 13px; }
+  .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 14px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
+  .btn.ghost { background: #F0F0F0; color: #111; }
+  input[type=email], input[type=password] {
+    width: 100%; padding: 10px 12px; margin: 6px 0 10px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 14px;
+  }
+  #login { max-width: 380px; margin: 60px auto; background: #fff; padding: 20px; border-radius: 12px; }
+  #panel { display: none; max-width: 720px; margin: 0 auto; padding: 12px; }
+  body.ready #panel { display: block; }
+  body.ready #login { display: none; }
+  .hint { padding: 8px 4px 12px; color: #6B7280; font-size: 13px; }
+  .list { background: #fff; border-radius: 12px; overflow: hidden; }
+  .co { border-bottom: 1px solid #E5E5EA; }
+  .co:last-child { border-bottom: none; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; min-height: 56px; }
+  .row .name { flex: 1; font-weight: 600; font-size: 16px; }
+  .row .sub { display: block; font-weight: 400; color: #8E8E93; font-size: 13px; margin-top: 2px; }
+  .chev { color: #C7C7CC; font-size: 22px; font-weight: 300; transition: transform .15s; }
+  .co.open .chev { transform: rotate(90deg); color: #34C759; }
+  .detail { display: none; background: #F9FAFB; padding: 0 12px 12px; }
+  .co.open .detail { display: block; }
+  .sec { background: #fff; border: 1px solid #E5E5EA; border-radius: 10px; margin-top: 8px; overflow: hidden; }
+  .sec > button { width: 100%; text-align: left; background: #fff; border: none; padding: 12px 14px; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; }
+  .sec .body { display: none; padding: 0 14px 12px; font-size: 14px; color: #374151; }
+  .sec.on .body { display: block; }
+  .sec .body p { margin: 6px 0; }
+  .hidden { display: none !important; }
+  .denied { max-width: 420px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SUPER ADMIN</h1>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a href="/app/">Mi compañía</a>
+    <button id="btnLogout" class="hidden">Cerrar sesión</button>
+  </div>
+</header>
+
+<div id="login">
+  <h3>Walkcheck · Super Admin</h3>
+  <p class="muted">Solo el dueño de la aplicación. Lista de compañías, sin interiors hasta expandir.</p>
+  <input type="email" id="email" placeholder="Correo" autocomplete="username">
+  <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+  <button class="btn" id="btnLogin">Entrar</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="denied" class="denied hidden">
+  <h3>No autorizado</h3>
+  <p class="muted">Esta página es solo para el dueño de Walkcheck. Entra al panel de tu compañía.</p>
+  <p><a class="btn" href="/app/" style="display:block;text-align:center;text-decoration:none">Ir a /app/</a></p>
+</div>
+
+<div id="panel">
+  <div class="hint" id="countHint">Compañías — toca › para ver empleados, jobs y buildings.</div>
+  <div class="list" id="coList"></div>
+</div>
+
+<script>
+const SUPER = 'maikelramirez55@gmail.com';
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const loaded = {};
+
+$('btnLogin').onclick = async () => {
+  $('loginErr').textContent = '';
+  try { await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value); }
+  catch(e){ $('loginErr').textContent = 'No se pudo entrar: ' + e.message; }
+};
+$('btnLogout').onclick = () => auth.signOut();
+
+function isSuper(user){
+  return (user && user.email || '').toLowerCase() === SUPER;
+}
+
+auth.onAuthStateChanged(async user => {
+  document.body.classList.remove('ready');
+  $('denied').classList.add('hidden');
+  $('btnLogout').classList.toggle('hidden', !user);
+  if (!user) return;
+  if (!isSuper(user)) {
+    $('login').style.display = 'none';
+    $('denied').classList.remove('hidden');
+    return;
+  }
+  document.body.classList.add('ready');
+  await loadCompanies();
+});
+
+async function loadCompanies(){
+  let snap;
+  try { snap = await db.collection('companies').limit(50).get(); }
+  catch(e){
+    $('coList').innerHTML = `<div style="padding:16px" class="err">${esc(e.message)}</div>`;
+    return;
+  }
+  const rows = [];
+  snap.forEach(d => rows.push({id: d.id, ...d.data()}));
+  rows.sort((a,b) => String(a.name||a.id).localeCompare(String(b.name||b.id)));
+  $('countHint').textContent = `${rows.length} compañías — toca › para expandir. No se cargan buildings privados hasta entonces.`;
+  $('coList').innerHTML = rows.map(c => {
+    const name = c.name || c.id;
+    const st = c.status || '';
+    const ind = c.industry || '';
+    const sub = [st, ind, c.id].filter(Boolean).join(' · ');
+    return `<div class="co" id="co-${esc(c.id)}">
+      <div class="row" onclick="toggleCo('${esc(c.id)}')">
+        <div class="name">${esc(name)}<span class="sub">${esc(sub)}</span></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="detail" id="det-${esc(c.id)}"></div>
+    </div>`;
+  }).join('') || '<div style="padding:16px" class="muted">Sin compañías.</div>';
+}
+
+async function toggleCo(id){
+  const box = document.getElementById('co-'+id);
+  const open = box.classList.toggle('open');
+  if (!open) return;
+  if (loaded[id]) return;
+  const det = document.getElementById('det-'+id);
+  det.innerHTML = '<p class="muted" style="padding:8px">Cargando…</p>';
+  const info = await db.collection('companies').doc(id).get();
+  const c = info.exists ? {id, ...info.data()} : {id};
+  const users = [], jobs = [], buildings = [];
+  try {
+    const u = await db.collection('users').where('companyId','==',id).limit(50).get();
+    u.forEach(d => users.push({id:d.id, ...d.data()}));
+  } catch(_){}
+  try {
+    const j = await db.collection('jobs').where('companyId','==',id).limit(50).get();
+    j.forEach(d => jobs.push({id:d.id, ...d.data()}));
+  } catch(_){}
+  try {
+    const j2 = await db.collection('companies').doc(id).collection('jobs').limit(50).get();
+    j2.forEach(d => { if (!jobs.some(x=>x.id===d.id)) jobs.push({id:d.id, ...d.data()}); });
+  } catch(_){}
+  try {
+    const b = await db.collection('buildings').where('companyId','==',id).limit(50).get();
+    b.forEach(d => buildings.push({id:d.id, ...d.data()}));
+  } catch(_){}
+  try {
+    const b2 = await db.collection('companies').doc(id).collection('buildings').limit(50).get();
+    b2.forEach(d => { if (!buildings.some(x=>x.id===d.id)) buildings.push({id:d.id, ...d.data()}); });
+  } catch(_){}
+  loaded[id] = true;
+  const created = c.createdAt && c.createdAt.toDate ? c.createdAt.toDate().toLocaleDateString() : '';
+  det.innerHTML = `
+    <div class="sec on">
+      <button onclick="this.parentNode.classList.toggle('on')"><span>1. Info compañía</span><span>▾</span></button>
+      <div class="body">
+        <p><b>${esc(c.name||id)}</b></p>
+        <p>ID: ${esc(id)}</p>
+        <p>Status: ${esc(c.status||'—')}</p>
+        <p>Industry: ${esc(c.industry||'—')}</p>
+        <p>Admin UID: ${esc(c.adminUid||'—')}</p>
+        <p>Creada: ${esc(created||'—')}</p>
+      </div>
+    </div>
+    <div class="sec">
+      <button onclick="this.parentNode.classList.toggle('on')"><span>2. Empleados y trabajos</span><span>▾</span></button>
+      <div class="body">
+        <p><b>Empleados (${users.length})</b></p>
+        ${users.map(u => `<p>${esc(u.displayName||u.email||u.id)} · ${esc(u.role||'worker')}</p>`).join('') || '<p class="muted">Sin empleados.</p>'}
+        <p style="margin-top:10px"><b>Jobs (${jobs.length})</b></p>
+        ${jobs.map(j => `<p>${esc(j.address||j.title||j.id)} · ${esc(j.assignedTo||j.assignedUid||'—')} · ${esc(j.time||j.startTime||'')}</p>`).join('') || '<p class="muted">Sin jobs.</p>'}
+      </div>
+    </div>
+    <div class="sec">
+      <button onclick="this.parentNode.classList.toggle('on')"><span>3. Buildings</span><span>▾</span></button>
+      <div class="body">
+        ${buildings.map(b => `<p>${esc(b.name||b.id)}</p>`).join('') || '<p class="muted">Sin buildings.</p>'}
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>

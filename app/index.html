@@ -36,6 +36,7 @@
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
   .addbox { padding: 12px 14px; border-top: 1px solid #E5E5EA; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .weekbar { background: #fff; padding: 10px 14px 6px; }
   .weekbar h2 { margin: 0 0 8px; font-size: 16px; }
   .weekdays { display: flex; }
@@ -61,6 +62,7 @@
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #8E8E93; font-size: 12px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
   #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; }
+  #adminLink { background: rgba(0,0,0,.18); }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 20; }
   .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; }
   .hidden { display: none !important; }
@@ -77,6 +79,7 @@
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="roleChip"></span>
+    <a id="adminLink" href="/admin/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px">SUPER ADMIN</a>
     <button id="btnLogout" class="hidden">Cerrar sesión</button>
   </div>
 </header>
@@ -102,7 +105,7 @@
       <button class="chip" data-f="Maintenance">Maintenance</button>
     </div>
     <div id="bList"></div>
-    <div class="addbox">
+    <div class="addbox" id="addbox">
       <div class="muted" style="font-weight:800;margin-bottom:6px">＋ Nuevo edificio</div>
       <input type="text" id="nbName" placeholder="Nombre del edificio">
       <input type="number" id="nbFloors" value="1" min="1" max="100">
@@ -118,11 +121,14 @@
       </div>
       <div class="weekdays" id="weekdays"></div>
     </div>
-    <div class="hours" id="hours"></div>
-    <div id="rows"></div>
-    <div id="assignBar" class="hidden">
-      <button class="btn" onclick="openAssign()">+ Assign Job</button>
+    <div id="staffMain">
+      <div class="hours" id="hours"></div>
+      <div id="rows"></div>
+      <div id="assignBar" class="hidden">
+        <button class="btn" onclick="openAssign()">+ Assign Job</button>
+      </div>
     </div>
+    <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
   </section>
 </div>
 
@@ -158,16 +164,18 @@ let bFilter = 'All';
 let bQuery = '';
 let selectedBuilding = '';
 
+function isSuper(){
+  return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
+}
 function isBoss(){
-  const email = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-  if (email === 'maikelramirez55@gmail.com') return true;
+  if (isSuper()) return true;
   return ['owner','admin','manager','supervisor','editor'].includes(String(profile.role||'').toLowerCase());
 }
 function canAssign(){
   return ['owner','admin','manager','supervisor'].includes(String(profile.role||'').toLowerCase())
-    || (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
+    || isSuper();
 }
-function cid(){ return profile.companyId || 'A0PKuVyRMLJ0Bv2UNzb3'; }
+function cid(){ return profile.companyId || (isSuper() ? 'A0PKuVyRMLJ0Bv2UNzb3' : ''); }
 
 $('btnLogin').onclick = async () => {
   $('loginErr').textContent = '';
@@ -179,19 +187,22 @@ $('btnLogout').onclick = () => auth.signOut();
 auth.onAuthStateChanged(async user => {
   document.body.classList.toggle('ready', false);
   $('btnLogout').classList.toggle('hidden', !user);
+  $('adminLink').classList.add('hidden');
   $('roleChip').textContent = '';
   $('viewJobs').classList.add('hidden');
   if (!user) return;
   const doc = await db.collection('users').doc(user.uid).get();
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
+  $('adminLink').classList.toggle('hidden', !isSuper());
   $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
-  if (isBoss()) {
-    document.body.classList.add('ready');
-    $('assignBar').classList.toggle('hidden', !canAssign());
-    await loadBoard();
-  } else {
-    await loadWorkerJobs();
-  }
+  document.body.classList.add('ready');
+  const staff = isBoss();
+  $('addbox').classList.toggle('hidden', !staff);
+  $('staffMain').classList.toggle('hidden', !staff);
+  $('workerMain').classList.toggle('hidden', staff);
+  $('assignBar').classList.toggle('hidden', !canAssign());
+  await loadBoard();
+  if (!staff) renderMySchedule();
 });
 
 $('bSearch').oninput = e => { bQuery = e.target.value; renderBuildings(); };
@@ -250,7 +261,7 @@ async function loadBoard(){
   const tDocs = [];
   s = await colGet(db.collection('users').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => tDocs.push({uid:d.id, name:d.data().displayName||'Tech', role:d.data().role||'worker'}));
-  if (!tDocs.length) {
+  if (!tDocs.length && id === 'A0PKuVyRMLJ0Bv2UNzb3') {
     tDocs.push({uid:'luis', name:'Luis Molina', role:'worker'});
     tDocs.push({uid: auth.currentUser.uid, name: profile.displayName || 'Maikel Ramirez', role:'owner'});
   }
@@ -265,7 +276,8 @@ async function loadBoard(){
   if (s) s.forEach(d => jDocs.push({id:d.id, ...d.data(), _wt:true}));
   jobs = jDocs;
   renderBuildings();
-  renderRows();
+  if (isBoss()) renderRows();
+  else renderMySchedule();
 }
 
 function renderBuildings(){
@@ -283,7 +295,8 @@ function renderBuildings(){
 function selectBuilding(id){
   selectedBuilding = id;
   renderBuildings();
-  loadMonths(id);
+  if (isBoss()) loadMonths(id);
+  else renderMySchedule();
 }
 
 function jobTime(j){
@@ -332,7 +345,7 @@ function renderRows(){
       const addr = j.address || j.title || j.buildingName || 'Job';
       const kind = /semi/i.test(j.kind||j.title||'') ? 'SEMI ANNUAL' : (j.kind || 'INSPECTION');
       const when = fmt(st)+'–'+fmt(en);
-      cards += `<div class="jcard" draggable="true" ondragstart="dragJob(event,'${j.id}')" style="left:${left}px;width:${w}px">
+      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} style="left:${left}px;width:${w}px">
         <div>${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
     });
     const empty = list.length ? '' : `<div class="empty">No jobs scheduled</div>`;
@@ -354,6 +367,7 @@ function allowDrop(ev){ ev.preventDefault(); ev.currentTarget.classList.add('ove
 function dropJob(ev){
   ev.preventDefault();
   ev.currentTarget.classList.remove('over');
+  if (!canAssign()) return;
   const hour = parseInt(ev.currentTarget.dataset.hour,10);
   const uid = ev.currentTarget.dataset.uid;
   const id = dragId || ev.dataTransfer.getData('text/plain');
@@ -420,6 +434,7 @@ async function saveAssign(){
 }
 
 async function addBuilding(){
+  if (!isBoss()) return;
   const name = $('nbName').value.trim();
   const floors = Math.min(100, Math.max(1, parseInt($('nbFloors').value)||1));
   if (!name){ alert('Escribe el nombre del edificio'); return; }
@@ -433,18 +448,14 @@ async function addBuilding(){
   loadBoard();
 }
 
-async function loadWorkerJobs(){
-  $('viewJobs').classList.remove('hidden');
-  const uid = auth.currentUser.uid;
-  const id = cid();
-  let snap;
-  try { snap = await db.collection('jobs').where('companyId','==',id).get(); }
-  catch(e){ $('viewJobs').innerHTML = `<div class="card"><p class="err">${esc(e.message)}</p></div>`; return; }
-  const mine = [];
-  snap.forEach(d => {
-    const j = {id:d.id, ...d.data()};
-    const a = j.assignedTo || j.assignedUid || '';
-    if (!a || a===uid) mine.push(j);
+function renderMySchedule(){
+  $('weekTitle').textContent = 'My Schedule';
+  const uid = auth.currentUser && auth.currentUser.uid;
+  const name = (profile.displayName || '').toLowerCase();
+  const mine = jobs.filter(j => {
+    const a = String(assignedOf(j)||'');
+    if (selectedBuilding && j.buildingId && j.buildingId !== selectedBuilding) return false;
+    return a === uid || a.toLowerCase() === name || a === name;
   });
   let html = `<div class="card"><h2>My Schedule</h2>`;
   if (!mine.length) html += '<p class="muted">No hay visitas asignadas.</p>';
@@ -454,8 +465,9 @@ async function loadWorkerJobs(){
     html += `<p><b>My ${esc(addr)} — ${esc(t)}</b></p>`;
   });
   html += '</div>';
-  $('viewJobs').innerHTML = html;
+  $('workerMain').innerHTML = html;
 }
+async function loadWorkerJobs(){ renderMySchedule(); }
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function nombreMes(ym){ if(!ym) return ''; const p = String(ym).split('-'); return MESES[parseInt(p[1],10)-1] + ' ' + p[0]; }
