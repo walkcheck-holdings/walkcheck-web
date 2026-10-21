@@ -43,6 +43,16 @@
   #bList { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
+  .co-head { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; min-height: 52px; font-weight: 800; font-size: 16px; border-bottom: 1px solid #E5E5EA; }
+  .co-head .chev, .co-row .chev { color: #C7C7CC; font-size: 22px; font-weight: 300; transition: transform .15s; line-height: 1; }
+  .co-head.open .chev, .co.open .chev { transform: rotate(90deg); color: #34C759; }
+  .co-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #F2F2F7; min-height: 52px; }
+  .co-row .name { flex: 1; cursor: pointer; font-size: 15px; font-weight: 600; }
+  .co-row .name span { display: block; font-weight: 400; color: #8E8E93; font-size: 13px; }
+  .co-row.on { background: #E8F8EC; }
+  .co-detail { display: none; background: #F9FAFB; padding: 8px 14px 12px; font-size: 14px; }
+  .co.open .co-detail { display: block; }
+  .co-detail p { margin: 4px 0; }
   .chips { padding: 0 14px 8px; display: flex; gap: 6px; flex-wrap: wrap; }
   .chip { font-size: 14px; padding: 8px 12px; border-radius: 16px; border: 1px solid #D1D1D6; background: #fff; cursor: pointer; min-height: 36px; }
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
@@ -244,6 +254,8 @@ let preWorker = '';
 let preHour = 9;
 let editJobId = '';
 let companyList = [];
+let companiesOpen = false;
+const companyLoaded = {};
 function isPhone(){ return window.matchMedia('(max-width: 1023px)').matches; }
 function useDesk(){ return !isPhone() || forceDesktop; }
 function pack(){
@@ -507,6 +519,7 @@ async function loadBoard(){
   applyCompanyPanel();
   if (isSuper()) await loadCompaniesSidebar();
   else {
+    $('sitesTitle').style.display = '';
     $('sitesTitle').textContent = pack().sitesLabel;
     $('bSearch').placeholder = pack().searchPlaceholder;
     $('addbox').classList.toggle('hidden', !isBoss());
@@ -550,8 +563,10 @@ async function loadBoard(){
   else renderMySchedule();
 }
 async function loadCompaniesSidebar(){
-  $('sitesTitle').textContent = 'Compañías';
+  $('sitesTitle').style.display = 'none';
   $('bSearch').placeholder = 'Buscar compañías...';
+  $('bSearch').parentElement.style.display = companiesOpen ? '' : 'none';
+  document.querySelectorAll('#sidebar .chips').forEach(el => el.classList.add('hidden'));
   $('addbox').classList.add('hidden');
   try {
     const snap = await db.collection('companies').limit(80).get();
@@ -567,12 +582,59 @@ async function loadCompaniesSidebar(){
   } catch(e){ companyList = []; }
   renderCompanies();
 }
+function toggleCompaniesList(){
+  companiesOpen = !companiesOpen;
+  renderCompanies();
+}
 function renderCompanies(){
   const q = bQuery.toLowerCase();
   const list = companyList.filter(c => !q || String(c.name||'').toLowerCase().includes(q));
-  $('bList').innerHTML = list.map(c =>
-    `<div class="b-item ${c.id===cid()?'on':''}" onclick="selectCompany('${c.id}')"><b>${esc(c.name||c.id)}</b><div class="muted">${c.workers} trabajadores</div></div>`
+  const searchWrap = $('bSearch').parentElement;
+  if (searchWrap) searchWrap.style.display = companiesOpen ? '' : 'none';
+  const head = `<div class="co-head ${companiesOpen?'open':''}" onclick="toggleCompaniesList()">
+    Compañías <span class="muted" style="font-weight:500">${companyList.length}</span>
+    <span class="chev">›</span>
+  </div>`;
+  if (!companiesOpen) {
+    $('bList').innerHTML = head + '<p class="muted" style="padding:14px">Toca › para ver las compañías.</p>';
+    return;
+  }
+  const rows = list.map(c =>
+    `<div class="co ${c._open?'open':''}" id="sco-${esc(c.id)}">
+      <div class="co-row ${c.id===cid()?'on':''}">
+        <div class="name" onclick="selectCompany('${c.id}')">${esc(c.name||c.id)}<span>${c.workers} trabajadores</span></div>
+        <div class="chev" onclick="event.stopPropagation();toggleCompany('${c.id}')">›</div>
+      </div>
+      <div class="co-detail" id="sdet-${esc(c.id)}">${c._html||''}</div>
+    </div>`
   ).join('') || '<div class="muted" style="padding:14px">Sin compañías</div>';
+  $('bList').innerHTML = head + rows;
+}
+async function toggleCompany(id){
+  const c = companyList.find(x => x.id === id);
+  if (!c) return;
+  c._open = !c._open;
+  const box = document.getElementById('sco-'+id);
+  if (box) box.classList.toggle('open', c._open);
+  if (!c._open) return;
+  if (companyLoaded[id]) return;
+  const det = document.getElementById('sdet-'+id);
+  if (det) det.innerHTML = '<p class="muted">Cargando…</p>';
+  const users = [], buildings = [];
+  try {
+    const u = await db.collection('users').where('companyId','==',id).limit(50).get();
+    u.forEach(d => users.push(d.data()));
+  } catch(_){}
+  try {
+    const b = await db.collection('buildings').where('companyId','==',id).limit(50).get();
+    b.forEach(d => buildings.push(d.data()));
+  } catch(_){}
+  companyLoaded[id] = true;
+  c.workers = users.length || c.workers;
+  c._html = `<p><b>Trabajadores</b></p>${users.map(u=>`<p>${esc(u.displayName||u.email||'—')} · ${esc(u.role||'worker')}</p>`).join('')||'<p class="muted">Sin equipo.</p>'}
+    <p style="margin-top:8px"><b>Sitios</b></p>${buildings.map(b=>`<p>${esc(b.name||b.id)}</p>`).join('')||'<p class="muted">Sin sitios.</p>'}
+    <button class="btn" style="margin-top:8px" onclick="selectCompany('${id}')">Ver agenda</button>`;
+  if (det) det.innerHTML = c._html;
 }
 async function selectCompany(id){
   viewCid = id;
