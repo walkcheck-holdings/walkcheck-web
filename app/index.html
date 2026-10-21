@@ -30,7 +30,7 @@
   .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
   .btn.ghost { background: #F0F0F0; color: #111; }
   .btn.ok { font-size: 14px; min-height: 40px; width: auto; padding: 8px 14px; }
-  input[type=email], input[type=password], input[type=text], input[type=number], select, textarea {
+  input[type=email], input[type=password], input[type=text], input[type=number], input[type=time], select, textarea {
     width: 100%; padding: 12px; margin: 6px 0 10px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 16px;
   }
   #login { max-width: 380px; margin: 48px auto; background: #fff; padding: 20px; border-radius: 12px; width: calc(100% - 24px); }
@@ -231,9 +231,21 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const HOURS = [8,9,10,11,12,13,14,15,16];
 const SLOT = 90;
-const START = 8;
+let START = 6;
+function dayHours(){
+  let minH = 6, maxH = 20;
+  jobs.filter(jobDayOk).forEach(j => {
+    const st = jobTime(j);
+    const en = jobEnd(j, st);
+    minH = Math.min(minH, st.getHours());
+    maxH = Math.max(maxH, en.getHours(), st.getHours());
+  });
+  if (preHour != null) { minH = Math.min(minH, preHour); maxH = Math.max(maxH, preHour+1); }
+  const arr = [];
+  for (let h = minH; h <= maxH; h++) arr.push(h);
+  return arr;
+}
 
 let profile = { role: 'worker', companyId: '', displayName: '' };
 let buildings = [];
@@ -252,6 +264,8 @@ let pickJobId = '';
 let viewCid = '';
 let preWorker = '';
 let preHour = 9;
+let preStartClock = '';
+let preEndClock = '';
 let editJobId = '';
 let companyList = [];
 let companiesOpen = false;
@@ -482,7 +496,6 @@ function renderWeek(){
     html += `<div class="wd ${sameDay(d,selectedDay)?'on':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
   }
   $('weekdays').innerHTML = html;
-  $('hours').innerHTML = HOURS.map(h => `<div class="hour">${hLabel(h)}</div>`).join('');
 }
 function pickDay(ms){ selectedDay = new Date(ms); loadBoard(); }
 function goToday(){ selectedDay = new Date(); loadBoard(); }
@@ -683,30 +696,65 @@ function selectBuilding(id){
   else renderMySchedule();
 }
 
+function clockToDate(clock, day){
+  const d = day || selectedDay;
+  const p = String(clock||'').split(':');
+  const h = parseInt(p[0],10);
+  const m = parseInt(p[1],10);
+  if (isNaN(h) || isNaN(m)) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0, 0);
+}
+function toClock(d){
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function parseLooseTime(raw, day){
+  const d = day || selectedDay;
+  const s = String(raw||'').toUpperCase().replace('.',':').trim();
+  const num = s.replace(/[^0-9:]/g,'');
+  let h=9, m=0;
+  if (/^\d{1,2}$/.test(num)) h = parseInt(num,10);
+  else if (num.includes(':')) { const p=num.split(':'); h=parseInt(p[0],10)||9; m=parseInt(p[1],10)||0; }
+  if (s.includes('PM') && h<12) h+=12;
+  if (s.includes('AM') && h===12) h=0;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0, 0);
+}
 function jobTime(j){
   const d = selectedDay;
+  const fromClock = clockToDate(j.startClock || j.startHHMM, d);
+  if (fromClock) return fromClock;
   if (typeof j.hour === 'number') {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), j.hour, j.minute||0);
   }
-  const t = j.appointment_start || j.appointmentStart || j.time || j.startTime;
+  const t = j.appointment_start || j.appointmentStart;
   if (t && t.toDate) {
     const x = t.toDate();
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), x.getHours(), x.getMinutes());
   }
-  let h=9, m=0;
-  const raw = String(t||'').toUpperCase().replace('.',':');
-  const num = raw.replace(/[^0-9:]/g,'');
-  if (/^\d{1,2}$/.test(num)) h = parseInt(num,10);
-  else if (num.includes(':')) { const p=num.split(':'); h=parseInt(p[0],10)||9; m=parseInt(p[1],10)||0; }
-  if (raw.includes('PM') && h<12) h+=12;
-  if (raw.includes('AM') && h===12) h=0;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
+  return parseLooseTime(j.time || j.startTime, d);
 }
 function jobEnd(j, start){
-  const t = j.endTime || j.appointmentEnd;
-  if (!t) return new Date(start.getTime()+60*60*1000);
-  const d = jobTime({time:t});
-  return d > start ? d : new Date(start.getTime()+45*60*1000);
+  const fromClock = clockToDate(j.endClock || j.endHHMM, selectedDay);
+  if (fromClock) return fromClock;
+  if (typeof j.endHour === 'number') {
+    return new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), j.endHour, j.endMinute||0);
+  }
+  const t = j.appointment_end || j.appointmentEnd;
+  if (t && t.toDate) {
+    const x = t.toDate();
+    return new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), x.getHours(), x.getMinutes());
+  }
+  if (j.endTime) {
+    const e = parseLooseTime(j.endTime, selectedDay);
+    if (e > start) return e;
+  }
+  return new Date(start.getTime()+60*60*1000);
+}
+function jobsForTech(t){
+  return jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name))
+    .sort((a,b) => jobTime(a) - jobTime(b));
+}
+function rangesOverlap(a0, a1, b0, b1){
+  return a0.getTime() < b1.getTime() && a1.getTime() > b0.getTime();
 }
 function jobDayOk(j){
   if (j.scheduledDate) return j.scheduledDate === ymd(selectedDay);
@@ -719,31 +767,34 @@ function assignedOf(j){
   return j.assignedTo || j.assignedUid || j.assignedUserId || j.uid || '';
 }
 
+function jobCardHtml(j, extraClass, posStyle){
+  const st = jobTime(j);
+  const en = jobEnd(j, st);
+  const addr = j.address || j.title || j.buildingName || 'Job';
+  const kind = j.kind || 'INSPECTION';
+  const tp = typeOf(kind);
+  const when = fmt(st)+' – '+fmt(en);
+  const pos = posStyle || '';
+  return `<div class="jcard ${extraClass||''}" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openEdit('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
+    <div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
+}
 function renderRows(){
   if (!useDesk()) { renderMobileAgenda(); return; }
+  const hs = dayHours();
+  START = hs[0];
+  $('hours').innerHTML = hs.map(h => `<div class="hour">${hLabel(h)}</div>`).join('');
   $('rows').innerHTML = techs.map(t => {
-    const mine = jobs.filter(j => {
-      if (!jobDayOk(j)) return false;
-      const a = assignedOf(j);
-      return a === t.uid || a === t.name || (!a && t.name.toLowerCase().includes('maikel') && jobs.filter(x=>assignedOf(x)===t.uid).length===0 && j === jobs[0]);
-    });
-    const real = jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name));
-    const list = real;
-    const slots = HOURS.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`).join('');
+    const list = jobsForTech(t);
+    const slots = hs.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`).join('');
     let cards = '';
     list.forEach(j => {
       const st = jobTime(j);
       const en = jobEnd(j, st);
       const left = ((st.getHours()+st.getMinutes()/60)-START)*SLOT;
-      const w = Math.max(80, ((en-st)/3600000)*SLOT);
-      const addr = j.address || j.title || j.buildingName || 'Job';
-      const kind = j.kind || 'INSPECTION';
-      const tp = typeOf(kind);
-      const when = fmt(st)+'–'+fmt(en);
-      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openEdit('${j.id}')" style="left:${left}px;width:${w}px;background:${esc(tp.color||'#34C759')}">
-        <div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
+      const w = Math.max(88, ((en-st)/3600000)*SLOT);
+      cards += jobCardHtml(j, '', `left:${left}px;width:${w}px`);
     });
-    const empty = list.length ? '' : `<div class="empty">No jobs scheduled</div>`;
+    const empty = list.length ? '' : `<div class="empty" onclick="slotClick('${t.uid}',${START})">No jobs scheduled</div>`;
     return `<div class="tech">
       <div class="tech-name">${esc(t.name)}<span>${list.length} jobs</span></div>
       <div class="lane">${slots}${cards}${empty}</div>
@@ -753,20 +804,11 @@ function renderRows(){
 function renderMobileAgenda(){
   $('hours').innerHTML = '';
   $('rows').innerHTML = techs.map(t => {
-    const list = jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name));
-    let rows = HOURS.map(h => {
-      const at = list.filter(j => jobTime(j).getHours()===h);
-      let cells = at.map(j => {
-        const st = jobTime(j); const en = jobEnd(j, st);
-        const addr = j.address || j.title || 'Job';
-        const kind = j.kind || 'INSPECTION';
-        const tp = typeOf(kind);
-        return `<div class="jcard mcard" style="background:${esc(tp.color||'#34C759')}" onclick="tapCard('${j.id}','${t.uid}',${h})"><div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${fmt(st)}–${fmt(en)}</div></div>`;
-      }).join('');
-      if (!cells) cells = `<div class="mempty" onclick="slotClick('${t.uid}',${h})">${canAssign()?'＋ Asignar':'No jobs scheduled'}</div>`;
-      return `<div class="mrow"><div class="mh">${hLabel(h)}</div><div class="mjobs">${cells}</div></div>`;
-    }).join('');
-    return `<div class="mtech"><div class="mtech-h">${esc(t.name)} · ${list.length} jobs</div>${rows}</div>`;
+    const list = jobsForTech(t);
+    let cells = list.map(j => jobCardHtml(j, 'mcard')).join('');
+    if (canAssign()) cells += `<div class="mempty" onclick="slotClick('${t.uid}',${list.length?jobTime(list[list.length-1]).getHours()+1:9})">＋ Asignar otro</div>`;
+    else if (!list.length) cells = `<div class="mempty">No jobs scheduled</div>`;
+    return `<div class="mtech"><div class="mtech-h">${esc(t.name)} · ${list.length} jobs</div><div style="padding:8px">${cells}</div></div>`;
   }).join('') || '<div class="card muted">Sin equipo.</div>';
 }
 function tapCard(id, uid, hour){
@@ -777,13 +819,15 @@ function slotClick(uid, hour){
   if (!canAssign() || justDropped) return;
   preWorker = uid;
   preHour = hour;
+  preStartClock = String(hour).padStart(2,'0')+':00';
+  preEndClock = String(Math.min(23, hour+1)).padStart(2,'0')+':00';
   editJobId = '';
   openAssign();
 }
 function fmt(d){
   const h = d.getHours()%12===0?12:d.getHours()%12;
   const m = String(d.getMinutes()).padStart(2,'0');
-  return h+':'+m+(d.getHours()<12?'AM':'PM');
+  return h+':'+m+' '+(d.getHours()<12?'AM':'PM');
 }
 
 let dragId = '';
@@ -814,15 +858,24 @@ function openMove(id, hour, uid){
   </div>`;
 }
 async function doMove(id, hour, uid, reason){
-  const h12 = hour%12===0?12:hour%12;
-  const am = hour<12?'AM':'PM';
-  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour);
+  const j = jobs.find(x=>x.id===id) || {};
+  const oldS = jobTime(j);
+  const oldE = jobEnd(j, oldS);
+  const dur = Math.max(15*60*1000, oldE - oldS);
+  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour, oldS.getMinutes());
+  const end = new Date(start.getTime()+dur);
+  if (rangesOverlapWorker(uid, start, end, id)) {
+    if (!confirm('Este horario se cruza con otro trabajo de la misma persona. ¿Guardar igual?')) return;
+  }
   const patch = {
     assignedTo: uid, assignedUid: uid,
-    hour, minute: 0,
+    hour: start.getHours(), minute: start.getMinutes(),
+    endHour: end.getHours(), endMinute: end.getMinutes(),
+    startClock: toClock(start), endClock: toClock(end),
     scheduledDate: ymd(selectedDay),
-    startTime: h12+':00 '+am, time: h12+':00 '+am,
+    startTime: fmt(start), time: fmt(start), endTime: fmt(end),
     appointment_start: firebase.firestore.Timestamp.fromDate(start),
+    appointment_end: firebase.firestore.Timestamp.fromDate(end),
     moveReason: reason,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -838,7 +891,11 @@ function openEdit(id){
   if (!j) return;
   editJobId = id;
   preWorker = assignedOf(j);
-  preHour = typeof j.hour === 'number' ? j.hour : jobTime(j).getHours();
+  const st = jobTime(j);
+  const en = jobEnd(j, st);
+  preHour = st.getHours();
+  preStartClock = toClock(st);
+  preEndClock = toClock(en);
   preKind = j.kind || '';
   selectedBuilding = j.buildingId || selectedBuilding;
   openAssign(j.kind);
@@ -846,15 +903,26 @@ function openEdit(id){
 function openAssign(kindPref){
   if (!canAssign()) { alert('No puedes asignar trabajos con este rol.'); return; }
   const chosen = kindPref || preKind || (allTypes(true)[0]&&allTypes(true)[0].name) || 'INSPECTION';
-  const hour = preHour || 9;
   const worker = preWorker || (techs[0]&&techs[0].uid) || (auth.currentUser&&auth.currentUser.uid) || '';
+  const existing = editJobId ? jobs.find(x=>x.id===editJobId) : null;
+  let startVal = preStartClock;
+  let endVal = preEndClock;
+  if (existing) {
+    const st = jobTime(existing);
+    const en = jobEnd(existing, st);
+    startVal = toClock(st);
+    endVal = toClock(en);
+  }
+  if (!startVal) startVal = String(preHour||9).padStart(2,'0')+':00';
+  if (!endVal) {
+    const p = startVal.split(':');
+    endVal = String(Math.min(23, (parseInt(p[0],10)||9)+1)).padStart(2,'0')+':'+(p[1]||'00');
+  }
   preKind = '';
   const bopts = '<option value="">— Dirección / sitio —</option>' + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
   const kopts = allTypes(true).map(k=>`<option value="${esc(k.name)}" ${k.name===chosen?'selected':''}>${esc(k.icon||'')} ${esc(k.name)}</option>`).join('');
-  const hopts = HOURS.map(h=>`<option value="${h}" ${h===hour?'selected':''}>${hLabel(h)}</option>`).join('');
   const preset = typeOf(chosen);
-  const existing = editJobId ? jobs.find(x=>x.id===editJobId) : null;
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
     <h3>${editJobId?'Editar / reasignar':'Assign Job'}</h3>
@@ -862,18 +930,28 @@ function openAssign(kindPref){
     <label class="muted">${esc(pack().sitesLabel)}</label><select id="ajB">${bopts}</select>
     <label class="muted">Dirección (si no hay sitio)</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
     <label class="muted">Trabajador</label><select id="ajT">${topts || '<option value="">Sin equipo</option>'}</select>
-    <label class="muted">Hora</label><select id="ajH">${hopts}</select>
+    <label class="muted">Start time</label><input id="ajStart" type="time" step="60" value="${startVal}">
+    <label class="muted">End time</label><input id="ajEnd" type="time" step="60" value="${endVal}">
     <label class="muted">Tipo de trabajo</label><select id="ajK" onchange="onKindChange()">${kopts}</select>
     <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer">${esc((existing&&existing.description)||preset.descriptionTemplate||'')}</textarea>
     <div class="err" id="ajErr"></div>
     ${canManageTypes()?'<p class="muted"><a href="/app/settings/job-types/">＋ Crear tipo</a></p>':''}
     <button class="btn" onclick="saveAssign()">${editJobId?'Guardar':'Asignar'}</button>
-    <button class="btn ghost" onclick="editJobId='';$('modal').classList.add('hidden')">Cancelar</button>
+    <button class="btn ghost" onclick="editJobId='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
 }
 function onKindChange(){
   const t = typeOf($('ajK').value);
   if (t.descriptionTemplate) $('ajD').value = t.descriptionTemplate;
+}
+function rangesOverlapWorker(uid, start, end, exceptId){
+  const tech = techs.find(t => t.uid === uid) || {uid, name:''};
+  return jobsForTech(tech).some(j => {
+    if (exceptId && j.id === exceptId) return false;
+    const s = jobTime(j);
+    const e = jobEnd(j, s);
+    return rangesOverlap(start, end, s, e);
+  });
 }
 async function saveAssign(){
   const err = $('ajErr');
@@ -881,25 +959,31 @@ async function saveAssign(){
   const bid = $('ajB').value;
   const uid = $('ajT').value;
   const kind = $('ajK').value;
-  const hour = parseInt($('ajH').value,10) || 9;
+  const start = clockToDate($('ajStart').value, selectedDay);
+  const end = clockToDate($('ajEnd').value, selectedDay);
   const addrIn = ($('ajAddr')&&$('ajAddr').value.trim()) || '';
   if (!uid) { if (err) err.textContent = 'Elige un trabajador.'; return; }
   if (!cid()) { if (err) err.textContent = 'No hay compañía activa.'; return; }
+  if (!start || !end) { if (err) err.textContent = 'Pon Start time y End time.'; return; }
+  if (!(end.getTime() > start.getTime())) { if (err) err.textContent = 'End time must be after Start time.'; return; }
+  if (rangesOverlapWorker(uid, start, end, editJobId)) {
+    if (!confirm('Este horario se cruza con otro trabajo de la misma persona. ¿Guardar igual?')) return;
+  }
   const b = buildings.find(x=>x.id===bid);
   const title = (b && b.name) || addrIn || kind || 'Job';
-  const h12 = hour%12===0?12:hour%12;
-  const am = hour<12?'AM':'PM';
-  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour);
   const payload = {
     companyId: cid(), buildingId: bid || '', assignedTo: uid, assignedUid: uid,
     title, address: addrIn || title, kind,
     description: ($('ajD')&&$('ajD').value.trim()) || typeOf(kind).descriptionTemplate || '',
     color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
-    hour, minute: 0,
+    hour: start.getHours(), minute: start.getMinutes(),
+    endHour: end.getHours(), endMinute: end.getMinutes(),
+    startClock: toClock(start), endClock: toClock(end),
     scheduledDate: ymd(selectedDay),
-    startTime: h12+':00 '+am, time: h12+':00 '+am, endTime: ((hour+1)%12||12)+':00 '+((hour+1)<12?'AM':'PM'),
+    startTime: fmt(start), time: fmt(start), endTime: fmt(end),
     appointment_start: firebase.firestore.Timestamp.fromDate(start),
+    appointment_end: firebase.firestore.Timestamp.fromDate(end),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   try {
@@ -915,6 +999,8 @@ async function saveAssign(){
   }
   editJobId = '';
   preWorker = '';
+  preStartClock = '';
+  preEndClock = '';
   $('modal').classList.add('hidden');
   await loadBoard();
 }
