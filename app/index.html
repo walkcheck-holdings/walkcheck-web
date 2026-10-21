@@ -295,6 +295,22 @@ function typeOf(kind){
   return allTypes(false).find(t => String(t.name).toLowerCase()===k || t.slug===k) || { color:'#34C759', icon:'🔧', name: kind||'Job' };
 }
 function cid(){ return profile.companyId || (isSuper() ? 'A0PKuVyRMLJ0Bv2UNzb3' : ''); }
+async function enforceTrial(){
+  if (isSuper()) return true;
+  try {
+    const co = await db.collection('companies').doc(cid()).get();
+    const d = co.data() || {};
+    if (d.is_paid === true) return true;
+    const raw = d.trialEnds || d.trial_end;
+    let end = null;
+    if (raw && raw.toDate) end = raw.toDate();
+    else if (typeof raw === 'string') end = new Date(raw);
+    if (!end || isNaN(end.getTime())) return true;
+    if (Date.now() < end.getTime()) return true;
+    location.href = '/pricing/';
+    return false;
+  } catch(_) { return true; }
+}
 
 $('btnLogin').onclick = async () => {
   $('loginErr').textContent = '';
@@ -314,6 +330,7 @@ auth.onAuthStateChanged(async user => {
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
   $('adminLink').classList.toggle('hidden', !isSuper());
   await resolveTypeAdmin(user.uid);
+  if (!await enforceTrial()) return;
   $('typesLink').classList.toggle('hidden', !canManageTypes());
   $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');

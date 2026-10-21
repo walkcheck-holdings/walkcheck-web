@@ -28,8 +28,8 @@
   <a href="/app/">Entrar</a>
 </header>
 <div class="card">
-  <h2>Registrar compañía</h2>
-  <p class="muted">Elige el tipo. El panel y los jobs salen con las plantillas de tu oficio. Team Schedule es igual para todos.</p>
+  <h2>Crear mi cuenta</h2>
+  <p class="muted">15 días gratis. Elige el tipo de compañía. Team Schedule es igual para todos.</p>
   <label>Nombre de la compañía</label>
   <input id="name" type="text" required>
   <label>Tu nombre</label>
@@ -42,7 +42,7 @@
   <select id="companyType" required>
     <option value="">Selecciona…</option>
   </select>
-  <button class="btn" id="go">Crear cuenta</button>
+  <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta - 15 dias gratis</button>
   <div class="err" id="err"></div>
   <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
 </div>
@@ -79,16 +79,31 @@ document.getElementById('go').onclick = async () => {
     const db = firebase.firestore();
     const ref = db.collection('companies').doc();
     const label = (window.COMPANY_TYPE_OPTIONS||[]).find(o => o.id===companyType)?.label || companyType;
+    const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
     await ref.set({
       id: ref.id, name, companyType, industry: label,
-      status: 'pending', adminUid: uid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      status: 'active', adminUid: uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      trial_start: firebase.firestore.FieldValue.serverTimestamp(),
+      trial_end: trialEnds,
+      trialEnds,
+      is_paid: false
     });
     await db.collection('users').doc(uid).set({
       uid, companyId: ref.id, displayName: fullName, role: 'owner',
       username: email.split('@')[0],
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    try {
+      await db.collection('mail').add({
+        to: [email],
+        message: {
+          subject: 'Tienes 15 dias gratis para probar WalkCheck',
+          text: 'Hola ' + fullName + ',\n\nTienes 15 dias gratis para probar WalkCheck.\n\nEntra: https://walkcheck.app/app/\n',
+          html: '<p>Hola ' + fullName + ',</p><p><b>Tienes 15 dias gratis para probar WalkCheck</b>.</p><p><a href="https://walkcheck.app/app/">Entrar al panel</a></p>'
+        }
+      });
+    } catch(_){}
     location.href = '/app/';
   } catch (e) {
     err.textContent = e.message || 'No se pudo registrar.';
