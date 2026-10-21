@@ -161,8 +161,8 @@
     </div>
     <div class="chips">
       <button class="chip on" data-f="All">All</button>
-      <button class="chip" data-f="Inspections">Inspections</button>
-      <button class="chip" data-f="Maintenance">Maintenance</button>
+      <button class="chip pm-only" data-f="Inspections">Inspections</button>
+      <button class="chip pm-only" data-f="Maintenance">Maintenance</button>
     </div>
     <div id="bList"></div>
     <div class="addbox" id="addbox">
@@ -243,6 +243,32 @@ function useDesk(){ return !isPhone() || forceDesktop; }
 function pack(){
   const t = window.JOB_TEMPLATES || {};
   return t[companyType] || t.property_management || {sitesLabel:'Buildings', searchPlaceholder:'Search buildings...', jobs:['INSPECTION']};
+}
+function panelTitle(){
+  return ({
+    cleaning: 'Panel Limpieza',
+    construction: 'Panel Construcción',
+    electrical: 'Panel Electricidad',
+    plumbing: 'Panel Plomería',
+    hvac: 'Panel HVAC',
+    roofing: 'Panel Roofing',
+    other: 'Panel Walkcheck',
+    property_management: 'Panel Inspecciones'
+  })[companyType] || 'Walkcheck · Panel';
+}
+function applyCompanyPanel(){
+  document.body.dataset.panel = companyType;
+  const h = document.querySelector('header h1 a');
+  if (h) h.textContent = 'Walkcheck · ' + panelTitle();
+  document.title = 'Walkcheck · ' + panelTitle();
+  const pm = companyType === 'property_management';
+  document.querySelectorAll('.pm-only').forEach(el => { el.style.display = pm ? '' : 'none'; });
+  const addLbl = document.querySelector('#addbox .muted');
+  if (addLbl) addLbl.textContent = pm ? '＋ Nuevo edificio' : '＋ Nuevo sitio';
+  const nb = $('nbName');
+  if (nb) nb.placeholder = pm ? 'Nombre del edificio' : 'Nombre del sitio / cliente';
+  const ed = document.querySelector('#phoneTabs [data-tab="edificios"]');
+  if (ed) ed.textContent = pack().sitesLabel;
 }
 
 function isSuper(){
@@ -332,7 +358,8 @@ auth.onAuthStateChanged(async user => {
   await resolveTypeAdmin(user.uid);
   if (!await enforceTrial()) return;
   $('typesLink').classList.toggle('hidden', !canManageTypes());
-  $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
+  const roleName = {owner:'Dueño',admin:'Administrador',manager:'Manager',supervisor:'Supervisor',worker:'Trabajador'}[String(profile.role||'').toLowerCase()] || (isBoss() ? 'Jefe / Admin' : 'Trabajador');
+  $('roleChip').textContent = roleName + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');
   const staff = isBoss();
   $('addbox').classList.toggle('hidden', !staff);
@@ -445,6 +472,7 @@ async function loadBoard(){
       else companyType = 'property_management';
     }
   } catch(_) { companyType = 'property_management'; }
+  applyCompanyPanel();
   $('sitesTitle').textContent = pack().sitesLabel;
   $('bSearch').placeholder = pack().searchPlaceholder;
   const bDocs = [];
@@ -706,7 +734,7 @@ async function addBuilding(){
   const floors = Math.min(100, Math.max(1, parseInt($('nbFloors').value)||1));
   if (!name){ alert('Escribe el nombre del edificio'); return; }
   const ref = db.collection('buildings').doc();
-  await ref.set({ id: ref.id, name, floors, companyId: cid(), kind: 'Inspections' });
+  await ref.set({ id: ref.id, name, floors, companyId: cid(), kind: companyType === 'property_management' ? 'Inspections' : 'Site', companyType });
   try {
     await db.collection('companies').doc(cid()).collection('buildings').doc(ref.id)
       .set({ id: ref.id, name, floors, companyId: cid() });

@@ -83,7 +83,7 @@ document.getElementById('go').onclick = async () => {
     const plan = allowed[(new URLSearchParams(location.search).get('plan')||'')] ? new URLSearchParams(location.search).get('plan') : 'crew_10';
     const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
     await ref.set({
-      id: ref.id, name, companyType, industry: label, plan,
+      id: ref.id, name, companyType, industry: label, panel: companyType, plan,
       status: 'active', adminUid: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       trial_start: firebase.firestore.FieldValue.serverTimestamp(),
@@ -93,7 +93,7 @@ document.getElementById('go').onclick = async () => {
     });
     await db.collection('users').doc(uid).set({
       uid, companyId: ref.id, displayName: fullName, role: 'owner',
-      username: email.split('@')[0],
+      companyType, username: email.split('@')[0],
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     try {
