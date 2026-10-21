@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · Registro</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="/js/jobTemplates.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; }
+  header { background: #34C759; color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 18px; }
+  header a { color: #fff; text-decoration: none; font-weight: 700; }
+  .card { max-width: 420px; margin: 32px auto; background: #fff; padding: 20px; border-radius: 12px; }
+  label { font-size: 13px; font-weight: 700; color: #6B7280; display: block; margin-top: 8px; }
+  input, select { width: 100%; padding: 10px 12px; margin: 6px 0 10px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 14px; }
+  .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 14px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
+  .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .muted { color: #8E8E93; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Walkcheck</h1>
+  <a href="/app/">Entrar</a>
+</header>
+<div class="card">
+  <h2>Registrar compañía</h2>
+  <p class="muted">Elige el tipo. El panel y los jobs salen con las plantillas de tu oficio. Team Schedule es igual para todos.</p>
+  <label>Nombre de la compañía</label>
+  <input id="name" type="text" required>
+  <label>Tu nombre</label>
+  <input id="fullName" type="text" required>
+  <label>Correo</label>
+  <input id="email" type="email" required>
+  <label>Contraseña</label>
+  <input id="password" type="password" minlength="6" required>
+  <label>Tipo de compañía *</label>
+  <select id="companyType" required>
+    <option value="">Selecciona…</option>
+  </select>
+  <button class="btn" id="go">Crear cuenta</button>
+  <div class="err" id="err"></div>
+  <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
+</div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+firebase.initializeApp(firebaseConfig);
+const sel = document.getElementById('companyType');
+(window.COMPANY_TYPE_OPTIONS||[]).forEach(o => {
+  const opt = document.createElement('option');
+  opt.value = o.id; opt.textContent = o.label; sel.appendChild(opt);
+});
+document.getElementById('go').onclick = async () => {
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const name = document.getElementById('name').value.trim();
+  const fullName = document.getElementById('fullName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const companyType = sel.value;
+  if (!name || !fullName || !email || !password || !companyType) {
+    err.textContent = 'Completa todos los campos, incluido Tipo de compañía.';
+    return;
+  }
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+    const db = firebase.firestore();
+    const ref = db.collection('companies').doc();
+    const label = (window.COMPANY_TYPE_OPTIONS||[]).find(o => o.id===companyType)?.label || companyType;
+    await ref.set({
+      id: ref.id, name, companyType, industry: label,
+      status: 'pending', adminUid: uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('users').doc(uid).set({
+      uid, companyId: ref.id, displayName: fullName, role: 'owner',
+      username: email.split('@')[0],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    location.href = '/app/';
+  } catch (e) {
+    err.textContent = e.message || 'No se pudo registrar.';
+  }
+};
+</script>
+</body>
+</html>

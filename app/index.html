@@ -7,6 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="/js/jobTemplates.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; }
@@ -86,7 +87,7 @@
 
 <div id="login">
   <h3>Entrar a Walkcheck</h3>
-  <p class="muted">Jefe ve Team Schedule. Trabajador ve My Schedule.</p>
+  <p class="muted">Team Schedule para todos. El tipo de job sale del oficio de tu compañía. <a href="/register/">Registrar</a></p>
   <input type="email" id="email" placeholder="Correo" autocomplete="username">
   <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
   <button class="btn" id="btnLogin">Entrar</button>
@@ -95,7 +96,7 @@
 
 <div id="board">
   <aside id="sidebar">
-    <h2>Buildings</h2>
+    <h2 id="sitesTitle">Buildings</h2>
     <div style="padding:0 14px">
       <input type="text" id="bSearch" placeholder="Search buildings...">
     </div>
@@ -163,6 +164,11 @@ let selectedDay = new Date();
 let bFilter = 'All';
 let bQuery = '';
 let selectedBuilding = '';
+let companyType = 'property_management';
+function pack(){
+  const t = window.JOB_TEMPLATES || {};
+  return t[companyType] || t.property_management || {sitesLabel:'Buildings', searchPlaceholder:'Search buildings...', jobs:['INSPECTION']};
+}
 
 function isSuper(){
   return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
@@ -250,6 +256,22 @@ async function colGet(pathTry){
 async function loadBoard(){
   renderWeek();
   const id = cid();
+  try {
+    const co = await db.collection('companies').doc(id).get();
+    const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
+    companyType = String(raw).toLowerCase().replace(/\s+/g,'_');
+    if (!(window.JOB_TEMPLATES||{})[companyType]) {
+      if (/electric/.test(companyType)) companyType = 'electrical';
+      else if (/plumb/.test(companyType)) companyType = 'plumbing';
+      else if (/hvac|air/.test(companyType)) companyType = 'hvac';
+      else if (/roof/.test(companyType)) companyType = 'roofing';
+      else if (/clean/.test(companyType)) companyType = 'cleaning';
+      else if (/construct/.test(companyType)) companyType = 'construction';
+      else companyType = 'property_management';
+    }
+  } catch(_) { companyType = 'property_management'; }
+  $('sitesTitle').textContent = pack().sitesLabel;
+  $('bSearch').placeholder = pack().searchPlaceholder;
   const bDocs = [];
   let s = await colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => bDocs.push({id:d.id, ...d.data()}));
@@ -405,14 +427,14 @@ async function doMove(id, hour, uid, reason){
 function openAssign(){
   const bopts = buildings.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}">${esc(t.name)}</option>`).join('');
+  const kopts = pack().jobs.map(k=>`<option>${esc(k)}</option>`).join('');
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
     <h3>+ Assign Job</h3>
-    <label class="muted">Building</label><select id="ajB">${bopts}</select>
+    <label class="muted">${esc(pack().sitesLabel)}</label><select id="ajB">${bopts}</select>
     <label class="muted">Trabajador</label><select id="ajT">${topts}</select>
-    <label class="muted">Tipo</label><select id="ajK">
-      <option>INSPECTION</option><option>MAINTENANCE</option><option>SEMI ANNUAL</option>
-    </select>
+    <label class="muted">Tipo</label><select id="ajK">${kopts}</select>
+    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer"></textarea>
     <button class="btn" onclick="saveAssign()">Asignar</button>
     <button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
@@ -422,7 +444,8 @@ async function saveAssign(){
   const b = buildings.find(x=>x.id===bid) || {name:'Job'};
   const payload = {
     companyId: cid(), buildingId: bid, assignedTo: uid, assignedUid: uid,
-    title: b.name, address: b.name, kind, status: 'open',
+    title: b.name, address: b.name, kind, description: ($('ajD')&&$('ajD').value.trim()) || '',
+    companyType, status: 'open',
     startTime: '9:00 AM', time: '9:00 AM', endTime: '10:00 AM',
     appointment_start: firebase.firestore.Timestamp.fromDate(selectedDay),
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
