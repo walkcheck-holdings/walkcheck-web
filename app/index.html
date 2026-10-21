@@ -132,6 +132,7 @@
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="roleChip"></span>
+    <button id="moneyBtn" class="hidden" onclick="openMoney()">Dinero</button>
     <a id="typesLink" href="/app/settings/job-types/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px;background:rgba(0,0,0,.18)">Tipos</a>
     <a id="adminLink" href="/admin/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px">SUPER ADMIN</a>
     <button id="btnLogout" class="hidden">Cerrar sesión</button>
@@ -238,6 +239,11 @@ let preKind = '';
 let forceDesktop = false;
 let phoneTab = 'agenda';
 let pickJobId = '';
+let viewCid = '';
+let preWorker = '';
+let preHour = 9;
+let editJobId = '';
+let companyList = [];
 function isPhone(){ return window.matchMedia('(max-width: 1023px)').matches; }
 function useDesk(){ return !isPhone() || forceDesktop; }
 function pack(){
@@ -320,7 +326,24 @@ function typeOf(kind){
   const k = String(kind||'').toLowerCase();
   return allTypes(false).find(t => String(t.name).toLowerCase()===k || t.slug===k) || { color:'#34C759', icon:'🔧', name: kind||'Job' };
 }
-function cid(){ return profile.companyId || (isSuper() ? 'A0PKuVyRMLJ0Bv2UNzb3' : ''); }
+function cid(){
+  if (isSuper() && viewCid) return viewCid;
+  return profile.companyId || '';
+}
+function ymd(d){
+  const x = d instanceof Date ? d : new Date(d);
+  return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+}
+function canSeeMoney(){
+  const r = String(profile.role||'').toLowerCase();
+  if (r !== 'owner' && r !== 'admin' && !isCompanyCreatorLike()) return false;
+  if (isSuper() && cid() && cid() !== profile.companyId) return false;
+  return !!cid();
+}
+function isCompanyCreatorLike(){
+  const uid = auth.currentUser && auth.currentUser.uid;
+  return !!(uid && companyAdminUid && uid === companyAdminUid && cid() === profile.companyId);
+}
 async function enforceTrial(){
   if (isSuper()) return true;
   try {
@@ -362,10 +385,11 @@ auth.onAuthStateChanged(async user => {
   $('roleChip').textContent = roleName + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');
   const staff = isBoss();
-  $('addbox').classList.toggle('hidden', !staff);
+  $('addbox').classList.toggle('hidden', !staff || isSuper());
   $('staffMain').classList.toggle('hidden', !staff);
   $('workerMain').classList.toggle('hidden', staff);
   $('assignBar').classList.toggle('hidden', !canAssign());
+  $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
   document.body.classList.add('tab-' + phoneTab);
   applyLayout();
   await loadBoard();
@@ -413,7 +437,7 @@ function renderTeam(){
     || '<div class="card muted">Sin equipo.</div>';
 }
 
-$('bSearch').oninput = e => { bQuery = e.target.value; renderBuildings(); };
+$('bSearch').oninput = e => { bQuery = e.target.value; if (isSuper()) renderCompanies(); else renderBuildings(); };
 document.querySelectorAll('.chip').forEach(ch => {
   ch.onclick = () => {
     document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
@@ -457,7 +481,15 @@ async function colGet(pathTry){
 
 async function loadBoard(){
   renderWeek();
+  if (isSuper() && !cid()) {
+    await loadCompaniesSidebar();
+    if (!viewCid && companyList[0]) viewCid = companyList[0].id;
+  }
   const id = cid();
+  if (!id) {
+    $('rows').innerHTML = '<div class="card muted">Elige una compañía a la izquierda.</div>';
+    return;
+  }
   try {
     const co = await db.collection('companies').doc(id).get();
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
@@ -473,8 +505,12 @@ async function loadBoard(){
     }
   } catch(_) { companyType = 'property_management'; }
   applyCompanyPanel();
-  $('sitesTitle').textContent = pack().sitesLabel;
-  $('bSearch').placeholder = pack().searchPlaceholder;
+  if (isSuper()) await loadCompaniesSidebar();
+  else {
+    $('sitesTitle').textContent = pack().sitesLabel;
+    $('bSearch').placeholder = pack().searchPlaceholder;
+    $('addbox').classList.toggle('hidden', !isBoss());
+  }
   const bDocs = [];
   let s = await colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => bDocs.push({id:d.id, ...d.data()}));
@@ -486,9 +522,9 @@ async function loadBoard(){
   const tDocs = [];
   s = await colGet(db.collection('users').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => tDocs.push({uid:d.id, name:d.data().displayName||'Tech', role:d.data().role||'worker'}));
-  if (!tDocs.length && id === 'A0PKuVyRMLJ0Bv2UNzb3') {
-    tDocs.push({uid:'luis', name:'Luis Molina', role:'worker'});
-    tDocs.push({uid: auth.currentUser.uid, name: profile.displayName || 'Maikel Ramirez', role:'owner'});
+  const me = auth.currentUser && auth.currentUser.uid;
+  if (me && !tDocs.some(t => t.uid === me)) {
+    tDocs.unshift({uid: me, name: profile.displayName || 'Yo', role: profile.role || 'owner'});
   }
   techs = tDocs;
 
@@ -506,11 +542,42 @@ async function loadBoard(){
     ts.forEach(d => customTypes.push({id:d.id, ...d.data()}));
   } catch(_){}
   renderTypeBar();
-  renderBuildings();
+  if (!isSuper()) renderBuildings();
   renderMap();
   renderTeam();
+  $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
   if (isBoss()) renderRows();
   else renderMySchedule();
+}
+async function loadCompaniesSidebar(){
+  $('sitesTitle').textContent = 'Compañías';
+  $('bSearch').placeholder = 'Buscar compañías...';
+  $('addbox').classList.add('hidden');
+  try {
+    const snap = await db.collection('companies').limit(80).get();
+    const us = await db.collection('users').limit(200).get();
+    const counts = {};
+    us.forEach(d => {
+      const c = d.data().companyId;
+      if (c) counts[c] = (counts[c]||0)+1;
+    });
+    companyList = [];
+    snap.forEach(d => companyList.push({id:d.id, ...d.data(), workers: counts[d.id]||0}));
+    companyList.sort((a,b)=> String(a.name||'').localeCompare(String(b.name||'')));
+  } catch(e){ companyList = []; }
+  renderCompanies();
+}
+function renderCompanies(){
+  const q = bQuery.toLowerCase();
+  const list = companyList.filter(c => !q || String(c.name||'').toLowerCase().includes(q));
+  $('bList').innerHTML = list.map(c =>
+    `<div class="b-item ${c.id===cid()?'on':''}" onclick="selectCompany('${c.id}')"><b>${esc(c.name||c.id)}</b><div class="muted">${c.workers} trabajadores</div></div>`
+  ).join('') || '<div class="muted" style="padding:14px">Sin compañías</div>';
+}
+async function selectCompany(id){
+  viewCid = id;
+  selectedBuilding = '';
+  await loadBoard();
 }
 function renderTypeBar(){
   const bar = $('typeBar');
@@ -555,15 +622,22 @@ function selectBuilding(id){
 }
 
 function jobTime(j){
-  const t = j.time || j.startTime || j.appointmentStart || j.appointment_start;
-  if (t && t.toDate) return t.toDate();
   const d = selectedDay;
+  if (typeof j.hour === 'number') {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), j.hour, j.minute||0);
+  }
+  const t = j.appointment_start || j.appointmentStart || j.time || j.startTime;
+  if (t && t.toDate) {
+    const x = t.toDate();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), x.getHours(), x.getMinutes());
+  }
   let h=9, m=0;
   const raw = String(t||'').toUpperCase().replace('.',':');
   const num = raw.replace(/[^0-9:]/g,'');
   if (/^\d{1,2}$/.test(num)) h = parseInt(num,10);
   else if (num.includes(':')) { const p=num.split(':'); h=parseInt(p[0],10)||9; m=parseInt(p[1],10)||0; }
   if (raw.includes('PM') && h<12) h+=12;
+  if (raw.includes('AM') && h===12) h=0;
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
 }
 function jobEnd(j, start){
@@ -573,8 +647,10 @@ function jobEnd(j, start){
   return d > start ? d : new Date(start.getTime()+45*60*1000);
 }
 function jobDayOk(j){
-  const t = j.appointment_start || j.createdAt;
+  if (j.scheduledDate) return j.scheduledDate === ymd(selectedDay);
+  const t = j.appointment_start || j.appointmentStart || j.timeAt;
   if (t && t.toDate) return sameDay(t.toDate(), selectedDay);
+  if (t instanceof Date) return sameDay(t, selectedDay);
   return true;
 }
 function assignedOf(j){
@@ -591,7 +667,7 @@ function renderRows(){
     });
     const real = jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name));
     const list = real;
-    const slots = HOURS.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`).join('');
+    const slots = HOURS.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`).join('');
     let cards = '';
     list.forEach(j => {
       const st = jobTime(j);
@@ -602,7 +678,7 @@ function renderRows(){
       const kind = j.kind || 'INSPECTION';
       const tp = typeOf(kind);
       const when = fmt(st)+'–'+fmt(en);
-      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} style="left:${left}px;width:${w}px;background:${esc(tp.color||'#34C759')}">
+      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openEdit('${j.id}')" style="left:${left}px;width:${w}px;background:${esc(tp.color||'#34C759')}">
         <div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
     });
     const empty = list.length ? '' : `<div class="empty">No jobs scheduled</div>`;
@@ -625,7 +701,7 @@ function renderMobileAgenda(){
         const tp = typeOf(kind);
         return `<div class="jcard mcard" style="background:${esc(tp.color||'#34C759')}" onclick="tapCard('${j.id}','${t.uid}',${h})"><div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${fmt(st)}–${fmt(en)}</div></div>`;
       }).join('');
-      if (!cells) cells = `<div class="mempty" onclick="tapEmpty('${t.uid}',${h})">${list.length?'':'No jobs scheduled'}</div>`;
+      if (!cells) cells = `<div class="mempty" onclick="slotClick('${t.uid}',${h})">${canAssign()?'＋ Asignar':'No jobs scheduled'}</div>`;
       return `<div class="mrow"><div class="mh">${hLabel(h)}</div><div class="mjobs">${cells}</div></div>`;
     }).join('');
     return `<div class="mtech"><div class="mtech-h">${esc(t.name)} · ${list.length} jobs</div>${rows}</div>`;
@@ -633,12 +709,14 @@ function renderMobileAgenda(){
 }
 function tapCard(id, uid, hour){
   if (!canAssign()) return;
-  pickJobId = id;
-  openMove(id, hour, uid);
+  openEdit(id);
 }
-function tapEmpty(uid, hour){
-  if (!canAssign() || !pickJobId) return;
-  openMove(pickJobId, hour, uid);
+function slotClick(uid, hour){
+  if (!canAssign() || justDropped) return;
+  preWorker = uid;
+  preHour = hour;
+  editJobId = '';
+  openAssign();
 }
 function fmt(d){
   const h = d.getHours()%12===0?12:d.getHours()%12;
@@ -647,11 +725,14 @@ function fmt(d){
 }
 
 let dragId = '';
+let justDropped = false;
 function dragJob(ev, id){ dragId = id; ev.dataTransfer.setData('text/plain', id); }
 function allowDrop(ev){ ev.preventDefault(); ev.currentTarget.classList.add('over'); }
 function dropJob(ev){
   ev.preventDefault();
   ev.currentTarget.classList.remove('over');
+  justDropped = true;
+  setTimeout(() => { justDropped = false; }, 400);
   if (!canAssign()) return;
   const hour = parseInt(ev.currentTarget.dataset.hour,10);
   const uid = ev.currentTarget.dataset.uid;
@@ -676,34 +757,56 @@ async function doMove(id, hour, uid, reason){
   const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour);
   const patch = {
     assignedTo: uid, assignedUid: uid,
+    hour, minute: 0,
+    scheduledDate: ymd(selectedDay),
     startTime: h12+':00 '+am, time: h12+':00 '+am,
     appointment_start: firebase.firestore.Timestamp.fromDate(start),
     moveReason: reason,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  try { await db.collection('jobs').doc(id).set(patch,{merge:true}); } catch(_){}
+  try { await db.collection('jobs').doc(id).set(patch,{merge:true}); }
+  catch(e){ alert('No se pudo mover: '+(e.message||e)); return; }
   try { await db.collection('companies').doc(cid()).collection('jobs').doc(id).set(patch,{merge:true}); } catch(_){}
   $('modal').classList.add('hidden');
   loadBoard();
 }
 
+function openEdit(id){
+  const j = jobs.find(x=>x.id===id);
+  if (!j) return;
+  editJobId = id;
+  preWorker = assignedOf(j);
+  preHour = typeof j.hour === 'number' ? j.hour : jobTime(j).getHours();
+  preKind = j.kind || '';
+  selectedBuilding = j.buildingId || selectedBuilding;
+  openAssign(j.kind);
+}
 function openAssign(kindPref){
-  const chosen = kindPref || preKind || '';
+  if (!canAssign()) { alert('No puedes asignar trabajos con este rol.'); return; }
+  const chosen = kindPref || preKind || (allTypes(true)[0]&&allTypes(true)[0].name) || 'INSPECTION';
+  const hour = preHour || 9;
+  const worker = preWorker || (techs[0]&&techs[0].uid) || (auth.currentUser&&auth.currentUser.uid) || '';
   preKind = '';
-  const bopts = buildings.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
-  const topts = techs.map(t=>`<option value="${t.uid}">${esc(t.name)}</option>`).join('');
+  const bopts = '<option value="">— Dirección / sitio —</option>' + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
+  const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
   const kopts = allTypes(true).map(k=>`<option value="${esc(k.name)}" ${k.name===chosen?'selected':''}>${esc(k.icon||'')} ${esc(k.name)}</option>`).join('');
+  const hopts = HOURS.map(h=>`<option value="${h}" ${h===hour?'selected':''}>${hLabel(h)}</option>`).join('');
   const preset = typeOf(chosen);
+  const existing = editJobId ? jobs.find(x=>x.id===editJobId) : null;
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
-    <h3>+ Assign Job</h3>
+    <h3>${editJobId?'Editar / reasignar':'Assign Job'}</h3>
+    <p class="muted">${ymd(selectedDay)} · ${esc(techs.find(t=>t.uid===worker)?.name||'')}</p>
     <label class="muted">${esc(pack().sitesLabel)}</label><select id="ajB">${bopts}</select>
-    <label class="muted">Trabajador</label><select id="ajT">${topts}</select>
+    <label class="muted">Dirección (si no hay sitio)</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
+    <label class="muted">Trabajador</label><select id="ajT">${topts || '<option value="">Sin equipo</option>'}</select>
+    <label class="muted">Hora</label><select id="ajH">${hopts}</select>
     <label class="muted">Tipo de trabajo</label><select id="ajK" onchange="onKindChange()">${kopts}</select>
-    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer">${esc(preset.descriptionTemplate||'')}</textarea>
+    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer">${esc((existing&&existing.description)||preset.descriptionTemplate||'')}</textarea>
+    <div class="err" id="ajErr"></div>
     ${canManageTypes()?'<p class="muted"><a href="/app/settings/job-types/">＋ Crear tipo</a></p>':''}
-    <button class="btn" onclick="saveAssign()">Asignar</button>
-    <button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cancelar</button>
+    <button class="btn" onclick="saveAssign()">${editJobId?'Guardar':'Asignar'}</button>
+    <button class="btn ghost" onclick="editJobId='';$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
 }
 function onKindChange(){
@@ -711,21 +814,98 @@ function onKindChange(){
   if (t.descriptionTemplate) $('ajD').value = t.descriptionTemplate;
 }
 async function saveAssign(){
-  const bid = $('ajB').value, uid = $('ajT').value, kind = $('ajK').value;
-  const b = buildings.find(x=>x.id===bid) || {name:'Job'};
+  const err = $('ajErr');
+  if (err) err.textContent = '';
+  const bid = $('ajB').value;
+  const uid = $('ajT').value;
+  const kind = $('ajK').value;
+  const hour = parseInt($('ajH').value,10) || 9;
+  const addrIn = ($('ajAddr')&&$('ajAddr').value.trim()) || '';
+  if (!uid) { if (err) err.textContent = 'Elige un trabajador.'; return; }
+  if (!cid()) { if (err) err.textContent = 'No hay compañía activa.'; return; }
+  const b = buildings.find(x=>x.id===bid);
+  const title = (b && b.name) || addrIn || kind || 'Job';
+  const h12 = hour%12===0?12:hour%12;
+  const am = hour<12?'AM':'PM';
+  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour);
   const payload = {
-    companyId: cid(), buildingId: bid, assignedTo: uid, assignedUid: uid,
-    title: b.name, address: b.name, kind, description: ($('ajD')&&$('ajD').value.trim()) || typeOf(kind).descriptionTemplate || '',
+    companyId: cid(), buildingId: bid || '', assignedTo: uid, assignedUid: uid,
+    title, address: addrIn || title, kind,
+    description: ($('ajD')&&$('ajD').value.trim()) || typeOf(kind).descriptionTemplate || '',
     color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
-    startTime: '9:00 AM', time: '9:00 AM', endTime: '10:00 AM',
-    appointment_start: firebase.firestore.Timestamp.fromDate(selectedDay),
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    hour, minute: 0,
+    scheduledDate: ymd(selectedDay),
+    startTime: h12+':00 '+am, time: h12+':00 '+am, endTime: ((hour+1)%12||12)+':00 '+((hour+1)<12?'AM':'PM'),
+    appointment_start: firebase.firestore.Timestamp.fromDate(start),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  await db.collection('jobs').add(payload);
-  try { await db.collection('companies').doc(cid()).collection('jobs').add(payload); } catch(_){}
+  try {
+    if (editJobId) {
+      await db.collection('jobs').doc(editJobId).set(payload, {merge:true});
+    } else {
+      payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('jobs').add(payload);
+    }
+  } catch(e) {
+    if (err) err.textContent = 'No se guardó: ' + (e.message || e);
+    return;
+  }
+  editJobId = '';
+  preWorker = '';
   $('modal').classList.add('hidden');
-  loadBoard();
+  await loadBoard();
+}
+
+async function openMoney(){
+  if (!canSeeMoney()) { alert('El dinero de cada compañía es privado.'); return; }
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box"><p class="muted">Cargando…</p></div>`;
+  const month = ymd(selectedDay).slice(0,7);
+  let rows = [];
+  try {
+    const snap = await db.collection('companies').doc(cid()).collection('ledger').limit(80).get();
+    snap.forEach(d => rows.push({id:d.id, ...d.data()}));
+  } catch(e){
+    $('modal').innerHTML = `<div class="box"><h3>Dinero</h3><p class="err">${esc(e.message||'No se pudo leer')}</p><button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cerrar</button></div>`;
+    return;
+  }
+  const mine = rows.filter(r => String(r.date||'').startsWith(month));
+  const earned = mine.filter(r=>r.type==='earned').reduce((s,r)=>s+Number(r.amount||0),0);
+  const spent = mine.filter(r=>r.type==='spent').reduce((s,r)=>s+Number(r.amount||0),0);
+  const list = mine.sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(r =>
+    `<div style="padding:8px 0;border-bottom:1px solid #F2F2F7">${r.type==='earned'?'+':'-'} $${Number(r.amount).toFixed(2)} · ${esc(r.date)}<div class="muted">${esc(r.note||'')}</div></div>`
+  ).join('') || '<p class="muted">Sin movimientos este mes.</p>';
+  $('modal').innerHTML = `<div class="box">
+    <h3>Dinero · ${esc(month)}</h3>
+    <p><b>Earned</b> $${earned.toFixed(2)}<br><b>Spent</b> $${spent.toFixed(2)}<br><b>Profit</b> $${(earned-spent).toFixed(2)}</p>
+    <label class="muted">Tipo</label>
+    <select id="mnT"><option value="earned">Earned</option><option value="spent">Spent</option></select>
+    <label class="muted">Monto</label><input id="mnA" type="number" min="0" step="0.01" placeholder="1000">
+    <label class="muted">Fecha</label><input id="mnD" type="text" value="${ymd(new Date())}">
+    <label class="muted">Nota</label><input id="mnN" type="text" placeholder="Earned $1000 / Spent $500">
+    <div class="err" id="mnErr"></div>
+    <button class="btn" onclick="saveMoney()">Guardar</button>
+    <div style="margin-top:12px">${list}</div>
+    <button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cerrar</button>
+  </div>`;
+}
+async function saveMoney(){
+  if (!canSeeMoney()) return;
+  const err = $('mnErr');
+  const type = $('mnT').value;
+  const amount = Number($('mnA').value);
+  const date = ($('mnD').value||'').trim();
+  const note = ($('mnN').value||'').trim();
+  if (!(amount>=0) || !date || date.length!==10) { err.textContent = 'Monto y fecha YYYY-MM-DD.'; return; }
+  try {
+    await db.collection('companies').doc(cid()).collection('ledger').add({
+      type, amount, date, note, companyId: cid(),
+      createdBy: auth.currentUser.uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    openMoney();
+  } catch(e) { err.textContent = e.message || 'No se guardó.'; }
 }
 
 async function addBuilding(){
