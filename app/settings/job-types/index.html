@@ -97,9 +97,11 @@ let companyType = 'property_management';
 let customs = [];
 function cid(){ return profile.companyId || ''; }
 function isSuper(){ return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com'; }
+let companyAdminUid = '';
 function canEdit(){
   const r = String(profile.role||'').toLowerCase();
-  return isSuper() || r === 'owner' || r === 'admin';
+  const uid = auth.currentUser && auth.currentUser.uid;
+  return isSuper() || r === 'owner' || r === 'admin' || (uid && companyAdminUid === uid);
 }
 function slugify(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
 function pack(){
@@ -121,10 +123,16 @@ auth.onAuthStateChanged(async user => {
   $('login').classList.add('hidden');
   const doc = await db.collection('users').doc(user.uid).get();
   profile = doc.exists ? doc.data() : {};
+  try {
+    const co = await db.collection('companies').doc(cid()).get();
+    companyAdminUid = (co.exists && co.data().adminUid) || '';
+    companyType = String((co.data()||{}).companyType || 'property_management');
+  } catch(_){}
   if (!canEdit()) {
     try {
       const m = await db.collection('companies').doc(cid()).collection('members').doc(user.uid).get();
-      if (m.exists) profile.role = m.data().role || profile.role;
+      const mr = String((m.exists && m.data().role) || '').toLowerCase();
+      if (mr === 'owner' || mr === 'admin') profile.role = mr;
     } catch(_){}
   }
   $('app').classList.remove('hidden');

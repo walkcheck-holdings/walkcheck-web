@@ -256,9 +256,23 @@ function canAssign(){
   return ['owner','admin','manager','supervisor'].includes(String(profile.role||'').toLowerCase())
     || isSuper();
 }
+let companyAdminUid = '';
 function canManageTypes(){
   const r = String(profile.role||'').toLowerCase();
-  return isSuper() || r === 'owner' || r === 'admin';
+  const uid = auth.currentUser && auth.currentUser.uid;
+  return isSuper() || r === 'owner' || r === 'admin' || (uid && companyAdminUid === uid);
+}
+async function resolveTypeAdmin(uid){
+  try {
+    const co = await db.collection('companies').doc(cid()).get();
+    companyAdminUid = (co.exists && co.data().adminUid) || '';
+  } catch(_) { companyAdminUid = ''; }
+  if (canManageTypes()) return;
+  try {
+    const m = await db.collection('companies').doc(cid()).collection('members').doc(uid).get();
+    const mr = String((m.exists && m.data().role) || '').toLowerCase();
+    if (mr === 'owner' || mr === 'admin') profile.role = mr;
+  } catch(_){}
 }
 function slugify(n){
   return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -299,16 +313,8 @@ auth.onAuthStateChanged(async user => {
   const doc = await db.collection('users').doc(user.uid).get();
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
   $('adminLink').classList.toggle('hidden', !isSuper());
+  await resolveTypeAdmin(user.uid);
   $('typesLink').classList.toggle('hidden', !canManageTypes());
-  if (!canManageTypes()) {
-    try {
-      const m = await db.collection('companies').doc(cid()).collection('members').doc(user.uid).get();
-      if (m.exists && ['owner','admin'].includes(String(m.data().role||'').toLowerCase())) {
-        profile.role = m.data().role;
-        $('typesLink').classList.remove('hidden');
-      }
-    } catch(_){}
-  }
   $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');
   const staff = isBoss();
