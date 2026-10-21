@@ -29,7 +29,7 @@
 </header>
 <div class="card">
   <h2>Crear mi cuenta</h2>
-  <p class="muted">15 días gratis. Elige el tipo de compañía. Team Schedule es igual para todos.</p>
+  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Elige el tipo de compañía.</p>
   <label>Nombre de la compañía</label>
   <input id="name" type="text" required>
   <label>Tu nombre</label>
@@ -79,9 +79,11 @@ document.getElementById('go').onclick = async () => {
     const db = firebase.firestore();
     const ref = db.collection('companies').doc();
     const label = (window.COMPANY_TYPE_OPTIONS||[]).find(o => o.id===companyType)?.label || companyType;
+    const allowed = { crew_5: 1, crew_10: 1, unlimited: 1 };
+    const plan = allowed[(new URLSearchParams(location.search).get('plan')||'')] ? new URLSearchParams(location.search).get('plan') : 'crew_10';
     const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
     await ref.set({
-      id: ref.id, name, companyType, industry: label,
+      id: ref.id, name, companyType, industry: label, plan,
       status: 'active', adminUid: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       trial_start: firebase.firestore.FieldValue.serverTimestamp(),
