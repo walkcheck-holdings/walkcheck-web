@@ -95,6 +95,11 @@
   .mcard { position: relative; left: auto !important; width: 100% !important; height: auto; min-height: 60px; margin-bottom: 6px; cursor: pointer; }
   .mempty { color: #C7C7CC; font-size: 14px; min-height: 48px; display: flex; align-items: center; }
   .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
+  #typeBar { display: none; flex-wrap: wrap; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; align-items: center; }
+  body.ready #typeBar { display: flex; }
+  #typeBar .lbl { font-size: 13px; font-weight: 800; color: #6B7280; width: 100%; }
+  #typeBar .tchip { border: none; color: #fff; border-radius: 20px; padding: 8px 12px; font-size: 14px; min-height: 40px; cursor: pointer; font-weight: 700; }
+  #typeBar .tchip.add { background: #F0F0F0; color: #111; }
   @media (max-width: 1023px) {
     body.ready:not(.desk) { overflow-x: hidden; }
     body.ready:not(.desk) #phoneTabs { display: flex; }
@@ -127,6 +132,7 @@
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="roleChip"></span>
+    <a id="typesLink" href="/app/settings/job-types/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px;background:rgba(0,0,0,.18)">Tipos</a>
     <a id="adminLink" href="/admin/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px">SUPER ADMIN</a>
     <button id="btnLogout" class="hidden">Cerrar sesión</button>
   </div>
@@ -168,6 +174,7 @@
   </aside>
   <section id="main">
     <div class="weekbar">
+      <div id="typeBar"></div>
       <div style="display:flex;align-items:center;gap:8px">
         <h2 id="weekTitle">Team Schedule</h2>
         <button class="btn ok" onclick="goToday()">Today</button>
@@ -226,6 +233,8 @@ let bFilter = 'All';
 let bQuery = '';
 let selectedBuilding = '';
 let companyType = 'property_management';
+let customTypes = [];
+let preKind = '';
 let forceDesktop = false;
 let phoneTab = 'agenda';
 let pickJobId = '';
@@ -247,6 +256,30 @@ function canAssign(){
   return ['owner','admin','manager','supervisor'].includes(String(profile.role||'').toLowerCase())
     || isSuper();
 }
+function canManageTypes(){
+  const r = String(profile.role||'').toLowerCase();
+  return isSuper() || r === 'owner' || r === 'admin';
+}
+function slugify(n){
+  return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+function defaultTypes(){
+  return pack().jobs.map(n => ({
+    name: n, slug: slugify(n), icon: '🔧', color: '#34C759',
+    descriptionTemplate: '', category: companyType, custom: false
+  }));
+}
+function allTypes(activeOnly){
+  const defs = defaultTypes();
+  const extra = customTypes.filter(t => !activeOnly || t.isActive !== false);
+  const names = new Set(defs.map(d => d.name.toLowerCase()));
+  extra.forEach(t => { if (!names.has(String(t.name||'').toLowerCase())) defs.push({...t, custom:true}); });
+  return defs;
+}
+function typeOf(kind){
+  const k = String(kind||'').toLowerCase();
+  return allTypes(false).find(t => String(t.name).toLowerCase()===k || t.slug===k) || { color:'#34C759', icon:'🔧', name: kind||'Job' };
+}
 function cid(){ return profile.companyId || (isSuper() ? 'A0PKuVyRMLJ0Bv2UNzb3' : ''); }
 
 $('btnLogin').onclick = async () => {
@@ -266,6 +299,16 @@ auth.onAuthStateChanged(async user => {
   const doc = await db.collection('users').doc(user.uid).get();
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
   $('adminLink').classList.toggle('hidden', !isSuper());
+  $('typesLink').classList.toggle('hidden', !canManageTypes());
+  if (!canManageTypes()) {
+    try {
+      const m = await db.collection('companies').doc(cid()).collection('members').doc(user.uid).get();
+      if (m.exists && ['owner','admin'].includes(String(m.data().role||'').toLowerCase())) {
+        profile.role = m.data().role;
+        $('typesLink').classList.remove('hidden');
+      }
+    } catch(_){}
+  }
   $('roleChip').textContent = (isBoss() ? 'Jefe / Admin' : 'Trabajador') + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');
   const staff = isBoss();
@@ -406,11 +449,33 @@ async function loadBoard(){
   s = await colGet(db.collection('walkthroughs').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => jDocs.push({id:d.id, ...d.data(), _wt:true}));
   jobs = jDocs;
+  customTypes = [];
+  try {
+    const ts = await db.collection('companies').doc(id).collection('customJobTypes').limit(50).get();
+    ts.forEach(d => customTypes.push({id:d.id, ...d.data()}));
+  } catch(_){}
+  renderTypeBar();
   renderBuildings();
   renderMap();
   renderTeam();
   if (isBoss()) renderRows();
   else renderMySchedule();
+}
+function renderTypeBar(){
+  const bar = $('typeBar');
+  if (!bar) return;
+  const types = allTypes(true);
+  let html = '<span class="lbl">Tipos rápidos:</span>';
+  types.forEach(t => {
+    html += `<button class="tchip" style="background:${esc(t.color||'#34C759')}" onclick="quickAssign('${esc(t.name)}')">${esc(t.icon||'')} ${esc(t.name)}</button>`;
+  });
+  if (canManageTypes()) html += `<button class="tchip add" onclick="location.href='/app/settings/job-types/'">＋ Nuevo</button>`;
+  bar.innerHTML = html;
+}
+function quickAssign(kind){
+  preKind = kind;
+  if (canAssign()) openAssign(kind);
+  else location.href = '/app/settings/job-types/';
 }
 
 function renderBuildings(){
@@ -483,10 +548,11 @@ function renderRows(){
       const left = ((st.getHours()+st.getMinutes()/60)-START)*SLOT;
       const w = Math.max(80, ((en-st)/3600000)*SLOT);
       const addr = j.address || j.title || j.buildingName || 'Job';
-      const kind = /semi/i.test(j.kind||j.title||'') ? 'SEMI ANNUAL' : (j.kind || 'INSPECTION');
+      const kind = j.kind || 'INSPECTION';
+      const tp = typeOf(kind);
       const when = fmt(st)+'–'+fmt(en);
-      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} style="left:${left}px;width:${w}px">
-        <div>${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
+      cards += `<div class="jcard" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} style="left:${left}px;width:${w}px;background:${esc(tp.color||'#34C759')}">
+        <div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
     });
     const empty = list.length ? '' : `<div class="empty">No jobs scheduled</div>`;
     return `<div class="tech">
@@ -505,7 +571,8 @@ function renderMobileAgenda(){
         const st = jobTime(j); const en = jobEnd(j, st);
         const addr = j.address || j.title || 'Job';
         const kind = j.kind || 'INSPECTION';
-        return `<div class="jcard mcard" onclick="tapCard('${j.id}','${t.uid}',${h})"><div>${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${fmt(st)}–${fmt(en)}</div></div>`;
+        const tp = typeOf(kind);
+        return `<div class="jcard mcard" style="background:${esc(tp.color||'#34C759')}" onclick="tapCard('${j.id}','${t.uid}',${h})"><div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${fmt(st)}–${fmt(en)}</div></div>`;
       }).join('');
       if (!cells) cells = `<div class="mempty" onclick="tapEmpty('${t.uid}',${h})">${list.length?'':'No jobs scheduled'}</div>`;
       return `<div class="mrow"><div class="mh">${hLabel(h)}</div><div class="mjobs">${cells}</div></div>`;
@@ -569,27 +636,36 @@ async function doMove(id, hour, uid, reason){
   loadBoard();
 }
 
-function openAssign(){
+function openAssign(kindPref){
+  const chosen = kindPref || preKind || '';
+  preKind = '';
   const bopts = buildings.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}">${esc(t.name)}</option>`).join('');
-  const kopts = pack().jobs.map(k=>`<option>${esc(k)}</option>`).join('');
+  const kopts = allTypes(true).map(k=>`<option value="${esc(k.name)}" ${k.name===chosen?'selected':''}>${esc(k.icon||'')} ${esc(k.name)}</option>`).join('');
+  const preset = typeOf(chosen);
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
     <h3>+ Assign Job</h3>
     <label class="muted">${esc(pack().sitesLabel)}</label><select id="ajB">${bopts}</select>
     <label class="muted">Trabajador</label><select id="ajT">${topts}</select>
-    <label class="muted">Tipo</label><select id="ajK">${kopts}</select>
-    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer"></textarea>
+    <label class="muted">Tipo de trabajo</label><select id="ajK" onchange="onKindChange()">${kopts}</select>
+    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer">${esc(preset.descriptionTemplate||'')}</textarea>
+    ${canManageTypes()?'<p class="muted"><a href="/app/settings/job-types/">＋ Crear tipo</a></p>':''}
     <button class="btn" onclick="saveAssign()">Asignar</button>
     <button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
+}
+function onKindChange(){
+  const t = typeOf($('ajK').value);
+  if (t.descriptionTemplate) $('ajD').value = t.descriptionTemplate;
 }
 async function saveAssign(){
   const bid = $('ajB').value, uid = $('ajT').value, kind = $('ajK').value;
   const b = buildings.find(x=>x.id===bid) || {name:'Job'};
   const payload = {
     companyId: cid(), buildingId: bid, assignedTo: uid, assignedUid: uid,
-    title: b.name, address: b.name, kind, description: ($('ajD')&&$('ajD').value.trim()) || '',
+    title: b.name, address: b.name, kind, description: ($('ajD')&&$('ajD').value.trim()) || typeOf(kind).descriptionTemplate || '',
+    color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
     startTime: '9:00 AM', time: '9:00 AM', endTime: '10:00 AM',
     appointment_start: firebase.firestore.Timestamp.fromDate(selectedDay),

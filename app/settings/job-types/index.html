@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#34C759">
+<title>Walkcheck · Tipos de trabajo</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="/js/jobTemplates.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
+  header { background: #34C759; color: #fff; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header a, header button { color: #fff; background: rgba(255,255,255,.2); border: none; padding: 8px 12px; border-radius: 8px; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; font-weight: 700; cursor: pointer; }
+  header h1 { margin: 0; font-size: 17px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 80px; }
+  .btn { background: #34C759; color: #fff; border: none; padding: 14px 16px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%; min-height: 48px; font-weight: 800; }
+  .btn.ghost { background: #F0F0F0; color: #111; }
+  .btn.tiny { width: auto; min-height: 40px; font-size: 13px; padding: 8px 12px; margin-right: 6px; }
+  .btn.danger { background: #FEE2E2; color: #B91C1C; }
+  input, select, textarea { width: 100%; padding: 12px; margin: 6px 0 12px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 16px; }
+  label { font-size: 13px; font-weight: 700; color: #6B7280; }
+  .card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .muted { color: #8E8E93; font-size: 14px; }
+  .err { color: #b3261e; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .dot { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+  .hidden { display: none !important; }
+  #login { max-width: 380px; margin: 48px auto; background: #fff; padding: 20px; border-radius: 12px; }
+  .emos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .emos button { width: 44px; height: 44px; font-size: 20px; border: 1px solid #E5E5EA; background: #fff; border-radius: 10px; cursor: pointer; }
+  .emos button.on { border-color: #34C759; background: #E8F8EC; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tipos de trabajo</h1>
+  <a href="/app/">← Agenda</a>
+</header>
+<div id="login">
+  <h3>Entrar</h3>
+  <input id="email" type="email" placeholder="Correo">
+  <input id="password" type="password" placeholder="Contraseña">
+  <button class="btn" id="btnLogin">Entrar</button>
+  <p class="err" id="loginErr"></p>
+</div>
+<div id="app" class="wrap hidden">
+  <p class="muted" id="hint">Tipos por defecto de tu oficio + los que tú creas. Quedan en Firestore.</p>
+  <button class="btn" id="btnNew" onclick="openForm()">＋ Crear Nuevo Tipo de Trabajo</button>
+  <p class="err" id="perm"></p>
+  <div id="form" class="card hidden" style="margin-top:12px">
+    <h3 id="formTitle">Nuevo tipo</h3>
+    <input type="hidden" id="editId">
+    <label>Nombre</label>
+    <input id="fName" placeholder="Electricidad">
+    <label>Icono</label>
+    <div class="emos" id="emos"></div>
+    <input id="fIcon" maxlength="4" value="⚡">
+    <label>Color</label>
+    <input id="fColor" type="color" value="#F59E0B">
+    <label>Descripción base</label>
+    <textarea id="fDesc" rows="3" placeholder="Trabajo de electricidad en..."></textarea>
+    <label>Categoría</label>
+    <select id="fCat">
+      <option value="custom">custom</option>
+      <option value="electrical">electrical</option>
+      <option value="maintenance">maintenance</option>
+      <option value="walk">walk</option>
+    </select>
+    <button class="btn" onclick="saveType()">Guardar</button>
+    <button class="btn ghost" onclick="$('form').classList.add('hidden')">Cancelar</button>
+  </div>
+  <h3 style="margin-top:20px">Por defecto</h3>
+  <div id="defaults"></div>
+  <h3>Tus tipos</h3>
+  <div id="customs"></div>
+</div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
+  authDomain: "walkcheck-a4f1e.firebaseapp.com",
+  projectId: "walkcheck-a4f1e",
+  storageBucket: "walkcheck-a4f1e.firebasestorage.app",
+  messagingSenderId: "827762473021",
+  appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const EMO = ['⚡','🔧','🚰','❄️','🏠','🧹','🔨','🪜','🪟','🌳','🔥','📦','🛠️','📝','🚨'];
+let profile = {};
+let companyType = 'property_management';
+let customs = [];
+function cid(){ return profile.companyId || ''; }
+function isSuper(){ return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com'; }
+function canEdit(){
+  const r = String(profile.role||'').toLowerCase();
+  return isSuper() || r === 'owner' || r === 'admin';
+}
+function slugify(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+function pack(){
+  const t = window.JOB_TEMPLATES || {};
+  return t[companyType] || t.property_management || { jobs: [] };
+}
+$('emos').innerHTML = EMO.map(e => `<button type="button" onclick="pickEmo('${e}')">${e}</button>`).join('');
+function pickEmo(e){
+  $('fIcon').value = e;
+  document.querySelectorAll('#emos button').forEach(b => b.classList.toggle('on', b.textContent===e));
+}
+$('btnLogin').onclick = async () => {
+  $('loginErr').textContent = '';
+  try { await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value); }
+  catch(e){ $('loginErr').textContent = e.message; }
+};
+auth.onAuthStateChanged(async user => {
+  if (!user) { $('app').classList.add('hidden'); $('login').classList.remove('hidden'); return; }
+  $('login').classList.add('hidden');
+  const doc = await db.collection('users').doc(user.uid).get();
+  profile = doc.exists ? doc.data() : {};
+  if (!canEdit()) {
+    try {
+      const m = await db.collection('companies').doc(cid()).collection('members').doc(user.uid).get();
+      if (m.exists) profile.role = m.data().role || profile.role;
+    } catch(_){}
+  }
+  $('app').classList.remove('hidden');
+  $('btnNew').classList.toggle('hidden', !canEdit());
+  $('perm').textContent = canEdit() ? '' : 'Solo el dueño o admin puede crear tipos. Tú puedes usarlos en Assign Job.';
+  await loadAll();
+});
+async function loadAll(){
+  const id = cid();
+  try {
+    const co = await db.collection('companies').doc(id).get();
+    companyType = String((co.data()||{}).companyType || 'property_management');
+  } catch(_){}
+  $('defaults').innerHTML = pack().jobs.map(n => `<div class="card row"><span class="dot" style="background:#34C759">✓</span><div><b>${esc(n)}</b><div class="muted">Default · ${esc(companyType)}</div></div></div>`).join('');
+  customs = [];
+  try {
+    const snap = await db.collection('companies').doc(id).collection('customJobTypes').limit(50).get();
+    snap.forEach(d => customs.push({id:d.id, ...d.data()}));
+  } catch(e){ $('customs').innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
+  $('customs').innerHTML = customs.map(t => `
+    <div class="card">
+      <div class="row">
+        <span class="dot" style="background:${esc(t.color||'#34C759')}">${esc(t.icon||'🔧')}</span>
+        <div style="flex:1"><b>${esc(t.name)}</b><div class="muted">${t.isActive===false?'Inactivo':'Activo'} · ${esc(t.category||'custom')}</div></div>
+      </div>
+      <p class="muted">${esc(t.descriptionTemplate||'')}</p>
+      ${canEdit()?`<button class="btn tiny" onclick="editType('${t.id}')">Editar</button>
+        <button class="btn tiny ghost" onclick="toggleType('${t.id}', ${t.isActive===false})">${t.isActive===false?'Activar':'Desactivar'}</button>
+        <button class="btn tiny danger" onclick="delType('${t.id}')">Borrar</button>`:''}
+    </div>`).join('') || '<p class="muted">Todavía no creas tipos. Dale a ＋ Crear.</p>';
+}
+function openForm(){
+  if (!canEdit()) return;
+  $('editId').value = '';
+  $('fName').value = '';
+  $('fIcon').value = '⚡';
+  $('fColor').value = '#F59E0B';
+  $('fDesc').value = '';
+  $('fCat').value = 'custom';
+  $('formTitle').textContent = 'Nuevo tipo';
+  $('form').classList.remove('hidden');
+  $('form').scrollIntoView({behavior:'smooth'});
+}
+function editType(id){
+  const t = customs.find(x=>x.id===id); if (!t) return;
+  $('editId').value = id;
+  $('fName').value = t.name||'';
+  $('fIcon').value = t.icon||'⚡';
+  $('fColor').value = t.color||'#F59E0B';
+  $('fDesc').value = t.descriptionTemplate||'';
+  $('fCat').value = t.category||'custom';
+  $('formTitle').textContent = 'Editar tipo';
+  $('form').classList.remove('hidden');
+}
+async function saveType(){
+  if (!canEdit()) return;
+  const name = $('fName').value.trim();
+  if (!name) { alert('Pon un nombre'); return; }
+  const payload = {
+    name,
+    slug: slugify(name),
+    icon: $('fIcon').value.trim() || '🔧',
+    color: $('fColor').value || '#34C759',
+    descriptionTemplate: $('fDesc').value.trim(),
+    category: $('fCat').value || 'custom',
+    isActive: true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    createdBy: auth.currentUser.uid
+  };
+  const col = db.collection('companies').doc(cid()).collection('customJobTypes');
+  const id = $('editId').value;
+  if (id) await col.doc(id).set(payload, {merge:true});
+  else await col.add(payload);
+  $('form').classList.add('hidden');
+  loadAll();
+}
+async function toggleType(id, on){
+  await db.collection('companies').doc(cid()).collection('customJobTypes').doc(id)
+    .set({ isActive: !!on }, {merge:true});
+  loadAll();
+}
+async function delType(id){
+  if (!confirm('¿Borrar este tipo?')) return;
+  await db.collection('companies').doc(cid()).collection('customJobTypes').doc(id).delete();
+  loadAll();
+}
+</script>
+</body>
+</html>
