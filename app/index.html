@@ -2,38 +2,49 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#34C759">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Walkcheck">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/app/manifest.json">
 <title>Walkcheck · Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { corePlugins: { preflight: false }, theme: { screens: { lg: '1024px' } } }</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; }
-  header { background: #34C759; color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  header h1 { margin: 0; font-size: 18px; font-weight: 800; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
+  header { background: #34C759; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 800; }
   header h1 a { color: #fff; text-decoration: none; }
-  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; min-height: 44px; }
-  .muted { color: #8E8E93; font-size: 13px; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 44px; font-size: 14px; }
+  #roleChip { font-size: 13px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .muted { color: #8E8E93; font-size: 14px; }
   .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
-  .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 14px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
+  .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
   .btn.ghost { background: #F0F0F0; color: #111; }
-  .btn.ok { font-size: 12px; min-height: 36px; width: auto; padding: 8px 14px; }
+  .btn.ok { font-size: 14px; min-height: 40px; width: auto; padding: 8px 14px; }
   input[type=email], input[type=password], input[type=text], input[type=number], select, textarea {
-    width: 100%; padding: 10px 12px; margin: 6px 0 10px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 14px;
+    width: 100%; padding: 12px; margin: 6px 0 10px; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 16px;
   }
-  #login { max-width: 380px; margin: 60px auto; background: #fff; padding: 20px; border-radius: 12px; }
-  #board { display: none; height: calc(100vh - 56px); }
+  #login { max-width: 380px; margin: 48px auto; background: #fff; padding: 20px; border-radius: 12px; width: calc(100% - 24px); }
+  #phoneTabs, #deskToggle, #bottomNav, #mapPane, #teamPane { display: none; }
+  #board { display: none; height: calc(100dvh - 56px); flex-direction: row; }
   body.ready #board { display: flex; }
   body.ready #login { display: none; }
   #sidebar { width: 300px; min-width: 300px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
   #sidebar h2 { margin: 0; padding: 14px 14px 6px; font-size: 16px; }
-  #bList { overflow: auto; flex: 1; }
-  .b-item { padding: 10px 14px; cursor: pointer; font-size: 14px; font-weight: 500; border-bottom: 1px solid #F2F2F7; }
+  #bList { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+  .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
   .chips { padding: 0 14px 8px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .chip { font-size: 11px; padding: 6px 10px; border-radius: 16px; border: 1px solid #D1D1D6; background: #fff; cursor: pointer; }
+  .chip { font-size: 14px; padding: 8px 12px; border-radius: 16px; border: 1px solid #D1D1D6; background: #fff; cursor: pointer; min-height: 36px; }
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
   .addbox { padding: 12px 14px; border-top: 1px solid #E5E5EA; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -41,41 +52,77 @@
   .weekbar { background: #fff; padding: 10px 14px 6px; }
   .weekbar h2 { margin: 0 0 8px; font-size: 16px; }
   .weekdays { display: flex; }
-  .wd { flex: 1; text-align: center; padding: 6px 0; cursor: pointer; }
+  .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 44px; font-size: 14px; }
   .wd .d { font-size: 11px; color: #8E8E93; }
   .wd.on { border-bottom: 2px solid #34C759; font-weight: 800; color: #34C759; }
   .hours { display: flex; padding-left: 140px; overflow-x: auto; background: #fff; border-bottom: 1px solid #E5E5EA; }
   .hour { min-width: 90px; width: 90px; font-size: 12px; font-weight: 700; color: #6B7280; padding: 8px 0; }
-  #rows { overflow: auto; flex: 1; }
+  #rows { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .tech { display: flex; border-bottom: 1px solid #E5E5EA; min-height: 136px; background: #fff; }
-  .tech-name { width: 140px; min-width: 140px; padding: 12px; font-size: 13px; font-weight: 800; }
-  .tech-name span { display: block; font-weight: 500; color: #8E8E93; font-size: 11px; }
+  .tech-name { width: 140px; min-width: 140px; padding: 12px; font-size: 14px; font-weight: 800; }
+  .tech-name span { display: block; font-weight: 500; color: #8E8E93; font-size: 12px; }
   .lane { position: relative; display: flex; height: 136px; overflow-x: auto; flex: 1; }
   .slot { min-width: 90px; width: 90px; height: 136px; border-left: 1px solid #EEEEEE; }
   .slot.over { background: #E8F8EC; }
   .jcard {
-    position: absolute; top: 8px; height: 120px; padding: 16px; border-radius: 12px;
+    position: absolute; top: 8px; height: 120px; min-height: 60px; padding: 16px; border-radius: 12px;
     background: #34C759; color: #fff; font-size: 14px; cursor: grab; z-index: 2;
     display: flex; flex-direction: column; justify-content: space-between;
   }
   .jcard b { font-size: 12px; }
   .jcard .t { font-size: 16px; font-weight: 600; }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    color: #8E8E93; font-size: 12px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
+    color: #8E8E93; font-size: 14px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
   #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; }
   #adminLink { background: rgba(0,0,0,.18); }
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 20; }
-  .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 12px; }
+  .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; max-height: 90dvh; overflow: auto; }
   .hidden { display: none !important; }
   .card { background: #fff; border-radius: 12px; padding: 16px; margin: 12px; }
   .back { background: none; border: none; color: #2E7D32; font-size: 15px; cursor: pointer; }
-  @media (max-width: 800px) {
-    #board { flex-direction: column; height: auto; }
-    #sidebar { width: 100%; min-width: 0; max-height: 40vh; }
+  #phoneTabs { display: none; background: #fff; border-bottom: 1px solid #E5E5EA; }
+  #phoneTabs button { flex: 1; min-height: 44px; border: none; background: none; font-size: 15px; font-weight: 700; color: #8E8E93; padding: 10px; }
+  #phoneTabs button.on { color: #34C759; border-bottom: 3px solid #34C759; }
+  #deskToggle { display: none; position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 8px; z-index: 30; width: auto; min-height: 36px; font-size: 12px; padding: 6px 10px; }
+  #bottomNav { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E5E5EA; padding-bottom: env(safe-area-inset-bottom); z-index: 25; }
+  #bottomNav button { flex: 1; border: none; background: none; min-height: 52px; font-size: 12px; font-weight: 700; color: #111; }
+  #bottomNav button.plus { color: #34C759; font-size: 13px; }
+  .mtech { background: #fff; margin-bottom: 10px; }
+  .mtech-h { padding: 12px 14px; font-weight: 800; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
+  .mrow { display: flex; min-height: 64px; border-bottom: 1px solid #F2F2F7; }
+  .mh { width: 64px; min-width: 64px; padding: 10px 6px; font-size: 12px; font-weight: 800; color: #6B7280; }
+  .mjobs { flex: 1; padding: 6px 8px 6px 0; }
+  .mcard { position: relative; left: auto !important; width: 100% !important; height: auto; min-height: 60px; margin-bottom: 6px; cursor: pointer; }
+  .mempty { color: #C7C7CC; font-size: 14px; min-height: 48px; display: flex; align-items: center; }
+  .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
+  @media (max-width: 1023px) {
+    body.ready:not(.desk) { overflow-x: hidden; }
+    body.ready:not(.desk) #phoneTabs { display: flex; }
+    body.ready:not(.desk) #deskToggle { display: block; }
+    body.ready:not(.desk) #bottomNav { display: flex; }
+    body.ready:not(.desk) #board { flex-direction: column; height: auto; min-height: calc(100dvh - 160px); padding-bottom: 72px; }
+    body.ready:not(.desk) #sidebar, body.ready:not(.desk) #main, body.ready:not(.desk) #mapPane, body.ready:not(.desk) #teamPane { width: 100%; min-width: 0; border-right: none; }
+    body.ready:not(.desk) #hours { display: none; }
+    body.ready:not(.desk) .weekbar h2 { font-size: 15px; padding-right: 110px; }
+    body.ready:not(.desk).tab-edificios #main, body.ready:not(.desk).tab-edificios #mapPane, body.ready:not(.desk).tab-edificios #teamPane { display: none; }
+    body.ready:not(.desk).tab-agenda #sidebar, body.ready:not(.desk).tab-agenda #mapPane, body.ready:not(.desk).tab-agenda #teamPane { display: none; }
+    body.ready:not(.desk).tab-mapa #sidebar, body.ready:not(.desk).tab-mapa #main, body.ready:not(.desk).tab-mapa #teamPane { display: none; }
+    body.ready:not(.desk).tab-equipo #sidebar, body.ready:not(.desk).tab-equipo #main, body.ready:not(.desk).tab-equipo #mapPane { display: none; }
+    body.ready:not(.desk).tab-mapa #mapPane, body.ready:not(.desk).tab-equipo #teamPane { display: block; }
+    body.ready:not(.desk) #assignBar { display: none !important; }
+    header { padding-right: 118px; }
+  }
+  body.desk #board { flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 56px); }
+  body.desk #sidebar { width: 260px; min-width: 260px; }
+  body.desk #main { min-width: 720px; }
+  body.desk #phoneTabs, body.desk #bottomNav, body.desk #mapPane, body.desk #teamPane { display: none !important; }
+  body.desk #deskToggle { display: block; }
+  @media (min-width: 1024px) {
+    #deskToggle { display: none !important; }
   }
 </style>
 </head>
-<body>
+<body class="tab-agenda">
 <header>
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
@@ -84,6 +131,12 @@
     <button id="btnLogout" class="hidden">Cerrar sesión</button>
   </div>
 </header>
+<button class="btn" id="deskToggle" onclick="toggleDesk()">Ver 2 columnas</button>
+<div id="phoneTabs">
+  <button data-tab="edificios" onclick="setTab('edificios')">Edificios</button>
+  <button class="on" data-tab="agenda" onclick="setTab('agenda')">Agenda</button>
+  <button data-tab="mapa" onclick="setTab('mapa')">Mapa</button>
+</div>
 
 <div id="login">
   <h3>Entrar a Walkcheck</h3>
@@ -94,7 +147,7 @@
   <div class="err" id="loginErr"></div>
 </div>
 
-<div id="board">
+<div id="board" class="flex flex-col lg:flex-row">
   <aside id="sidebar">
     <h2 id="sitesTitle">Buildings</h2>
     <div style="padding:0 14px">
@@ -131,7 +184,15 @@
     </div>
     <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
   </section>
+  <div id="mapPane"></div>
+  <div id="teamPane"></div>
 </div>
+<nav id="bottomNav">
+  <button onclick="goToday();setTab('agenda')">Hoy</button>
+  <button onclick="setTab('edificios')">Edificios</button>
+  <button onclick="setTab('equipo')">Equipo</button>
+  <button class="plus" onclick="phonePlus()">＋ Nuevo</button>
+</nav>
 
 <div id="viewJobs" class="hidden"></div>
 <div id="viewMonths" class="hidden" style="padding:16px"></div>
@@ -165,6 +226,11 @@ let bFilter = 'All';
 let bQuery = '';
 let selectedBuilding = '';
 let companyType = 'property_management';
+let forceDesktop = false;
+let phoneTab = 'agenda';
+let pickJobId = '';
+function isPhone(){ return window.matchMedia('(max-width: 1023px)').matches; }
+function useDesk(){ return !isPhone() || forceDesktop; }
 function pack(){
   const t = window.JOB_TEMPLATES || {};
   return t[companyType] || t.property_management || {sitesLabel:'Buildings', searchPlaceholder:'Search buildings...', jobs:['INSPECTION']};
@@ -207,9 +273,52 @@ auth.onAuthStateChanged(async user => {
   $('staffMain').classList.toggle('hidden', !staff);
   $('workerMain').classList.toggle('hidden', staff);
   $('assignBar').classList.toggle('hidden', !canAssign());
+  document.body.classList.add('tab-' + phoneTab);
+  applyLayout();
   await loadBoard();
   if (!staff) renderMySchedule();
 });
+
+function applyLayout(){
+  document.body.classList.toggle('desk', forceDesktop && isPhone());
+  $('deskToggle').textContent = forceDesktop ? 'Ver como teléfono' : 'Ver 2 columnas';
+  renderMap();
+  renderTeam();
+}
+function setTab(t){
+  phoneTab = t;
+  forceDesktop = false;
+  ['agenda','edificios','mapa','equipo'].forEach(x => document.body.classList.remove('tab-'+x));
+  document.body.classList.add('tab-'+t);
+  document.querySelectorAll('#phoneTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
+  applyLayout();
+  if (t==='agenda' && isBoss()) renderRows();
+}
+function toggleDesk(){
+  forceDesktop = !forceDesktop;
+  if (forceDesktop) ['agenda','edificios','mapa','equipo'].forEach(x => document.body.classList.remove('tab-'+x));
+  applyLayout();
+  if (isBoss()) renderRows();
+}
+function phonePlus(){
+  if (canAssign()) openAssign();
+  else if (isBoss()) setTab('edificios');
+}
+window.addEventListener('resize', () => { applyLayout(); if (isBoss()) renderRows(); });
+function renderMap(){
+  const el = $('mapPane');
+  if (!el) return;
+  el.innerHTML = buildings.map(b => {
+    const q = encodeURIComponent(b.name||b.address||'');
+    return `<a class="map-item" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">${esc(b.name||b.id)}<div class="muted">Abrir en Mapas</div></a>`;
+  }).join('') || '<div class="card muted">Sin sitios para el mapa.</div>';
+}
+function renderTeam(){
+  const el = $('teamPane');
+  if (!el) return;
+  el.innerHTML = techs.map(t => `<div class="b-item">${esc(t.name)}<div class="muted">${esc(t.role||'worker')}</div></div>`).join('')
+    || '<div class="card muted">Sin equipo.</div>';
+}
 
 $('bSearch').oninput = e => { bQuery = e.target.value; renderBuildings(); };
 document.querySelectorAll('.chip').forEach(ch => {
@@ -298,6 +407,8 @@ async function loadBoard(){
   if (s) s.forEach(d => jDocs.push({id:d.id, ...d.data(), _wt:true}));
   jobs = jDocs;
   renderBuildings();
+  renderMap();
+  renderTeam();
   if (isBoss()) renderRows();
   else renderMySchedule();
 }
@@ -317,6 +428,12 @@ function renderBuildings(){
 function selectBuilding(id){
   selectedBuilding = id;
   renderBuildings();
+  if (isPhone() && !forceDesktop) {
+    setTab('agenda');
+    if (isBoss()) renderRows();
+    else renderMySchedule();
+    return;
+  }
   if (isBoss()) loadMonths(id);
   else renderMySchedule();
 }
@@ -349,6 +466,7 @@ function assignedOf(j){
 }
 
 function renderRows(){
+  if (!useDesk()) { renderMobileAgenda(); return; }
   $('rows').innerHTML = techs.map(t => {
     const mine = jobs.filter(j => {
       if (!jobDayOk(j)) return false;
@@ -376,6 +494,33 @@ function renderRows(){
       <div class="lane">${slots}${cards}${empty}</div>
     </div>`;
   }).join('');
+}
+function renderMobileAgenda(){
+  $('hours').innerHTML = '';
+  $('rows').innerHTML = techs.map(t => {
+    const list = jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name));
+    let rows = HOURS.map(h => {
+      const at = list.filter(j => jobTime(j).getHours()===h);
+      let cells = at.map(j => {
+        const st = jobTime(j); const en = jobEnd(j, st);
+        const addr = j.address || j.title || 'Job';
+        const kind = j.kind || 'INSPECTION';
+        return `<div class="jcard mcard" onclick="tapCard('${j.id}','${t.uid}',${h})"><div>${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${fmt(st)}–${fmt(en)}</div></div>`;
+      }).join('');
+      if (!cells) cells = `<div class="mempty" onclick="tapEmpty('${t.uid}',${h})">${list.length?'':'No jobs scheduled'}</div>`;
+      return `<div class="mrow"><div class="mh">${hLabel(h)}</div><div class="mjobs">${cells}</div></div>`;
+    }).join('');
+    return `<div class="mtech"><div class="mtech-h">${esc(t.name)} · ${list.length} jobs</div>${rows}</div>`;
+  }).join('') || '<div class="card muted">Sin equipo.</div>';
+}
+function tapCard(id, uid, hour){
+  if (!canAssign()) return;
+  pickJobId = id;
+  openMove(id, hour, uid);
+}
+function tapEmpty(uid, hour){
+  if (!canAssign() || !pickJobId) return;
+  openMove(pickJobId, hour, uid);
 }
 function fmt(d){
   const h = d.getHours()%12===0?12:d.getHours()%12;

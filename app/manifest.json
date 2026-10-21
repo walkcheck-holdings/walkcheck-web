@@ -1,0 +1,10 @@
+{
+  "name": "Walkcheck",
+  "short_name": "Walkcheck",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#34C759",
+  "theme_color": "#34C759",
+  "lang": "es"
+}
