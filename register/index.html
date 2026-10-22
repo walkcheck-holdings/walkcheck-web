@@ -30,6 +30,12 @@
 <div class="card">
   <h2>Crear mi cuenta</h2>
   <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Elige el tipo de compañía.</p>
+  <label>Plan</label>
+  <select id="plan">
+    <option value="crew5">CREW 5 $99.99</option>
+    <option value="crew10">CREW 10 $149.99</option>
+    <option value="unlimited">UNLIMITED $299.99</option>
+  </select>
   <label>Nombre de la compañía</label>
   <input id="name" type="text" required>
   <label>Tu nombre</label>
@@ -45,6 +51,7 @@
   <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta - 15 dias gratis</button>
   <div class="err" id="err"></div>
   <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
+  <p class="muted">¿Dudas? Escríbenos a <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a></p>
 </div>
 <script>
 const firebaseConfig = {
@@ -56,6 +63,16 @@ const firebaseConfig = {
   appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
 };
 firebase.initializeApp(firebaseConfig);
+function normalizePlan(raw){
+  const p = String(raw||'').toLowerCase().replace(/[_-\s]/g,'');
+  if (p === 'crew5' || p === 'crew05') return 'crew5';
+  if (p === 'crew10') return 'crew10';
+  if (p === 'unlimited' || p === 'unlimit') return 'unlimited';
+  return '';
+}
+const planSel = document.getElementById('plan');
+const fromUrl = normalizePlan(new URLSearchParams(location.search).get('plan'));
+if (fromUrl) planSel.value = fromUrl;
 const sel = document.getElementById('companyType');
 (window.COMPANY_TYPE_OPTIONS||[]).forEach(o => {
   const opt = document.createElement('option');
@@ -79,8 +96,7 @@ document.getElementById('go').onclick = async () => {
     const db = firebase.firestore();
     const ref = db.collection('companies').doc();
     const label = (window.COMPANY_TYPE_OPTIONS||[]).find(o => o.id===companyType)?.label || companyType;
-    const allowed = { crew_5: 1, crew_10: 1, unlimited: 1 };
-    const plan = allowed[(new URLSearchParams(location.search).get('plan')||'')] ? new URLSearchParams(location.search).get('plan') : 'crew_10';
+    const plan = normalizePlan(planSel.value) || fromUrl || 'crew10';
     const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
     await ref.set({
       id: ref.id, name, companyType, industry: label, panel: companyType, plan,

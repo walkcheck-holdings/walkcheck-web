@@ -20,6 +20,10 @@
 </style>
 </head>
 <body>
+<script>
+const PAYMENT_LINKS = { crew5: "", crew10: "", unlimited: "" };
+function planHref(id){ return PAYMENT_LINKS[id] || ('/register/?plan=' + id); }
+</script>
 <header><a href="/">Walkcheck</a></header>
 <div class="wrap">
   <h1>Tu prueba de 15 días terminó</h1>
@@ -28,21 +32,26 @@
     <h3>WALKCHECK CREW 5</h3>
     <p class="muted">Hasta 5 trabajadores</p>
     <div class="price">$99.99/mes</div>
-    <a class="btn" href="https://wa.me/13055824136?text=Quiero%20CREW%205">Activar por WhatsApp</a>
+    <a class="btn" id="planBtnCrew5" href="/register/?plan=crew5">Empezar 15 días gratis</a>
   </div>
   <div class="card pop">
     <h3>WALKCHECK CREW 10 — MÁS POPULAR</h3>
     <p class="muted">Hasta 10 trabajadores</p>
     <div class="price">$149.99/mes</div>
-    <a class="btn" href="https://wa.me/13055824136?text=Quiero%20CREW%2010">Activar por WhatsApp</a>
+    <a class="btn" id="planBtnCrew10" href="/register/?plan=crew10">Empezar 15 días gratis</a>
   </div>
   <div class="card">
     <h3>WALKCHECK UNLIMITED</h3>
     <p class="muted">Trabajadores ilimitados</p>
     <div class="price">$299.99/mes</div>
-    <a class="btn" href="https://wa.me/13055824136?text=Quiero%20UNLIMITED">Activar por WhatsApp</a>
+    <a class="btn" id="planBtnUnlimited" href="/register/?plan=unlimited">Empezar 15 días gratis</a>
   </div>
   <a class="btn ghost" href="/app/">Volver al login</a>
 </div>
+<script>
+document.getElementById('planBtnCrew5').href = planHref('crew5');
+document.getElementById('planBtnCrew10').href = planHref('crew10');
+document.getElementById('planBtnUnlimited').href = planHref('unlimited');
+</script>
 </body>
 </html>

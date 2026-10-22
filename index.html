@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WalkCheck — Recorridos profesionales de propiedades</title>
@@ -117,12 +116,9 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 .fcols a{display:block;color:#BFD6F2;text-decoration:none;font-size:14.5px;margin-bottom:10px}
 .fcols a:hover{color:#fff}
 .fbot{border-top:1px solid rgba(255,255,255,.12);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px;color:#8FA9C9}
-/* ===== WA FLOAT ===== */
-.wa-float{position:fixed;right:22px;bottom:22px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--wa);display:flex;align-items:center;justify-content:center;font-size:30px;text-decoration:none;box-shadow:0 10px 28px rgba(37,211,102,.5);transition:.15s}
-.wa-float:hover{transform:scale(1.08)}
-.ai-float{position:fixed;right:22px;bottom:96px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
+.ai-float{position:fixed;right:22px;bottom:22px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
 .ai-float:hover{transform:scale(1.08);background:var(--navy3)}
-.ai-box{position:fixed;right:22px;bottom:172px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
+.ai-box{position:fixed;right:22px;bottom:96px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
 .ai-box.on{display:flex}
 .ai-hd{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
 .ai-hd b{flex:1;font-size:15px}
@@ -184,14 +180,12 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .cta-final p{font-size:15px;margin:10px 0 18px}
   footer{padding:36px 0 90px}
   .fcols{grid-template-columns:1fr;gap:22px;margin-bottom:24px}
-  .wa-float,.ai-float{width:48px;height:48px;right:12px;font-size:20px}
-  .wa-float{bottom:12px}
-  .ai-float{bottom:68px}
+  .ai-float{width:48px;height:48px;right:12px;bottom:12px;font-size:20px}
   .ai-box{
     left:auto;
     right:12px;
     width:min(300px,calc(100vw - 24px));
-    bottom:124px;
+    bottom:68px;
     height:min(38vh,300px);
     max-height:300px;
     border-radius:14px;
@@ -229,7 +223,6 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <button class="lang-toggle" onclick="toggleLang()">EN</button>
       <a class="btn btn-green btn-sm" href="/register/">15 días gratis</a>
       <a class="btn-enter" href="/app/" data-i18n="navEnter">Entrar</a>
-      <a class="btn btn-green btn-sm" id="waHd" href="https://wa.me/13055824136?text=Hola%2C%20vi%20WalkCheck%20en%20walkcheck.app%20y%20quiero%20hablar%20con%20ventas" target="_blank" rel="noopener" data-i18n="navCta">Hablar con Ventas</a>
     </div>
   </div>
 </header>
@@ -240,11 +233,10 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <h1 data-i18n="heroT">La solución todo-en-uno para profesionales de <span class="hl">condominios</span></h1>
       <p class="sub" data-i18n="heroS">Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.</p>
       <div class="hero-cta">
-        <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 28px">Crear mi cuenta - 15 dias gratis</a>
-        <a class="btn btn-wa" id="waHero" href="https://wa.me/13055824136?text=Hola%2C%20vi%20WalkCheck%20en%20walkcheck.app%20y%20quiero%20una%20demo" target="_blank" rel="noopener" data-i18n="heroCta1">💬 Agenda una demo</a>
+        <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 28px" data-i18n="heroMain">Empezar 15 días gratis</a>
         <a class="btn btn-outline" href="#precios" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-i18n="heroCta2">Ver precios</a>
       </div>
-      <p class="hero-note" data-i18n="heroNote">Sin tarjeta de crédito · Te activamos por WhatsApp</p>
+      <p class="hero-note" data-i18n="heroNote">Sin tarjeta de crédito · 15 días gratis al registrarte</p>
       <div class="trust">
         <div>📋 <span data-i18n="t1">Checklists por área</span></div>
         <div>📸 <span data-i18n="t2">Fotos con ubicación</span></div>
@@ -383,7 +375,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
           <li data-i18n="core3">Soporte por email</li>
           <li data-i18n="core4">Analítica e informes básicos</li>
         </ul>
-        <a class="btn btn-outline" href="/register/?plan=crew_5" data-i18n="planCta">Empezar 15 días gratis</a>
+        <a class="btn btn-outline" id="planBtnCrew5" href="/register/?plan=crew5" data-i18n="planCta">Empezar 15 días gratis</a>
       </div>
       <div class="plan pop">
         <span class="pop-tag" data-i18n="popTag">Más popular</span>
@@ -394,26 +386,25 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
           <li data-i18n="conn1">Hasta 10 trabajadores</li>
           <li data-i18n="conn2">Checklists y plantillas</li>
           <li data-i18n="conn3">Soporte prioritario</li>
-          <li data-i18n="conn4">Analítica avanzada</li>
+          <li data-i18n="conn4">Historial mensual y reportes</li>
           <li data-i18n="conn5">Panel web para la oficina</li>
         </ul>
-        <a class="btn btn-blue" href="/register/?plan=crew_10" data-i18n="planCta2">Empezar 15 días gratis</a>
+        <a class="btn btn-blue" id="planBtnCrew10" href="/register/?plan=crew10" data-i18n="planCta2">Empezar 15 días gratis</a>
       </div>
       <div class="plan">
         <h3 data-i18n="planUnlim">UNLIMITED</h3>
         <div class="price">$299.99<small data-i18n="perMo3">/mes</small></div>
-        <p class="desc" data-i18n="growD">Trabajadores ilimitados + todo</p>
+        <p class="desc" data-i18n="growD">Trabajadores ilimitados</p>
         <ul>
           <li data-i18n="grow1">Trabajadores ilimitados</li>
-          <li data-i18n="grow2">Flujos y roles a medida</li>
-          <li data-i18n="grow3">Success manager</li>
-          <li data-i18n="grow4">API</li>
-          <li data-i18n="grow5">Reportes avanzados</li>
+          <li data-i18n="grow2">Todas las funciones de CREW 10</li>
+          <li data-i18n="grow3">Soporte prioritario</li>
+          <li data-i18n="grow4">Acompañamiento en la activación de tu compañía</li>
         </ul>
-        <a class="btn btn-outline" href="/register/?plan=unlimited" data-i18n="planCta3">Empezar 15 días gratis</a>
+        <a class="btn btn-outline" id="planBtnUnlimited" href="/register/?plan=unlimited" data-i18n="planCta3">Empezar 15 días gratis</a>
       </div>
     </div>
-    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. En web te activamos por WhatsApp; en iPhone por Apple.</p>
+    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Empiezas al registrarte en esta página; la app funciona en Android y el panel web en cualquier dispositivo.</p>
   </div>
 </section>
 
@@ -421,8 +412,8 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   <div class="wrap">
     <h2 data-i18n="faqT">Preguntas frecuentes</h2>
     <div class="faq">
-      <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Escríbele a nuestra IA por WhatsApp. Te registra, te activa la cuenta y te explica todo en 2 minutos. Enseguida estás haciendo tu primer recorrido.</div></details>
-      <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No para empezar. Puedes probar sin tarjeta. Cuando decidas activar tu plan, ahí sí agregas la tarjeta y se factura automático.</div></details>
+      <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Crea tu cuenta en esta página: eliges tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app y te acompañamos en tu primer recorrido.</div></details>
+      <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.</div></details>
       <details><summary data-i18n="fq3">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa3">La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.</div></details>
       <details><summary data-i18n="fq4">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa4">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
       <details><summary data-i18n="fq5">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa5">Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.</div></details>
@@ -433,8 +424,8 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 <div class="wrap">
   <div class="cta-final">
     <h2 data-i18n="ctaT">Empieza tu primer recorrido hoy</h2>
-    <p data-i18n="ctaS">Escríbenos y te activamos en minutos.</p>
-    <a class="btn btn-wa" id="waCta" href="https://wa.me/13055824136?text=Hola%2C%20vi%20WalkCheck%20en%20walkcheck.app%20y%20quiero%20una%20demo" target="_blank" rel="noopener" style="font-size:18px;padding:16px 40px" data-i18n="ctaB">💬 Hablar por WhatsApp</a>
+    <p data-i18n="ctaS">Crea tu cuenta y empieza tus 15 días gratis.</p>
+    <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 40px" data-i18n="ctaB">Empezar 15 días gratis</a>
   </div>
 </div>
 
@@ -453,7 +444,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       </div>
       <div>
         <h4 data-i18n="ftC">Contacto</h4>
-        <a id="waFooter" href="https://wa.me/13055824136?text=Hola%2C%20vi%20WalkCheck%20en%20walkcheck.app%20y%20quiero%20hablar%20con%20ventas" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="mailto:info@walkcheck.app">Contacto:  info@walkcheck.app</a>
       </div>
       <div>
         <h4 data-i18n="ftL">Legal</h4>
@@ -476,35 +467,28 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   </div>
   <div class="ai-msgs" id="aiMsgs"></div>
   <form class="ai-form" id="aiForm">
-    <input id="aiInput" autocomplete="off" maxlength="800" data-i18n-ph="aiPh" placeholder="Pregunta lo que quieras…">
+    <input id="aiInput" autocomplete="off" maxlength="800" data-i18n-ph="aiPh" placeholder="Pregunta por WalkCheck o una demo…">
     <button type="submit" data-i18n="aiSend">Enviar</button>
   </form>
 </div>
-<a class="wa-float" id="waFloat" href="https://wa.me/13055824136?text=Hola%2C%20vi%20WalkCheck%20en%20walkcheck.app%20y%20quiero%20una%20demo" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
-
 <script>
-var WA_NUMBER = "13055824136";
-function waLink(msg){ return "https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(msg); }
+const PAYMENT_LINKS = { crew5: "", crew10: "", unlimited: "" };
+function planHref(id){ return PAYMENT_LINKS[id] || ('/register/?plan=' + id); }
+function bindPlanButtons(){
+  var map = { planBtnCrew5: 'crew5', planBtnCrew10: 'crew10', planBtnUnlimited: 'unlimited' };
+  Object.keys(map).forEach(function(id){
+    var a = document.getElementById(id);
+    if (a) a.href = planHref(map[id]);
+  });
+}
 var lang = "es";
-var STR = {
-  es: {
-    hero:"Hola, vi WalkCheck en walkcheck.app y quiero una demo",
-    ventas:"Hola, vi WalkCheck en walkcheck.app y quiero una demo",
-    plan:function(p){ return "Hola, vi WalkCheck en walkcheck.app y quiero una demo del plan "+p; }
-  },
-  en: {
-    hero:"Hi, I saw WalkCheck on walkcheck.app and I want a demo",
-    ventas:"Hi, I saw WalkCheck on walkcheck.app and I want a demo",
-    plan:function(p){ return "Hi, I saw WalkCheck on walkcheck.app and I want a demo of the "+p+" plan"; }
-  }
-};
 var I18N = {
 es:{
-navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",navCta:"Hablar con Ventas",
-aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck y a agendar una demo. Si quieres hablar ya, toca el botón verde de WhatsApp.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
+navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",
+aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck. Para empezar, crea tu cuenta en /register/. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
 heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
 heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
-heroCta1:"💬 Agenda una demo",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · Te activamos por WhatsApp",
+heroMain:"Empezar 15 días gratis",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · 15 días gratis al registrarte",
 t1:"Checklists por área",t2:"Fotos con ubicación",t3:"Reporte por WhatsApp",
 phT:"Recorrido · Octubre",phS:"8000 Harding Ave · Piso 3",
 ph1:"Pasillos — Sin objetos",ph2:"Estacionamientos — Con objetos",ph3:"Lobby — Todo en orden",ph4:"Cuarto de basura — Pendiente",ph5:"Piscina — Todo en orden",
@@ -540,25 +524,25 @@ perMo:"/mes",perMo2:"/mes",perMo3:"/mes",
 popTag:"Más popular",
 planCrew5:"CREW 5",planCrew10:"CREW 10",planUnlim:"UNLIMITED",
 coreD:"Hasta 5 trabajadores",core1:"Hasta 5 trabajadores",core2:"Checklists de recorrido",core3:"Soporte por email",core4:"Analítica e informes básicos",
-connD:"Hasta 10 trabajadores",conn1:"Hasta 10 trabajadores",conn2:"Checklists y plantillas",conn3:"Soporte prioritario",conn4:"Analítica avanzada",conn5:"Panel web para la oficina",
-growD:"Trabajadores ilimitados + todo",grow1:"Trabajadores ilimitados",grow2:"Flujos y roles a medida",grow3:"Success manager",grow4:"API",grow5:"Reportes avanzados",
+connD:"Hasta 10 trabajadores",conn1:"Hasta 10 trabajadores",conn2:"Checklists y plantillas",conn3:"Soporte prioritario",conn4:"Historial mensual y reportes",conn5:"Panel web para la oficina",
+growD:"Trabajadores ilimitados",grow1:"Trabajadores ilimitados",grow2:"Todas las funciones de CREW 10",grow3:"Soporte prioritario",grow4:"Acompañamiento en la activación de tu compañía",
 planCta:"Empezar 15 días gratis",planCta2:"Empezar 15 días gratis",planCta3:"Empezar 15 días gratis",
-prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. En web te activamos por WhatsApp; en iPhone por Apple.",
+prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Empiezas al registrarte en esta página; la app funciona en Android y el panel web en cualquier dispositivo.",
 faqT:"Preguntas frecuentes",
-fq1:"¿Cómo empiezo?",fa1:"Toca Crear mi cuenta — 15 días gratis, registra tu compañía y entra a walkcheck.app/app. Sin tarjeta.",
-fq2:"¿Necesito tarjeta de crédito?",fa2:"No para empezar. Tienes 15 días gratis. Al terminar, activas CREW 5 ($99.99), CREW 10 ($149.99) o UNLIMITED ($299.99) por WhatsApp o Apple.",
+fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página: eliges tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app y te acompañamos en tu primer recorrido.",
+fq2:"¿Necesito tarjeta de crédito?",fa2:"No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.",
 fq3:"¿Funciona en iPhone?",fa3:"La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.",
 fq4:"¿Puedo cambiar de plan o cancelar?",fa4:"Sí, cuando quieras. Sin contratos ni penalidades.",
 fq5:"¿Mis datos están seguros?",fa5:"Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.",
-ctaT:"Empieza tu primer recorrido hoy",ctaS:"Escríbenos y te activamos en minutos.",ctaB:"💬 Hablar por WhatsApp",
+ctaT:"Empieza tu primer recorrido hoy",ctaS:"Crea tu cuenta y empieza tus 15 días gratis.",ctaB:"Empezar 15 días gratis",
 ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
 },
 en:{
-navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",navCta:"Talk to Sales",
-aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck and booking a demo. To talk now, tap the green WhatsApp button.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
+navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",
+aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck. To start, create your account at /register/. If you need help, email  soporte@walkcheck.app.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
 heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
 heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",
-heroCta1:"💬 Book a demo",heroCta2:"See pricing",heroNote:"No credit card · We activate you via WhatsApp",
+heroMain:"Start 15-day free trial",heroCta2:"See pricing",heroNote:"No credit card · 15 days free when you sign up",
 t1:"Checklists by area",t2:"Photos with location",t3:"WhatsApp report",
 phT:"Walkthrough · October",phS:"8000 Harding Ave · Floor 3",
 ph1:"Hallways — No items",ph2:"Parking — With items",ph3:"Lobby — All good",ph4:"Trash room — Pending",ph5:"Pool — All good",
@@ -594,32 +578,22 @@ perMo:"/mo",perMo2:"/mo",perMo3:"/mo",
 popTag:"Most Popular",
 planCrew5:"CREW 5",planCrew10:"CREW 10",planUnlim:"UNLIMITED",
 coreD:"Up to 5 workers",core1:"Up to 5 workers",core2:"Walkthrough checklists",core3:"Email support",core4:"Basic analytics &amp; reporting",
-connD:"Up to 10 workers",conn1:"Up to 10 workers",conn2:"Checklists and templates",conn3:"Priority support",conn4:"Advanced analytics",conn5:"Web panel for the office",
-growD:"Unlimited workers + everything",grow1:"Unlimited workers",grow2:"Custom workflows &amp; roles",grow3:"Success manager",grow4:"API",grow5:"Advanced reports",
+connD:"Up to 10 workers",conn1:"Up to 10 workers",conn2:"Checklists and templates",conn3:"Priority support",conn4:"Monthly history and reports",conn5:"Web panel for the office",
+growD:"Unlimited workers",grow1:"Unlimited workers",grow2:"All CREW 10 features",grow3:"Priority support",grow4:"Help activating your company",
 planCta:"Start 15-day free trial",planCta2:"Start 15-day free trial",planCta3:"Start 15-day free trial",
-prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. On the web we activate you via WhatsApp; on iPhone via Apple.",
+prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. You start when you sign up on this page; the app runs on Android and the web panel on any device.",
 faqT:"Frequently asked questions",
-fq1:"How do I start?",fa1:"Tap Create my account — 15 days free, register your company, and go to walkcheck.app/app. No card.",
-fq2:"Do I need a credit card?",fa2:"Not to start. You get 15 days free. After that, activate CREW 5 ($99.99), CREW 10 ($149.99) or UNLIMITED ($299.99) via WhatsApp or Apple.",
+fq1:"How do I start?",fa1:"Create your account on this page: choose your plan and start your 15 free days. If you need help, email  soporte@walkcheck.app and we walk you through your first inspection.",
+fq2:"Do I need a credit card?",fa2:"Not to start. You get 15 days free. When you decide to stay, we activate your plan and arrange payment with you.",
 fq3:"Does it work on iPhone?",fa3:"The app runs on Android and the web panel on any device. The iPhone version is in development.",
 fq4:"Can I change plans or cancel?",fa4:"Yes, anytime. No contracts or penalties.",
 fq5:"Is my data safe?",fa5:"Your buildings, photos and reports are stored in the cloud and only your company can see them.",
-ctaT:"Start your first walkthrough today",ctaS:"Message us and we activate you in minutes.",ctaB:"💬 Chat on WhatsApp",
+ctaT:"Start your first walkthrough today",ctaS:"Create your account and start your 15 free days.",ctaB:"Start 15-day free trial",
 ftD:"Professional property walkthroughs, made in Miami.",ftP:"Product",ftPr:"Pricing",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
 }};
 function tab(n){
   document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('on', i===n); });
   document.querySelectorAll('.pillar').forEach(function(p,i){ p.classList.toggle('on', i===n); });
-}
-function refreshWa(){
-  document.getElementById("waHero").href = waLink(STR[lang].hero);
-  document.getElementById("waFloat").href = waLink(STR[lang].hero);
-  document.getElementById("waFooter").href = waLink(STR[lang].hero);
-  document.getElementById("waHd").href = waLink(STR[lang].ventas);
-  document.getElementById("waCta").href = waLink(STR[lang].hero);
-  document.querySelectorAll(".wa-plan").forEach(function(a){
-    a.href = waLink(STR[lang].plan(a.getAttribute("data-plan")));
-  });
 }
 function applyLang(){
   var d = I18N[lang];
@@ -633,10 +607,10 @@ function applyLang(){
   });
   document.documentElement.lang = lang;
   document.querySelector(".lang-toggle").textContent = (lang==="es") ? "EN" : "ES";
-  refreshWa();
 }
 function toggleLang(){ lang = (lang==="es") ? "en" : "es"; applyLang(); }
 applyLang();
+bindPlanButtons();
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -657,7 +631,7 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: recorridos de condominios, fotos, reportes, precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). No existen planes Starter, Growth ni Scale. 15 días gratis sin tarjeta en walkcheck.app/register. Al vencer se activa por WhatsApp o Apple en iOS. Tu meta es cerrar la demo por WhatsApp al +1 305 582 4136. Si preguntan de otro tema, redirige a WalkCheck o al botón verde de WhatsApp. Sé breve."
+    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: recorridos de condominios, fotos, reportes, precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis sin tarjeta en walkcheck.app/register. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. Para cerrar, apunta a /register/ y a  soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a  soporte@walkcheck.app. Sé breve."
 });
 const chat = model.startChat();
 let sent = 0;
@@ -702,5 +676,6 @@ document.getElementById("aiForm").addEventListener("submit", async (e) => {
   }
 });
 </script>
-</body>
-</html>
+
+
+</body></html>
