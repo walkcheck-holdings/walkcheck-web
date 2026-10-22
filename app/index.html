@@ -60,7 +60,7 @@
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
   .addbox { padding: 12px 14px; border-top: 1px solid #E5E5EA; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
   .weekbar { background: #fff; padding: 10px 14px 6px; }
   .weekbar h2 { margin: 0 0 8px; font-size: 16px; }
   .weekdays { display: flex; }
@@ -69,12 +69,14 @@
   .wd.on { border-bottom: 2px solid #34C759; font-weight: 800; color: #34C759; }
   .hours { display: flex; padding-left: 140px; overflow-x: auto; background: #fff; border-bottom: 1px solid #E5E5EA; }
   .hour { min-width: 90px; width: 90px; font-size: 12px; font-weight: 700; color: #6B7280; padding: 8px 0; }
-  #rows { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-  .tech { display: flex; border-bottom: 1px solid #E5E5EA; min-height: 136px; background: #fff; }
+  #rows { overflow: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; -webkit-overflow-scrolling: touch; }
+  .tech { display: flex; align-items: stretch; border-bottom: 1px solid #E5E5EA; min-height: 136px; background: #fff; flex: 0 0 auto; }
   .tech-name { width: 140px; min-width: 140px; padding: 12px; font-size: 14px; font-weight: 800; }
   .tech-name span { display: block; font-weight: 500; color: #8E8E93; font-size: 12px; }
-  .lane { position: relative; display: flex; min-height: 136px; overflow-x: auto; flex: 1; }
-  .slot { min-width: 90px; width: 90px; min-height: 136px; height: 100%; border-left: 1px solid #EEEEEE; }
+  .lane { position: relative; display: flex; min-height: 136px; overflow-x: auto; flex: 1; align-self: stretch; }
+  .slot { min-width: 90px; width: 90px; min-height: 136px; align-self: stretch; border-left: 1px solid #EEEEEE; }
+  .tech.grid-fill { flex: 1 1 auto; min-height: 48px; border-bottom: none; }
+  .tech.grid-fill .lane, .tech.grid-fill .slot { min-height: 0; height: auto; }
   .slot.over { background: #E8F8EC; }
   .jcard {
     position: absolute; top: 8px; min-height: 92px; min-width: 150px; padding: 8px 10px; border-radius: 12px;
@@ -99,7 +101,7 @@
   }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #8E8E93; font-size: 14px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
-  #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; }
+  #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; flex: 0 0 auto; }
   #adminLink { background: rgba(0,0,0,.18); }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 12px; }
   .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; max-height: 90dvh; overflow: auto; }
@@ -831,7 +833,7 @@ function renderRows(){
       <div class="tech-name">${esc(t.name)}<span>${list.length} jobs</span></div>
       <div class="lane" style="min-height:${laneH}px;height:${laneH}px">${slots}${cards}${empty}</div>
     </div>`;
-  }).join('');
+  }).join('') + `<div class="tech grid-fill"><div class="tech-name"></div><div class="lane">${hs.map(h => `<div class="slot"></div>`).join('')}</div></div>`;
 }
 function renderMobileAgenda(){
   $('hours').innerHTML = '';
