@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -23,10 +24,14 @@
   body.ready { overflow-x: auto; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
   header { background: #34C759; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  header h1 { margin: 0; font-size: 17px; font-weight: 800; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.2; }
   header h1 a { color: #fff; text-decoration: none; }
   header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 44px; font-size: 14px; }
+  .hdr-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 1; }
+  .hdr-actions a { color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 44px; display: inline-flex; align-items: center; }
   #roleChip { font-size: 13px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #sitesToggle { display: none; }
+  .sites-close { display: none; }
   .muted { color: #8E8E93; font-size: 14px; }
   .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
   .okmsg { color: #1B7A36; font-size: 14px; margin-top: 8px; }
@@ -68,7 +73,7 @@
   #bList { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
-  .co-head { display: flex; align-items: center; justify-content: space-between; padding: 14px; cursor: pointer; min-height: 52px; font-weight: 800; font-size: 16px; border-bottom: 1px solid #E5E5EA; }
+  .co-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 12px 10px; cursor: pointer; min-height: 48px; font-weight: 800; font-size: 14px; border-bottom: 1px solid #E5E5EA; }
   .co-head .chev, .co-row .chev { color: #C7C7CC; font-size: 22px; font-weight: 300; transition: transform .15s; line-height: 1; }
   .co-head.open .chev, .co.open .chev { transform: rotate(90deg); color: #34C759; }
   .co-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #F2F2F7; min-height: 52px; }
@@ -85,7 +90,9 @@
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
   .weekbar { background: #fff; padding: 10px 14px 6px; }
-  .weekbar h2 { margin: 0 0 8px; font-size: 16px; }
+  .weekbar h2 { margin: 0; font-size: 16px; }
+  .week-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .week-tools h2 { flex: 1 1 auto; min-width: 0; }
   .weekdays { display: flex; }
   .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 44px; font-size: 14px; }
   .wd .d { font-size: 11px; color: #8E8E93; }
@@ -115,8 +122,8 @@
   }
   .jcard-kind {
     font-size: 12px; font-weight: 800; line-height: 1.25; text-transform: uppercase;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
-    overflow: hidden; white-space: normal; word-break: normal; overflow-wrap: break-word; flex: 1 1 auto;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    line-clamp: 2; overflow: hidden; white-space: normal; word-break: normal; overflow-wrap: break-word; flex: 1 1 auto;
   }
   .jcard-t, .jcard .t {
     font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -129,6 +136,14 @@
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 12px; }
   .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; max-height: 90dvh; overflow: auto; }
   .hidden { display: none !important; }
+  #viewJobs { position: fixed; inset: 0; background: #F2F2F7; z-index: 35; overflow: auto; padding-bottom: 24px; }
+  .jobhead { background: #34C759; color: #fff; padding: 12px 14px; padding-top: max(12px, env(safe-area-inset-top)); display: flex; align-items: center; gap: 10px; }
+  .jobhead h2 { margin: 0; font-size: 17px; flex: 1; }
+  .phone { color: #1565C0; font-weight: 800; text-decoration: none; font-size: 18px; }
+  .prog { background: #E8F8EC; border-radius: 12px; padding: 12px; font-weight: 800; margin: 12px 0; }
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thumbs img { width: 88px; height: 88px; object-fit: cover; border-radius: 10px; }
+  .done-mark { font-weight: 900; }
   .card { background: #fff; border-radius: 12px; padding: 16px; margin: 12px; }
   .back { background: none; border: none; color: #2E7D32; font-size: 15px; cursor: pointer; }
   #phoneTabs { display: none; background: #fff; border-bottom: 1px solid #E5E5EA; }
@@ -143,8 +158,19 @@
   .mrow { display: flex; min-height: 64px; border-bottom: 1px solid #F2F2F7; }
   .mh { width: 64px; min-width: 64px; padding: 10px 6px; font-size: 12px; font-weight: 800; color: #6B7280; }
   .mjobs { flex: 1; padding: 6px 8px 6px 0; }
-  .mcard { position: relative; left: auto !important; width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 88px; margin-bottom: 6px; cursor: pointer; }
+  .mcard { position: relative; left: auto !important; width: 100% !important; min-width: 0 !important; height: auto; min-height: 60px; margin-bottom: 6px; cursor: pointer; }
   .mempty { color: #C7C7CC; font-size: 14px; min-height: 48px; display: flex; align-items: center; }
+  .daycard {
+    display: block; width: 100%; text-align: left; background: #fff; border: none;
+    border-radius: 12px; padding: 14px 14px 14px 16px; margin: 0 0 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06); min-height: 88px; cursor: pointer;
+  }
+  .daycard-k { font-weight: 800; font-size: 16px; }
+  .daycard-t { font-size: 15px; font-weight: 700; color: #111; margin-top: 4px; }
+  .daycard-a, .daycard-w { font-size: 14px; color: #6B7280; margin-top: 2px; }
+  .day-empty { background: #fff; color: #8E8E93; text-align: center; padding: 28px 16px; border-radius: 12px; margin-bottom: 12px; }
+  .day-assign { margin-top: 8px; }
+  #dayList { padding: 12px; }
   .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
   #typeBar { display: none; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; }
   body.ready #typeBar { display: flex; }
@@ -184,53 +210,93 @@
     max-width: 140px; overflow: hidden; text-overflow: ellipsis;
   }
   .tchip.add { background: #F0F0F0; color: #111; flex-shrink: 0; max-width: none; }
-  @media (max-width: 1023px) {
-    body.ready:not(.desk) { overflow-x: hidden; }
-    body.ready:not(.desk) #phoneTabs { display: flex; }
-    body.ready:not(.desk) #deskToggle { display: block; }
-    body.ready:not(.desk) #bottomNav { display: flex; }
-    body.ready:not(.desk) #board { flex-direction: column; height: auto; min-height: calc(100dvh - 160px); padding-bottom: 72px; }
-    body.ready:not(.desk) #sidebar, body.ready:not(.desk) #main, body.ready:not(.desk) #mapPane, body.ready:not(.desk) #teamPane { width: 100%; min-width: 0; border-right: none; }
-    body.ready:not(.desk) #hours { display: none; }
-    body.ready:not(.desk) .weekbar h2 { font-size: 15px; padding-right: 110px; }
-    body.ready:not(.desk).tab-edificios #main, body.ready:not(.desk).tab-edificios #mapPane, body.ready:not(.desk).tab-edificios #teamPane { display: none; }
-    body.ready:not(.desk).tab-agenda #sidebar, body.ready:not(.desk).tab-agenda #mapPane, body.ready:not(.desk).tab-agenda #teamPane { display: none; }
-    body.ready:not(.desk).tab-mapa #sidebar, body.ready:not(.desk).tab-mapa #main, body.ready:not(.desk).tab-mapa #teamPane { display: none; }
-    body.ready:not(.desk).tab-equipo #sidebar, body.ready:not(.desk).tab-equipo #main, body.ready:not(.desk).tab-equipo #mapPane { display: none; }
-    body.ready:not(.desk).tab-mapa #mapPane, body.ready:not(.desk).tab-equipo #teamPane { display: block; }
-    body.ready:not(.desk) #assignBar { display: none !important; }
-    body.ready header { padding-right: 118px; }
+  @media (max-width: 767px) {
+    html, body { overflow-x: hidden; }
+    header {
+      flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;
+      padding: 10px 12px 12px; padding-top: max(10px, env(safe-area-inset-top));
+    }
+    header h1 { flex: 1 0 100%; width: 100%; font-size: 18px; }
+    .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
+    header button, .hdr-actions a {
+      min-height: 44px; padding: 10px 14px; font-size: 14px; flex: 0 0 auto;
+    }
+    #roleChip { max-width: none; width: 100%; white-space: normal; overflow: visible; line-height: 1.3; }
+    #deskToggle, #phoneTabs { display: none !important; }
+    body.ready #bottomNav { display: flex; }
+    body.ready #board {
+      display: flex; flex-direction: column; height: auto;
+      min-height: calc(100dvh - 160px); padding-bottom: 72px; overflow: visible;
+    }
+    #sidebar {
+      display: none; width: 100%; min-width: 0; max-width: none; flex: none;
+      max-height: none; border-right: none; overflow: auto;
+    }
+    body.sites-open #sidebar {
+      display: flex; position: fixed; inset: 0; z-index: 32;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .sites-close {
+      display: block; margin: 8px 14px 0; width: calc(100% - 28px);
+    }
+    #main, #mapPane, #teamPane { width: 100%; min-width: 0; }
+    #hours, .hours { display: none !important; }
+    #sitesToggle { display: inline-flex; }
+    #filtersBtn { display: none; }
+    .weekbar h2 { font-size: 17px; padding: 0; }
+    .week-tools { align-items: stretch; }
+    .week-tools h2 { flex: 1 1 100%; }
+    .week-tools .btn.ok { width: auto; flex: 0 0 auto; }
+    .weekdays { width: 100%; }
+    .wd { min-width: 0; font-size: 13px; overflow: hidden; }
+    #typeBar { padding: 0 0 8px; }
+    body.ready.tab-mapa #main, body.ready.tab-mapa #sidebar { display: none; }
+    body.ready.tab-equipo #main, body.ready.tab-equipo #sidebar { display: none; }
+    body.ready.tab-mapa #mapPane, body.ready.tab-equipo #teamPane { display: block; width: 100%; }
+    #assignBar { display: none !important; }
+    .modal { padding: 0; align-items: stretch; justify-content: stretch; }
+    .modal .box {
+      width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh;
+      border-radius: 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    }
+    .jobhead { flex-wrap: wrap; }
+    .jobhead h2 { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+    .jobhead .back { min-height: 44px; min-width: 44px; color: #fff; font-size: 16px; font-weight: 700; }
+    .card { margin: 10px; }
+    #rows { overflow: visible; }
+  }
+  @media (min-width: 768px) {
+    #sitesToggle { display: none !important; }
+    #deskToggle { display: none !important; }
+    #phoneTabs, #bottomNav { display: none !important; }
   }
   body.desk #board { flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 56px); }
   body.desk #sidebar { width: 210px; min-width: 210px; max-width: 210px; display: flex; }
   body.desk #main { min-width: 720px; }
   body.desk #phoneTabs, body.desk #bottomNav, body.desk #mapPane, body.desk #teamPane { display: none !important; }
-  body.desk #deskToggle { display: block; }
-  @media (min-width: 1024px) {
-    #deskToggle { display: none !important; }
-  }
 </style>
 </head>
 <body class="tab-agenda">
 <header>
   <h1><a href="/">Walkcheck</a></h1>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div class="hdr-actions">
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
       <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
     </div>
     <span id="roleChip"></span>
-    <button id="moneyBtn" class="hidden" onclick="openMoney()">Dinero</button>
-    <a id="typesLink" href="/app/settings/job-types/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px;background:rgba(0,0,0,.18)">Tipos</a>
-    <a id="adminLink" href="/admin/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px">SUPER ADMIN</a>
-    <button id="btnLogout" class="hidden">Cerrar sesión</button>
+    <button id="moneyBtn" class="hidden" onclick="openMoney()" data-i18n="money">Dinero</button>
+    <a id="typesLink" href="/app/settings/job-types/" class="hidden" data-i18n="types">Tipos</a>
+    <a id="adminLink" href="/admin/" class="hidden">SUPER ADMIN</a>
+    <button id="btnLogout" class="hidden" data-i18n="logout">Cerrar sesión</button>
   </div>
 </header>
 <button class="btn" id="deskToggle" onclick="toggleDesk()">Ver 2 columnas</button>
 <div id="phoneTabs">
-  <button data-tab="edificios" onclick="setTab('edificios')">Edificios</button>
-  <button class="on" data-tab="agenda" onclick="setTab('agenda')">Agenda</button>
-  <button data-tab="mapa" onclick="setTab('mapa')">Mapa</button>
+  <button data-tab="edificios" onclick="setTab('edificios')" data-i18n="buildings">Edificios</button>
+  <button class="on" data-tab="agenda" onclick="setTab('agenda')" data-i18n="agenda">Agenda</button>
+  <button data-tab="mapa" onclick="setTab('mapa')" data-i18n="map">Mapa</button>
 </div>
 
 <div id="login">
@@ -258,32 +324,34 @@
   <p class="muted" style="margin-top:16px;text-align:center"><a href="mailto:soporte@walkcheck.app">Soporte:  soporte@walkcheck.app</a></p>
 </div>
 
-<div id="board" class="flex flex-col lg:flex-row">
+<div id="board">
   <aside id="sidebar">
+    <button type="button" class="btn ghost sites-close" onclick="toggleSites()" data-i18n="close">Cerrar</button>
     <h2 id="sitesTitle">Buildings</h2>
-    <div style="padding:0 14px">
+    <div style="padding:0 10px">
       <input type="text" id="bSearch" placeholder="Search buildings...">
     </div>
     <div class="chips">
-      <button class="chip on" data-f="All">All</button>
-      <button class="chip pm-only" data-f="Inspections">Inspections</button>
-      <button class="chip pm-only" data-f="Maintenance">Maintenance</button>
+      <button class="chip on" data-f="All" data-i18n="all">Todos</button>
+      <button class="chip pm-only" data-f="Inspections" data-i18n="inspections">Inspecciones</button>
+      <button class="chip pm-only" data-f="Maintenance" data-i18n="maintenance">Mantenimiento</button>
     </div>
     <div id="bList"></div>
     <div class="addbox" id="addbox">
-      <div class="muted" style="font-weight:800;margin-bottom:6px">＋ Nuevo edificio</div>
-      <input type="text" id="nbName" placeholder="Nombre del edificio">
+      <div class="muted" id="addboxLbl" style="font-weight:800;margin-bottom:6px">＋ Nuevo edificio</div>
+      <input type="text" id="nbName" placeholder="Nombre del edificio" data-i18n-ph="buildingName">
       <input type="number" id="nbFloors" value="1" min="1" max="100">
-      <button class="btn" onclick="addBuilding()">Agregar</button>
+      <button class="btn" onclick="addBuilding()" data-i18n="add">Agregar</button>
     </div>
   </aside>
   <section id="main">
     <div class="weekbar">
       <div id="typeBar"></div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div class="week-tools">
         <h2 id="weekTitle">Team Schedule</h2>
-        <button class="btn ok" onclick="goToday()">Today</button>
-        <button class="btn ok ghost" onclick="alert('Filters: Inspections / Maintenance en la izquierda')">Filters</button>
+        <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()">Sites</button>
+        <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
+        <button class="btn ok ghost" id="filtersBtn" data-i18n="filters" onclick="alert(uiT('filtersHint'))">Filtros</button>
       </div>
       <div class="weekdays" id="weekdays"></div>
     </div>
@@ -291,7 +359,7 @@
       <div class="hours" id="hours"></div>
       <div id="rows"></div>
       <div id="assignBar" class="hidden">
-        <button class="btn" onclick="openAssign()">+ Assign Job</button>
+        <button class="btn" onclick="openAssign()" data-i18n="assignJob">+ Asignar trabajo</button>
       </div>
     </div>
     <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
@@ -300,10 +368,10 @@
   <div id="teamPane"></div>
 </div>
 <nav id="bottomNav">
-  <button onclick="goToday();setTab('agenda')">Hoy</button>
-  <button onclick="setTab('edificios')">Edificios</button>
-  <button onclick="setTab('equipo')">Equipo</button>
-  <button class="plus" onclick="phonePlus()">＋ Nuevo</button>
+  <button onclick="goToday();setTab('agenda')" data-i18n="today">Hoy</button>
+  <button onclick="toggleSites()" data-i18n="sites">Sitios</button>
+  <button onclick="setTab('equipo')" data-i18n="team">Equipo</button>
+  <button class="plus" onclick="phonePlus()" data-i18n="newPlus">＋ Nuevo</button>
 </nav>
 
 <div id="viewJobs" class="hidden"></div>
@@ -323,6 +391,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const SLOT = 90;
@@ -344,12 +413,14 @@ function dayHours(){
 let profile = { role: 'worker', companyId: '', displayName: '' };
 let buildings = [];
 let techs = [];
+let jobsUnsub = null;
 let jobs = [];
 let selectedDay = new Date();
 let bFilter = 'All';
 let bQuery = '';
 let selectedBuilding = '';
 let companyType = 'property_management';
+let companyName = '';
 let customTypes = [];
 let preKind = '';
 let forceDesktop = false;
@@ -364,8 +435,19 @@ let editJobId = '';
 let companyList = [];
 let companiesOpen = true;
 const companyLoaded = {};
-function isPhone(){ return window.matchMedia('(max-width: 1023px)').matches; }
-function useDesk(){ return !isPhone() || forceDesktop; }
+function isPhone(){ return window.matchMedia('(max-width: 767px)').matches; }
+function useDesk(){ return !isPhone(); }
+function toggleSites(){
+  const open = !document.body.classList.contains('sites-open');
+  if (open) {
+    phoneTab = 'agenda';
+    ['agenda','edificios','mapa','equipo'].forEach(x => document.body.classList.remove('tab-'+x));
+    document.body.classList.add('tab-agenda');
+  }
+  document.body.classList.toggle('sites-open', open);
+  const btn = $('sitesToggle');
+  if (btn) btn.textContent = open ? uiT('close') : uiT('sites');
+}
 function pack(){
   const t = window.JOB_TEMPLATES || {};
   return t[companyType] || t.property_management || {sitesLabel:'Buildings', searchPlaceholder:'Search buildings...', jobs:['INSPECTION']};
@@ -385,16 +467,16 @@ function panelTitle(){
 function applyCompanyPanel(){
   document.body.dataset.panel = companyType;
   const h = document.querySelector('header h1 a');
-  if (h) h.textContent = 'Walkcheck · ' + panelTitle();
+  if (h) h.textContent = 'Walkcheck';
   document.title = 'Walkcheck · ' + panelTitle();
   const pm = companyType === 'property_management';
   document.querySelectorAll('.pm-only').forEach(el => { el.style.display = pm ? '' : 'none'; });
-  const addLbl = document.querySelector('#addbox .muted');
-  if (addLbl) addLbl.textContent = pm ? '＋ Nuevo edificio' : '＋ Nuevo sitio';
+  const addLbl = $('addboxLbl') || document.querySelector('#addbox .muted');
+  if (addLbl) addLbl.textContent = pm ? uiT('newBuilding') : uiT('newSite');
   const nb = $('nbName');
-  if (nb) nb.placeholder = pm ? 'Nombre del edificio' : 'Nombre del sitio / cliente';
+  if (nb) nb.placeholder = pm ? uiT('buildingName') : uiT('siteName');
   const ed = document.querySelector('#phoneTabs [data-tab="edificios"]');
-  if (ed) ed.textContent = pack().sitesLabel;
+  if (ed) ed.textContent = pm ? uiT('buildings') : uiT('sites');
 }
 
 function isSuper(){
@@ -481,7 +563,7 @@ async function enforceTrial(){
   } catch(_) { return true; }
 }
 
-const LOGIN_I18N = {
+const UI_I18N = {
   es: {
     title: 'Entrar a Walkcheck',
     lead: 'El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.',
@@ -492,7 +574,30 @@ const LOGIN_I18N = {
     eye: 'Mostrar contraseña',
     needEmail: 'Escribe tu correo para enviarte el enlace.',
     sent: 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.',
-    fail: 'No se pudo entrar: '
+    fail: 'No se pudo entrar: ',
+    money:'Dinero', types:'Tipos', logout:'Cerrar sesión',
+    buildings:'Edificios', agenda:'Agenda', map:'Mapa',
+    today:'Hoy', todayBtn:'Hoy', sites:'Sitios', team:'Equipo', newPlus:'＋ Nuevo',
+    filters:'Filtros', filtersHint:'Filtros: Inspecciones / Mantenimiento a la izquierda',
+    assignJob:'+ Asignar trabajo', teamSchedule:'Agenda del equipo', weekOf:'Semana del',
+    mySchedule:'Mi agenda', jobType:'Tipo de trabajo', chooseType:'Elegir tipo…',
+    searchType:'Buscar tipo…', frequent:'Frecuentes', newType:'＋ Nuevo', noTypes:'Sin tipos',
+    newBuilding:'＋ Nuevo edificio', newSite:'＋ Nuevo sitio',
+    buildingName:'Nombre del edificio', siteName:'Nombre del sitio / cliente', add:'Agregar', close:'Cerrar',
+    all:'Todos', inspections:'Inspecciones', maintenance:'Mantenimiento',
+    assignTitle:'Asignar trabajo', editTitle:'Editar / reasignar',
+    address:'Dirección (si no hay sitio)', worker:'Trabajador', start:'Hora de inicio', end:'Hora de fin',
+    unit:'Unidad', contact:'Contacto / inquilino', phone:'Teléfono',
+    instructions:'Instrucciones', instrPh:'Opcional. Vacío si no escribes nada.',
+    save:'Guardar', assign:'Asignar', cancel:'Cancelar', noTeam:'Sin equipo',
+    siteOrAddr:'— Dirección / sitio —', openMaps:'Abrir en Mapas',
+    noMap:'Sin sitios para el mapa.', noTeamList:'Sin equipo.',
+    pickCompany:'Elige una compañía a la izquierda.', cannotAssign:'No puedes asignar trabajos con este rol.',
+    done:'completados', needBuilding:'Escribe el nombre del edificio',
+    companies:'Compañías', noCompanies:'Sin compañías', workers:'Trabajadores',
+    noBuildings:'Sin edificios', noPhone:'Sin teléfono', noInstr:'Sin instrucciones.',
+    owner:'Dueño', admin:'Administrador', manager:'Manager', supervisor:'Supervisor', workerRole:'Trabajador',
+    boss:'Jefe / Admin', searchBuildings:'Buscar edificios…'
   },
   en: {
     title: 'Sign in to Walkcheck',
@@ -504,20 +609,74 @@ const LOGIN_I18N = {
     eye: 'Show password',
     needEmail: 'Enter your email so we can send the reset link.',
     sent: 'If that email has an account, we sent a link to reset the password.',
-    fail: 'Could not sign in: '
+    fail: 'Could not sign in: ',
+    money:'Money', types:'Types', logout:'Sign out',
+    buildings:'Buildings', agenda:'Schedule', map:'Map',
+    today:'Today', todayBtn:'Today', sites:'Sites', team:'Team', newPlus:'＋ New',
+    filters:'Filters', filtersHint:'Filters: Inspections / Maintenance on the left',
+    assignJob:'+ Assign Job', teamSchedule:'Team Schedule', weekOf:'Week of',
+    mySchedule:'My Schedule', jobType:'Job type', chooseType:'Choose type…',
+    searchType:'Search type…', frequent:'Frequent', newType:'＋ New', noTypes:'No types',
+    newBuilding:'＋ New building', newSite:'＋ New site',
+    buildingName:'Building name', siteName:'Site / client name', add:'Add', close:'Close',
+    all:'All', inspections:'Inspections', maintenance:'Maintenance',
+    assignTitle:'Assign Job', editTitle:'Edit / reassign',
+    address:'Address (if no site)', worker:'Worker', start:'Start time', end:'End time',
+    unit:'Unit', contact:'Contact / tenant', phone:'Phone',
+    instructions:'Instructions', instrPh:'Optional. Leave empty if you type nothing.',
+    save:'Save', assign:'Assign', cancel:'Cancel', noTeam:'No team',
+    siteOrAddr:'— Address / site —', openMaps:'Open in Maps',
+    noMap:'No sites for the map.', noTeamList:'No team.',
+    pickCompany:'Pick a company on the left.', cannotAssign:'You cannot assign jobs with this role.',
+    done:'done', needBuilding:'Enter the building name',
+    companies:'Companies', noCompanies:'No companies', workers:'Workers',
+    noBuildings:'No buildings', noPhone:'No phone', noInstr:'No instructions.',
+    owner:'Owner', admin:'Admin', manager:'Manager', supervisor:'Supervisor', workerRole:'Worker',
+    boss:'Admin', searchBuildings:'Search buildings…'
   }
 };
 function loginLang(){
   try { return localStorage.getItem('walkcheck_lang') === 'en' ? 'en' : 'es'; }
   catch(_) { return 'es'; }
 }
+function uiT(k){
+  const d = UI_I18N[loginLang()] || UI_I18N.es;
+  return (d && d[k] != null) ? d[k] : ((UI_I18N.es||{})[k] || k);
+}
+function roleLabel(){
+  const r = String((profile&&profile.role)||'').toLowerCase();
+  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), worker: uiT('workerRole') };
+  return map[r] || (typeof isBoss === 'function' && isBoss() ? uiT('boss') : uiT('workerRole'));
+}
 function setLoginLang(code){
   try { localStorage.setItem('walkcheck_lang', code === 'en' ? 'en' : 'es'); } catch(_){}
   applyLoginLang();
 }
+function applyPanelLang(){
+  const cur = loginLang();
+  const d = UI_I18N[cur] || UI_I18N.es;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (d[k] != null) el.textContent = d[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    if (d[k] != null) el.placeholder = d[k];
+  });
+  if (!document.body.classList.contains('ready')) return;
+  applyCompanyPanel();
+  if ($('roleChip') && profile) {
+    $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
+  }
+  renderTypeBar();
+  renderWeek();
+  if (typeof isBoss === 'function' && !isBoss()) renderMySchedule();
+  renderMap();
+  renderTeam();
+}
 function applyLoginLang(){
   const cur = loginLang();
-  const t = LOGIN_I18N[cur];
+  const t = UI_I18N[cur] || UI_I18N.es;
   document.querySelectorAll('[data-set-lang]').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-set-lang') === cur);
   });
@@ -531,6 +690,7 @@ function applyLoginLang(){
   if ($('forgotLink')) $('forgotLink').textContent = t.forgot;
   if ($('regLink')) $('regLink').textContent = t.register;
   if ($('pwEye')) $('pwEye').setAttribute('aria-label', t.eye);
+  applyPanelLang();
 }
 function toggleLoginLang(){ setLoginLang(loginLang() === 'es' ? 'en' : 'es'); }
 function togglePw(){
@@ -539,7 +699,7 @@ function togglePw(){
   el.type = el.type === 'password' ? 'text' : 'password';
 }
 async function forgotPw(){
-  const t = LOGIN_I18N[loginLang()];
+  const t = UI_I18N[loginLang()] || UI_I18N.es;
   $('loginErr').textContent = '';
   $('loginOk').textContent = '';
   const email = $('email').value.trim();
@@ -552,7 +712,7 @@ async function forgotPw(){
 applyLoginLang();
 
 $('btnLogin').onclick = async () => {
-  const t = LOGIN_I18N[loginLang()];
+  const t = UI_I18N[loginLang()] || UI_I18N.es;
   $('loginErr').textContent = '';
   $('loginOk').textContent = '';
   try {
@@ -574,12 +734,19 @@ auth.onAuthStateChanged(async user => {
   if (!user) return;
   const doc = await db.collection('users').doc(user.uid).get();
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
+  try {
+    await db.collection('users').doc(user.uid).set({
+      uid: user.uid,
+      email: (user.email || '').toLowerCase()
+    }, {merge:true});
+    profile.uid = user.uid;
+    if (user.email) profile.email = user.email.toLowerCase();
+  } catch(_){}
   $('adminLink').classList.toggle('hidden', !isSuper());
   await resolveTypeAdmin(user.uid);
   if (!await enforceTrial()) return;
   $('typesLink').classList.toggle('hidden', !canManageTypes());
-  const roleName = {owner:'Dueño',admin:'Administrador',manager:'Manager',supervisor:'Supervisor',worker:'Trabajador'}[String(profile.role||'').toLowerCase()] || (isBoss() ? 'Jefe / Admin' : 'Trabajador');
-  $('roleChip').textContent = roleName + (profile.displayName ? ' · ' + profile.displayName : '');
+  $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   document.body.classList.add('ready');
   const staff = isBoss();
   $('addbox').classList.toggle('hidden', !staff || isSuper());
@@ -591,17 +758,21 @@ auth.onAuthStateChanged(async user => {
   applyLayout();
   await loadBoard();
   if (!staff) renderMySchedule();
+  applyPanelLang();
 });
 
 function applyLayout(){
-  document.body.classList.toggle('desk', forceDesktop && isPhone());
-  $('deskToggle').textContent = forceDesktop ? 'Ver como teléfono' : 'Ver 2 columnas';
+  document.body.classList.toggle('desk', false);
+  if ($('deskToggle')) $('deskToggle').style.display = 'none';
+  const btn = $('sitesToggle');
+  if (btn && !document.body.classList.contains('sites-open')) btn.textContent = pack().sitesLabel || 'Sites';
   renderMap();
   renderTeam();
 }
 function setTab(t){
   phoneTab = t;
   forceDesktop = false;
+  if (t !== 'agenda') document.body.classList.remove('sites-open');
   ['agenda','edificios','mapa','equipo'].forEach(x => document.body.classList.remove('tab-'+x));
   document.body.classList.add('tab-'+t);
   document.querySelectorAll('#phoneTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
@@ -624,14 +795,14 @@ function renderMap(){
   if (!el) return;
   el.innerHTML = buildings.map(b => {
     const q = encodeURIComponent(b.name||b.address||'');
-    return `<a class="map-item" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">${esc(b.name||b.id)}<div class="muted">Abrir en Mapas</div></a>`;
-  }).join('') || '<div class="card muted">Sin sitios para el mapa.</div>';
+    return `<a class="map-item" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">${esc(b.name||b.id)}<div class="muted">${esc(uiT('openMaps'))}</div></a>`;
+  }).join('') || `<div class="card muted">${esc(uiT('noMap'))}</div>`;
 }
 function renderTeam(){
   const el = $('teamPane');
   if (!el) return;
   el.innerHTML = techs.map(t => `<div class="b-item">${esc(t.name)}<div class="muted">${esc(t.role||'worker')}</div></div>`).join('')
-    || '<div class="card muted">Sin equipo.</div>';
+    || `<div class="card muted">${esc(uiT('noTeamList'))}</div>`;
 }
 
 $('bSearch').oninput = e => { bQuery = e.target.value; if (isSuper()) renderCompanies(); else renderBuildings(); };
@@ -658,8 +829,12 @@ function hLabel(h){ const h12 = h%12===0?12:h%12; return h12 + ' ' + (h<12?'AM':
 function renderWeek(){
   const ws = weekStart(selectedDay);
   const end = new Date(ws); end.setDate(end.getDate()+6);
-  const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  $('weekTitle').textContent = `Team Schedule — Week of ${meses[ws.getMonth()]} ${ws.getDate()}–${end.getDate()}, ${ws.getFullYear()}`;
+  const meses = loginLang()==='es'
+    ? ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  $('weekTitle').textContent = isPhone()
+    ? uiT('teamSchedule')
+    : `${uiT('teamSchedule')} — ${uiT('weekOf')} ${meses[ws.getMonth()]} ${ws.getDate()}–${end.getDate()}, ${ws.getFullYear()}`;
   const letters = ['S','M','T','W','T','F','S'];
   let html = '';
   for (let i=0;i<7;i++){
@@ -683,11 +858,12 @@ async function loadBoard(){
   }
   const id = cid();
   if (!id) {
-    $('rows').innerHTML = '<div class="card muted">Elige una compañía a la izquierda.</div>';
+    $('rows').innerHTML = `<div class="card muted">${esc(uiT('pickCompany'))}</div>`;
     return;
   }
   try {
     const co = await db.collection('companies').doc(id).get();
+    companyName = (co.exists && co.data().name) || '';
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
     companyType = String(raw).toLowerCase().replace(/\s+/g,'_');
     if (!(window.JOB_TEMPLATES||{})[companyType]) {
@@ -704,8 +880,8 @@ async function loadBoard(){
   if (isSuper()) await loadCompaniesSidebar();
   else {
     $('sitesTitle').style.display = '';
-    $('sitesTitle').textContent = pack().sitesLabel;
-    $('bSearch').placeholder = pack().searchPlaceholder;
+    $('sitesTitle').textContent = uiT('buildings');
+    $('bSearch').placeholder = uiT('searchBuildings');
     $('addbox').classList.toggle('hidden', !isBoss());
   }
   const bDocs = [];
@@ -718,21 +894,26 @@ async function loadBoard(){
 
   const tDocs = [];
   s = await colGet(db.collection('users').where('companyId','==',id).limit(50).get());
-  if (s) s.forEach(d => tDocs.push({uid:d.id, name:d.data().displayName||'Tech', role:d.data().role||'worker'}));
+  if (s) s.forEach(d => {
+    const u = d.data() || {};
+    tDocs.push({
+      uid: d.id,
+      name: u.displayName || 'Tech',
+      role: u.role || 'worker',
+      email: String(u.email || '').toLowerCase()
+    });
+  });
   const me = auth.currentUser && auth.currentUser.uid;
-  if (me && !tDocs.some(t => t.uid === me)) {
-    tDocs.unshift({uid: me, name: profile.displayName || 'Yo', role: profile.role || 'owner'});
+  if (me && profile.companyId === id && !tDocs.some(t => t.uid === me)) {
+    tDocs.unshift({
+      uid: me,
+      name: profile.displayName || 'Yo',
+      role: profile.role || 'worker',
+      email: String(profile.email || (auth.currentUser && auth.currentUser.email) || '').toLowerCase()
+    });
   }
   techs = tDocs;
-
-  const jDocs = [];
-  s = await colGet(db.collection('jobs').where('companyId','==',id).limit(50).get());
-  if (s) s.forEach(d => jDocs.push({id:d.id, ...d.data()}));
-  s = await colGet(db.collection('companies').doc(id).collection('jobs').limit(50).get());
-  if (s) s.forEach(d => { if (!jDocs.some(x=>x.id===d.id)) jDocs.push({id:d.id, ...d.data()}); });
-  s = await colGet(db.collection('walkthroughs').where('companyId','==',id).limit(50).get());
-  if (s) s.forEach(d => jDocs.push({id:d.id, ...d.data(), _wt:true}));
-  jobs = jDocs;
+  listenCompanyJobs(id);
   customTypes = [];
   try {
     const ts = await db.collection('companies').doc(id).collection('customJobTypes').limit(50).get();
@@ -780,7 +961,7 @@ function renderCompanies(){
     <span class="chev">›</span>
   </div>`;
   if (!companiesOpen) {
-    $('bList').innerHTML = head + '<p class="muted" style="padding:14px">Toca › para ver las compañías.</p>';
+    $('bList').innerHTML = head + '<p class="muted" style="padding:10px;font-size:13px;line-height:1.35">Toca › para ver las compañías.</p>';
     return;
   }
   const rows = list.map(c =>
@@ -823,6 +1004,7 @@ async function toggleCompany(id){
 async function selectCompany(id){
   viewCid = id;
   selectedBuilding = '';
+  document.body.classList.remove('sites-open');
   await loadBoard();
 }
 function frequentTypes(){
@@ -852,22 +1034,22 @@ function typePickerHtml(id, selectedName){
   const freq = frequentTypes();
   const hid = id === 'aj' ? 'ajK' : ('comboVal-'+id);
   return `<div class="type-picker">
-    <span class="lbl">Tipo de trabajo</span>
+    <span class="lbl">${esc(uiT('jobType'))}</span>
     <div class="type-combo-row">
       <div class="type-combo" data-combo="${esc(id)}">
         <button type="button" class="type-combo-btn" id="comboBtn-${esc(id)}" onclick="toggleTypeCombo('${esc(id)}', event)">
-          ${sel ? typeChipHtml(t) : '<span class="type-ph">Elegir tipo…</span>'}
+          ${sel ? typeChipHtml(t) : `<span class="type-ph">${esc(uiT('chooseType'))}</span>`}
         </button>
         <div class="type-combo-drop hidden" id="comboDrop-${esc(id)}">
-          <input type="search" id="comboQ-${esc(id)}" placeholder="Buscar tipo…" autocomplete="off"
+          <input type="search" id="comboQ-${esc(id)}" placeholder="${esc(uiT('searchType'))}" autocomplete="off"
             oninput="filterTypeCombo('${esc(id)}')" onclick="event.stopPropagation()">
           <div class="type-combo-list" id="comboList-${esc(id)}"></div>
         </div>
         <input type="hidden" id="${hid}" value="${esc(sel)}">
       </div>
-      <button type="button" class="tchip add" onclick="location.href='/app/settings/job-types/'">＋ Nuevo</button>
+      <button type="button" class="tchip add" onclick="location.href='/app/settings/job-types/'">${esc(uiT('newType'))}</button>
     </div>
-    <div class="freq-row">${freq.length ? '<span class="freq-lbl">Frecuentes</span>' : ''}${freq.map(ft =>
+    <div class="freq-row">${freq.length ? `<span class="freq-lbl">${esc(uiT('frequent'))}</span>` : ''}${freq.map(ft =>
       `<button type="button" class="tchip" style="background:${esc(ft.color||'#34C759')}" data-kind="${encodeURIComponent(ft.name)}" onclick="chooseType('${esc(id)}', this.dataset.kind)">${esc(ft.icon||'')} ${esc(ft.name)}</button>`
     ).join('')}</div>
   </div>`;
@@ -920,7 +1102,7 @@ function fillTypeComboList(id, q){
       <span class="type-dot" style="background:${esc(t.color||'#34C759')}"></span>
       <span>${esc(t.icon||'')} ${esc(t.name)}</span>
     </button>`
-  ).join('') || '<div class="muted" style="padding:12px">Sin tipos</div>';
+  ).join('') || `<div class="muted" style="padding:12px">${esc(uiT('noTypes'))}</div>`;
 }
 function toggleTypeCombo(id, ev){
   if (ev) ev.stopPropagation();
@@ -982,12 +1164,15 @@ function renderBuildings(){
   });
   $('bList').innerHTML = list.map(b =>
     `<div class="b-item ${b.id===selectedBuilding?'on':''}" onclick="selectBuilding('${b.id}')">${esc(b.name||b.id)}</div>`
-  ).join('') || '<div class="muted" style="padding:14px">Sin edificios</div>';
+  ).join('') || `<div class="muted" style="padding:14px">${esc(uiT('noBuildings'))}</div>`;
 }
 function selectBuilding(id){
   selectedBuilding = id;
   renderBuildings();
-  if (isPhone() && !forceDesktop) {
+  document.body.classList.remove('sites-open');
+  const st = $('sitesToggle');
+  if (st) st.textContent = pack().sitesLabel || 'Sites';
+  if (isPhone()) {
     setTab('agenda');
     if (isBoss()) renderRows();
     else renderMySchedule();
@@ -1051,7 +1236,7 @@ function jobEnd(j, start){
   return new Date(start.getTime()+60*60*1000);
 }
 function jobsForTech(t){
-  return jobs.filter(j => jobDayOk(j) && (assignedOf(j)===t.uid || assignedOf(j)===t.name))
+  return jobs.filter(j => jobDayOk(j) && accountUidOf(j)===t.uid)
     .sort((a,b) => jobTime(a) - jobTime(b));
 }
 function rangesOverlap(a0, a1, b0, b1){
@@ -1065,7 +1250,59 @@ function jobDayOk(j){
   return true;
 }
 function assignedOf(j){
-  return j.assignedTo || j.assignedUid || j.assignedUserId || j.uid || '';
+  return j.workerId || j.assignedUid || j.assignedTo || j.assignedUserId || '';
+}
+function looksLikeAccountId(v){
+  v = String(v||'');
+  return v.length >= 20 && v.indexOf(' ') < 0 && v.indexOf('@') < 0;
+}
+function accountUidOf(j){
+  const raw = String(assignedOf(j)||'');
+  if (techs.some(t => t.uid === raw)) return raw;
+  const em = String(j.assignedEmail||'').toLowerCase();
+  const byEmail = em && techs.find(t => t.email && t.email === em);
+  if (byEmail) return byEmail.uid;
+  const name = j.assignedName || raw;
+  const byName = techs.find(t => t.name && (t.name === name || t.name === raw));
+  if (byName && (!looksLikeAccountId(raw) || raw === byName.uid)) return byName.uid;
+  return looksLikeAccountId(raw) ? raw : '';
+}
+function assignmentPatch(uid){
+  const tech = techs.find(t => t.uid === uid) || {};
+  return {
+    workerId: uid, assignedTo: uid, assignedUid: uid, assignedUserId: uid,
+    assignedName: tech.name || '',
+    assignedEmail: String(tech.email || '').toLowerCase()
+  };
+}
+function jobDone(j){
+  const s = String(j.status || j.visitStatus || '').toLowerCase();
+  return !!(j.report && j.report.completed) || j.reportCompleted === true
+    || s === 'completed' || s === 'closed' || s === 'done';
+}
+function listenCompanyJobs(id){
+  if (jobsUnsub) { try { jobsUnsub(); } catch(_){} jobsUnsub = null; }
+  if (!id) return;
+  jobsUnsub = db.collection('jobs').where('companyId','==',id).limit(200).onSnapshot(snap => {
+    const jDocs = [];
+    snap.forEach(d => jDocs.push({id:d.id, ...d.data()}));
+    jobs = jDocs;
+    repairJobAccounts();
+    renderMap();
+    if (isBoss()) renderRows();
+    else renderMySchedule();
+  }, () => {});
+}
+function repairJobAccounts(){
+  jobs.forEach(j => {
+    const raw = String(assignedOf(j)||'');
+    if (!raw) return;
+    if (techs.some(t => t.uid === raw) && j.workerId === raw && j.assignedUid === raw) return;
+    const uid = accountUidOf(j);
+    if (!uid || uid === raw && j.workerId === uid) return;
+    if (!techs.some(t => t.uid === uid)) return;
+    db.collection('jobs').doc(j.id).set(assignmentPatch(uid), {merge:true}).catch(()=>{});
+  });
 }
 
 function cardAddr(j){
@@ -1090,8 +1327,9 @@ function jobCardHtml(j, extraClass, posStyle){
   const tp = typeOf(kind);
   const when = fmt(g.st)+' – '+fmt(g.en);
   const pos = posStyle || `left:${g.left}px;width:${g.w}px;height:${g.h}px`;
-  return `<div class="jcard ${extraClass||''}" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openEdit('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
-    <div class="jcard-addr">${esc(tp.icon||'')} ${esc(addr)}</div>
+  const check = jobDone(j) ? ' ✓' : '';
+  return `<div class="jcard ${extraClass||''}" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
+    <div class="jcard-addr">${esc(tp.icon||'')} ${esc(addr)}${check}</div>
     <div class="jcard-kind">${esc(kind)}</div>
     <div class="jcard-t">${when}</div></div>`;
 }
@@ -1112,24 +1350,44 @@ function renderRows(){
     });
     const empty = list.length ? '' : `<div class="empty" onclick="slotClick('${t.uid}',${START})">No jobs scheduled</div>`;
     return `<div class="tech" style="min-height:${laneH}px">
-      <div class="tech-name">${esc(t.name)}<span>${list.length} jobs</span></div>
+      <div class="tech-name">${esc(t.name)}<span>${list.filter(jobDone).length}/${list.length} done</span></div>
       <div class="lane" style="min-height:${laneH}px;height:${laneH}px">${slots}${cards}${empty}</div>
     </div>`;
   }).join('') + `<div class="tech grid-fill"><div class="tech-name"></div><div class="lane">${hs.map(h => `<div class="slot"></div>`).join('')}</div></div>`;
 }
 function renderMobileAgenda(){
   $('hours').innerHTML = '';
-  $('rows').innerHTML = techs.map(t => {
-    const list = jobsForTech(t);
-    let cells = list.map(j => jobCardHtml(j, 'mcard')).join('');
-    if (canAssign()) cells += `<div class="mempty" onclick="slotClick('${t.uid}',${list.length?jobTime(list[list.length-1]).getHours()+1:9})">＋ Asignar otro</div>`;
-    else if (!list.length) cells = `<div class="mempty">No jobs scheduled</div>`;
-    return `<div class="mtech"><div class="mtech-h">${esc(t.name)} · ${list.length} jobs</div><div style="padding:8px">${cells}</div></div>`;
-  }).join('') || '<div class="card muted">Sin equipo.</div>';
+  const list = jobs.filter(j => {
+    if (!jobDayOk(j)) return false;
+    if (selectedBuilding && j.buildingId && j.buildingId !== selectedBuilding) return false;
+    return true;
+  }).sort((a,b) => jobTime(a) - jobTime(b));
+  const done = list.filter(jobDone).length;
+  let html = `<div id="dayList"><p class="muted" style="margin:0 0 10px">${done}/${list.length} done</p>`;
+  if (!list.length) {
+    html += '<div class="day-empty">No jobs this day</div>';
+  } else {
+    html += list.map(j => {
+      const st = jobTime(j), en = jobEnd(j, st);
+      const uid = accountUidOf(j);
+      const tech = techs.find(t => t.uid===uid);
+      const worker = (tech && tech.name) || j.assignedName || 'Unassigned';
+      const tp = typeOf(j.kind || 'Job');
+      const addr = j.address || j.title || '';
+      return `<button type="button" class="daycard" onclick="openJobView('${j.id}')" style="border-left:6px solid ${esc(tp.color||'#34C759')}">
+        <div class="daycard-k">${esc(tp.icon||'')} ${esc(j.kind||'Job')}${jobDone(j)?' ✓':''}</div>
+        <div class="daycard-t">${fmt(st)} – ${fmt(en)}</div>
+        <div class="daycard-a">${esc(addr)}${j.unit ? ' · Unit '+esc(j.unit) : ''}</div>
+        <div class="daycard-w">${esc(worker)}</div>
+      </button>`;
+    }).join('');
+  }
+  if (canAssign()) html += '<button type="button" class="btn day-assign" onclick="openAssign()">+ Assign Job</button>';
+  html += '</div>';
+  $('rows').innerHTML = html;
 }
 function tapCard(id, uid, hour){
-  if (!canAssign()) return;
-  openEdit(id);
+  openJobView(id);
 }
 function slotClick(uid, hour){
   if (!canAssign() || justDropped) return;
@@ -1184,7 +1442,7 @@ async function doMove(id, hour, uid, reason){
     if (!confirm('Este horario se cruza con otro trabajo de la misma persona. ¿Guardar igual?')) return;
   }
   const patch = {
-    assignedTo: uid, assignedUid: uid,
+    ...assignmentPatch(uid),
     hour: start.getHours(), minute: start.getMinutes(),
     endHour: end.getHours(), endMinute: end.getMinutes(),
     startClock: toClock(start), endClock: toClock(end),
@@ -1197,7 +1455,6 @@ async function doMove(id, hour, uid, reason){
   };
   try { await db.collection('jobs').doc(id).set(patch,{merge:true}); }
   catch(e){ alert('No se pudo mover: '+(e.message||e)); return; }
-  try { await db.collection('companies').doc(cid()).collection('jobs').doc(id).set(patch,{merge:true}); } catch(_){}
   $('modal').classList.add('hidden');
   loadBoard();
 }
@@ -1217,7 +1474,7 @@ function openEdit(id){
   openAssign(j.kind);
 }
 function openAssign(kindPref){
-  if (!canAssign()) { alert('No puedes asignar trabajos con este rol.'); return; }
+  if (!canAssign()) { alert(uiT('cannotAssign')); return; }
   const chosen = kindPref || preKind || (allTypes(true)[0]&&allTypes(true)[0].name) || 'INSPECTION';
   const worker = preWorker || (techs[0]&&techs[0].uid) || (auth.currentUser&&auth.currentUser.uid) || '';
   const existing = editJobId ? jobs.find(x=>x.id===editJobId) : null;
@@ -1235,22 +1492,25 @@ function openAssign(kindPref){
     endVal = String(Math.min(23, (parseInt(p[0],10)||9)+1)).padStart(2,'0')+':'+(p[1]||'00');
   }
   preKind = '';
-  const bopts = '<option value="">— Dirección / sitio —</option>' + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
+  const bopts = `<option value="">${esc(uiT('siteOrAddr'))}</option>` + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
-    <h3>${editJobId?'Editar / reasignar':'Assign Job'}</h3>
+    <h3>${editJobId?esc(uiT('editTitle')):esc(uiT('assignTitle'))}</h3>
     <p class="muted">${ymd(selectedDay)} · ${esc(techs.find(t=>t.uid===worker)?.name||'')}</p>
-    <label class="muted">${esc(pack().sitesLabel)}</label><select id="ajB">${bopts}</select>
-    <label class="muted">Dirección (si no hay sitio)</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
-    <label class="muted">Trabajador</label><select id="ajT">${topts || '<option value="">Sin equipo</option>'}</select>
-    <label class="muted">Start time</label><input id="ajStart" type="time" step="60" value="${startVal}">
-    <label class="muted">End time</label><input id="ajEnd" type="time" step="60" value="${endVal}">
+    <label class="muted">${esc(uiT('buildings'))}</label><select id="ajB">${bopts}</select>
+    <label class="muted">${esc(uiT('address'))}</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
+    <label class="muted">${esc(uiT('worker'))}</label><select id="ajT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
+    <label class="muted">${esc(uiT('start'))}</label><input id="ajStart" type="time" step="60" value="${startVal}">
+    <label class="muted">${esc(uiT('end'))}</label><input id="ajEnd" type="time" step="60" value="${endVal}">
     ${typePickerHtml('aj', chosen)}
-    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Opcional. Vacío si no escribes nada.">${esc(existing?(existing.instructions||existing.description||''):'')}</textarea>
+    <label class="muted">${esc(uiT('unit'))}</label><input id="ajUnit" type="text" value="${esc(existing&&existing.unit||'')}">
+    <label class="muted">${esc(uiT('contact'))}</label><input id="ajContact" type="text" value="${esc(existing&&existing.contactName||'')}">
+    <label class="muted">${esc(uiT('phone'))}</label><input id="ajPhone" type="text" value="${esc(existing&&existing.contactPhone||'')}">
+    <label class="muted">${esc(uiT('instructions'))}</label><textarea id="ajD" rows="3" placeholder="${esc(uiT('instrPh'))}">${esc(existing?(existing.instructions||existing.description||''):'')}</textarea>
     <div class="err" id="ajErr"></div>
-    <button class="btn" onclick="saveAssign()">${editJobId?'Guardar':'Asignar'}</button>
-    <button class="btn ghost" onclick="editJobId='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">Cancelar</button>
+    <button class="btn" onclick="saveAssign()">${editJobId?esc(uiT('save')):esc(uiT('assign'))}</button>
+    <button class="btn ghost" onclick="editJobId='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">${esc(uiT('cancel'))}</button>
   </div>`;
   bindTypeComboUi();
 }
@@ -1279,7 +1539,7 @@ async function saveAssign(){
   const start = clockToDate($('ajStart').value, selectedDay);
   const end = clockToDate($('ajEnd').value, selectedDay);
   const addrIn = ($('ajAddr')&&$('ajAddr').value.trim()) || '';
-  if (!uid) { if (err) err.textContent = 'Elige un trabajador.'; return; }
+  if (!uid || !techs.some(t => t.uid === uid)) { if (err) err.textContent = 'Elige un trabajador de esta compañía (su cuenta, no solo el nombre).'; return; }
   if (!cid()) { if (err) err.textContent = 'No hay compañía activa.'; return; }
   if (!start || !end) { if (err) err.textContent = 'Pon Start time y End time.'; return; }
   if (!(end.getTime() > start.getTime())) { if (err) err.textContent = 'End time must be after Start time.'; return; }
@@ -1287,12 +1547,18 @@ async function saveAssign(){
     if (!confirm('Este horario se cruza con otro trabajo de la misma persona. ¿Guardar igual?')) return;
   }
   const b = buildings.find(x=>x.id===bid);
+  const tech = techs.find(t=>t.uid===uid);
   const title = (b && b.name) || addrIn || kind || 'Job';
   const payload = {
-    companyId: cid(), buildingId: bid || '', assignedTo: uid, assignedUid: uid,
+    companyId: cid(), companyName: companyName,
+    buildingId: bid || '',
+    ...assignmentPatch(uid),
     title, address: addrIn || title, kind,
-    description: ($('ajD')&&$('ajD').value.trim()) || '',
+    unit: ($('ajUnit')&&$('ajUnit').value.trim()) || '',
+    contactName: ($('ajContact')&&$('ajContact').value.trim()) || '',
+    contactPhone: ($('ajPhone')&&$('ajPhone').value.trim()) || '',
     instructions: ($('ajD')&&$('ajD').value.trim()) || '',
+    description: ($('ajD')&&$('ajD').value.trim()) || '',
     color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
     hour: start.getHours(), minute: start.getMinutes(),
@@ -1321,6 +1587,163 @@ async function saveAssign(){
   preEndClock = '';
   $('modal').classList.add('hidden');
   await loadBoard();
+}
+
+function requiredReportCount(r){
+  r = r || {};
+  const checks = [
+    !!(r.actualStart),
+    !!(r.actualEnd),
+    !!(r.problem && String(r.problem).trim()),
+    Array.isArray(r.beforePhotos) ? r.beforePhotos.length>0 : !!(r.beforePhoto),
+    r.solved === true || r.solved === false,
+    !!(r.solution && String(r.solution).trim()),
+    r.expensesTotal !== '' && r.expensesTotal != null && !isNaN(Number(r.expensesTotal)),
+    !!(r.supplier && String(r.supplier).trim()),
+    !!(r.receiptPhoto),
+    !!(r.finalNotes && String(r.finalNotes).trim())
+  ];
+  return checks.filter(Boolean).length;
+}
+function closeJobView(){
+  $('viewJobs').classList.add('hidden');
+  $('viewJobs').innerHTML = '';
+}
+async function openJobView(id){
+  let j = jobs.find(x=>x.id===id);
+  try {
+    const d = await db.collection('jobs').doc(id).get();
+    if (d.exists) j = {id: d.id, ...d.data()};
+  } catch(_){}
+  if (!j) return;
+  const r = j.report || {};
+  const st = jobTime(j), en = jobEnd(j, st);
+  const phone = j.contactPhone || '';
+  const done = requiredReportCount(r);
+  const photos = (r.beforePhotos||[]).concat(r.beforePhoto?[r.beforePhoto]:[]);
+  const phoneHtml = phone
+    ? `<a class="phone" href="tel:${esc(phone.replace(/[^\d+]/g,''))}">${esc(phone)}</a>`
+    : '<span class="muted">Sin teléfono</span>';
+  $('viewJobs').classList.remove('hidden');
+  $('viewJobs').innerHTML = `<div class="jobhead">
+      <button class="back" onclick="closeJobView()">← Schedule</button>
+      <h2>${esc(j.kind||j.title||'Job')}${jobDone(j)?' ✓':''}</h2>
+    </div>
+    <div class="card">
+      <p><b>${esc(j.kind||'Job')}</b></p>
+      <p>${esc(j.companyName||companyName||'—')}</p>
+      <p>${esc(j.scheduledDate||ymd(selectedDay))}</p>
+      <p class="t">${fmt(st)} – ${fmt(en)}</p>
+      <p>${esc(j.address||j.title||'')} ${j.unit?('· Unit '+esc(j.unit)):''}</p>
+      <p>${esc(j.contactName||'—')} · ${phoneHtml}</p>
+      <p style="white-space:pre-wrap">${esc(j.instructions||j.description||'Sin instrucciones.')}</p>
+      ${canAssign()?`<button class="btn ghost" onclick="closeJobView();openEdit('${j.id}')">Reassign / times</button>`:''}
+    </div>
+    <div class="card">
+      <h3>Notes</h3>
+      <textarea id="jobNotes" rows="3" placeholder="Internal notes">${esc(j.notes||'')}</textarea>
+      <button class="btn ghost" onclick="saveJobNotes('${j.id}')">Save notes</button>
+    </div>
+    <div class="card">
+      <h3>Job Report</h3>
+      <div class="prog" id="repProg">${done}/10 required fields completed</div>
+      <label class="muted">Actual start</label><input id="rpAS" type="time" value="${esc(r.actualStart||'')}">
+      <label class="muted">Actual end</label><input id="rpAE" type="time" value="${esc(r.actualEnd||'')}">
+      <label class="muted">Problem Description</label><textarea id="rpP" rows="3">${esc(r.problem||'')}</textarea>
+      <label class="muted">BEFORE photos</label>
+      <div class="thumbs" id="rpThumbs">${photos.map(u=>`<img src="${esc(u)}">`).join('')}</div>
+      <input id="rpBefore" type="file" accept="image/*" multiple>
+      <label class="muted">Was it solved?</label>
+      <select id="rpSolved"><option value="">—</option><option value="yes" ${r.solved===true?'selected':''}>Yes</option><option value="no" ${r.solved===false?'selected':''}>No</option></select>
+      <label class="muted">Solution / what was done</label><textarea id="rpS" rows="3">${esc(r.solution||'')}</textarea>
+      <label class="muted">Expenses · material cost</label><input id="rpEx" type="number" min="0" step="0.01" value="${r.expensesTotal!=null?esc(r.expensesTotal):''}">
+      <label class="muted">Supplier</label><input id="rpSup" type="text" value="${esc(r.supplier||'')}">
+      <label class="muted">Receipt photo</label>
+      <div class="thumbs">${r.receiptPhoto?`<img src="${esc(r.receiptPhoto)}">`:''}</div>
+      <input id="rpRec" type="file" accept="image/*">
+      <label class="muted">Final Notes / Recommendations</label><textarea id="rpN" rows="3">${esc(r.finalNotes||'')}</textarea>
+      <div class="err" id="rpErr"></div>
+      <button class="btn ghost" onclick="saveJobReport('${j.id}', false)">Save Progress</button>
+      <button class="btn" onclick="saveJobReport('${j.id}', true)">Complete report</button>
+    </div>`;
+}
+async function saveJobNotes(id){
+  const notes = ($('jobNotes')&&$('jobNotes').value) || '';
+  try {
+    await db.collection('jobs').doc(id).set({ notes, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
+  } catch(e){ alert(e.message||e); }
+}
+async function uploadJobFile(jobId, kind, file){
+  const path = 'photos/'+cid()+'/jobs/'+jobId+'/'+kind+'_'+Date.now()+'_'+(file.name||'pic.jpg');
+  const ref = storage.ref(path);
+  await ref.put(file);
+  return await ref.getDownloadURL();
+}
+async function saveJobReport(id, complete){
+  const err = $('rpErr');
+  if (err) err.textContent = '';
+  let j = jobs.find(x=>x.id===id) || {};
+  try {
+    const d = await db.collection('jobs').doc(id).get();
+    if (d.exists) j = {id, ...d.data()};
+  } catch(_){}
+  const prev = j.report || {};
+  let beforePhotos = Array.isArray(prev.beforePhotos) ? prev.beforePhotos.slice() : [];
+  if (prev.beforePhoto && !beforePhotos.includes(prev.beforePhoto)) beforePhotos.push(prev.beforePhoto);
+  const bf = $('rpBefore') && $('rpBefore').files;
+  try {
+    if (bf && bf.length) {
+      for (let i=0;i<bf.length;i++) beforePhotos.push(await uploadJobFile(id, 'before', bf[i]));
+    }
+  } catch(e){ if (err) err.textContent = 'Foto: '+(e.message||e); return; }
+  let receipt = prev.receiptPhoto || '';
+  try {
+    const rf = $('rpRec') && $('rpRec').files && $('rpRec').files[0];
+    if (rf) receipt = await uploadJobFile(id, 'receipt', rf);
+  } catch(e){ if (err) err.textContent = 'Receipt: '+(e.message||e); return; }
+  const solvedVal = $('rpSolved').value;
+  const report = {
+    actualStart: $('rpAS').value || '',
+    actualEnd: $('rpAE').value || '',
+    problem: ($('rpP').value||'').trim(),
+    beforePhotos,
+    solved: solvedVal==='' ? null : solvedVal==='yes',
+    solution: ($('rpS').value||'').trim(),
+    expensesTotal: $('rpEx').value === '' ? null : Number($('rpEx').value),
+    supplier: ($('rpSup').value||'').trim(),
+    receiptPhoto: receipt,
+    finalNotes: ($('rpN').value||'').trim(),
+    draft: !complete,
+    completed: false,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: auth.currentUser && auth.currentUser.uid
+  };
+  const n = requiredReportCount(report);
+  report.requiredDone = n;
+  report.requiredTotal = 10;
+  if (complete) {
+    if (n < 10) { if (err) err.textContent = n+'/10 required fields. Completa el reporte.'; return; }
+    report.completed = true;
+    report.draft = false;
+  }
+  try {
+    const patch = { report, reportCompleted: !!report.completed, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (report.completed) patch.status = 'completed';
+    await db.collection('jobs').doc(id).set(patch, {merge:true});
+    if (report.completed) {
+      await db.collection('jobReports').add({
+        jobId: id, companyId: cid(), workerId: assignedOf(j),
+        actualStart: report.actualStart, actualEnd: report.actualEnd,
+        problem: report.problem, solution: report.solution, solved: report.solved,
+        expensesTotal: report.expensesTotal, supplier: report.supplier,
+        beforePhotos: report.beforePhotos, receiptPhoto: report.receiptPhoto,
+        finalNotes: report.finalNotes, status: 'completed',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  } catch(e){ if (err) err.textContent = e.message||e; return; }
+  await loadBoard();
+  await openJobView(id);
 }
 
 async function openMoney(){
@@ -1378,7 +1801,7 @@ async function addBuilding(){
   if (!isBoss()) return;
   const name = $('nbName').value.trim();
   const floors = Math.min(100, Math.max(1, parseInt($('nbFloors').value)||1));
-  if (!name){ alert('Escribe el nombre del edificio'); return; }
+  if (!name){ alert(uiT('needBuilding')); return; }
   const ref = db.collection('buildings').doc();
   await ref.set({ id: ref.id, name, floors, companyId: cid(), kind: companyType === 'property_management' ? 'Inspections' : 'Site', companyType });
   try {
@@ -1390,20 +1813,28 @@ async function addBuilding(){
 }
 
 function renderMySchedule(){
-  $('weekTitle').textContent = 'My Schedule';
+  $('weekTitle').textContent = uiT('mySchedule');
   const uid = auth.currentUser && auth.currentUser.uid;
-  const name = (profile.displayName || '').toLowerCase();
   const mine = jobs.filter(j => {
-    const a = String(assignedOf(j)||'');
     if (selectedBuilding && j.buildingId && j.buildingId !== selectedBuilding) return false;
-    return a === uid || a.toLowerCase() === name || a === name;
-  });
-  let html = `<div class="card"><h2>My Schedule</h2>`;
-  if (!mine.length) html += '<p class="muted">No hay visitas asignadas.</p>';
+    if (isPhone() && !jobDayOk(j)) return false;
+    const a = accountUidOf(j);
+    const em = String(j.assignedEmail||'').toLowerCase();
+    const myEmail = String((auth.currentUser && auth.currentUser.email) || '').toLowerCase();
+    return a === uid || (myEmail && em === myEmail);
+  }).sort((a,b)=> jobTime(a)-jobTime(b));
+  const done = mine.filter(jobDone).length;
+  let html = `<div id="dayList"><p class="muted" style="margin:0 0 10px">${done}/${mine.length} done</p>`;
+  if (!mine.length) html += '<div class="day-empty">No hay visitas asignadas.</div>';
   mine.forEach(j => {
     const addr = j.address || j.title || 'Job';
-    const t = j.time || j.startTime || '9 AM';
-    html += `<p><b>My ${esc(addr)} — ${esc(t)}</b></p>`;
+    const st = jobTime(j); const en = jobEnd(j, st);
+    const tp = typeOf(j.kind || 'Job');
+    html += `<button type="button" class="daycard" onclick="openJobView('${j.id}')" style="border-left:6px solid ${esc(tp.color||'#34C759')}">
+      <div class="daycard-k">${jobDone(j)?'✓ ':''}${esc(j.kind||'Job')}</div>
+      <div class="daycard-t">${fmt(st)} – ${fmt(en)}</div>
+      <div class="daycard-a">${esc(addr)}</div>
+    </button>`;
   });
   html += '</div>';
   $('workerMain').innerHTML = html;
