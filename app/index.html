@@ -29,6 +29,22 @@
   #roleChip { font-size: 13px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .muted { color: #8E8E93; font-size: 14px; }
   .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
+  .okmsg { color: #1B7A36; font-size: 14px; margin-top: 8px; }
+  .lang-toggle, header button.lang-toggle {
+    background: transparent; border: 1.5px solid rgba(255,255,255,.45); color: #fff;
+    border-radius: 9px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; min-height: 44px;
+  }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 48px; }
+  .pw-eye {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 40px; border: none; background: transparent; cursor: pointer;
+    font-size: 18px; line-height: 1; color: #6B7280;
+  }
+  .keep { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; font-size: 14px; cursor: pointer; }
+  .keep input { width: auto; margin: 0; accent-color: #34C759; }
+  .login-links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; font-size: 14px; }
+  .login-links a { color: #1565C0; font-weight: 700; text-decoration: none; }
   .btn { background: #34C759; color: #fff; border: none; padding: 12px 16px; border-radius: 10px; font-size: 15px; cursor: pointer; width: 100%; min-height: 44px; font-weight: 700; }
   .btn.ghost { background: #F0F0F0; color: #111; }
   .btn.ok { font-size: 14px; min-height: 40px; width: auto; padding: 8px 14px; }
@@ -159,6 +175,7 @@
 <header>
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
+    <button type="button" class="lang-toggle" id="langToggle" onclick="toggleLoginLang()">EN</button>
     <span id="roleChip"></span>
     <button id="moneyBtn" class="hidden" onclick="openMoney()">Dinero</button>
     <a id="typesLink" href="/app/settings/job-types/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px;background:rgba(0,0,0,.18)">Tipos</a>
@@ -174,12 +191,21 @@
 </div>
 
 <div id="login">
-  <h3>Entrar a Walkcheck</h3>
-  <p class="muted">Team Schedule para todos. El tipo de job sale del oficio de tu compañía. <a href="/register/">Registrar</a></p>
+  <h3 id="loginTitle">Entrar a Walkcheck</h3>
+  <p class="muted" id="loginLead">El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.</p>
   <input type="email" id="email" placeholder="Correo" autocomplete="username">
-  <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+  <div class="pw-wrap">
+    <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+    <button type="button" class="pw-eye" id="pwEye" onclick="togglePw()" aria-label="Mostrar contraseña">👁</button>
+  </div>
+  <label class="keep"><input type="checkbox" id="keepIn" checked> <span id="keepLbl">Mantener mi sesión iniciada</span></label>
+  <div class="login-links">
+    <a href="#" id="forgotLink" onclick="forgotPw();return false;">¿Olvidaste tu contraseña?</a>
+    <a href="/register/" id="regLink">Registrar</a>
+  </div>
   <button class="btn" id="btnLogin">Entrar</button>
   <div class="err" id="loginErr"></div>
+  <p class="okmsg" id="loginOk"></p>
   <p class="muted" style="margin-top:16px;text-align:center"><a href="mailto:soporte@walkcheck.app">Soporte:  soporte@walkcheck.app</a></p>
 </div>
 
@@ -406,10 +432,81 @@ async function enforceTrial(){
   } catch(_) { return true; }
 }
 
-$('btnLogin').onclick = async () => {
+const LOGIN_I18N = {
+  es: {
+    title: 'Entrar a Walkcheck',
+    lead: 'El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.',
+    email: 'Correo', pass: 'Contraseña', enter: 'Entrar',
+    keep: 'Mantener mi sesión iniciada',
+    forgot: '¿Olvidaste tu contraseña?',
+    register: 'Registrar',
+    eye: 'Mostrar contraseña',
+    needEmail: 'Escribe tu correo para enviarte el enlace.',
+    sent: 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.',
+    fail: 'No se pudo entrar: '
+  },
+  en: {
+    title: 'Sign in to Walkcheck',
+    lead: 'Your company panel: walkthroughs, photos, and reports in one place.',
+    email: 'Email', pass: 'Password', enter: 'Sign in',
+    keep: 'Keep me signed in',
+    forgot: 'Forgot your password?',
+    register: 'Register',
+    eye: 'Show password',
+    needEmail: 'Enter your email so we can send the reset link.',
+    sent: 'If that email has an account, we sent a link to reset the password.',
+    fail: 'Could not sign in: '
+  }
+};
+function loginLang(){ return localStorage.getItem('walkcheck_lang') === 'en' ? 'en' : 'es'; }
+function applyLoginLang(){
+  const t = LOGIN_I18N[loginLang()];
+  const tog = $('langToggle');
+  if (tog) tog.textContent = loginLang() === 'es' ? 'EN' : 'ES';
+  document.documentElement.lang = loginLang();
+  if ($('loginTitle')) $('loginTitle').textContent = t.title;
+  if ($('loginLead')) $('loginLead').textContent = t.lead;
+  if ($('email')) $('email').placeholder = t.email;
+  if ($('password')) $('password').placeholder = t.pass;
+  if ($('btnLogin')) $('btnLogin').textContent = t.enter;
+  if ($('keepLbl')) $('keepLbl').textContent = t.keep;
+  if ($('forgotLink')) $('forgotLink').textContent = t.forgot;
+  if ($('regLink')) $('regLink').textContent = t.register;
+  if ($('pwEye')) $('pwEye').setAttribute('aria-label', t.eye);
+}
+function toggleLoginLang(){
+  localStorage.setItem('walkcheck_lang', loginLang() === 'es' ? 'en' : 'es');
+  applyLoginLang();
+}
+function togglePw(){
+  const el = $('password');
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+async function forgotPw(){
+  const t = LOGIN_I18N[loginLang()];
   $('loginErr').textContent = '';
-  try { await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value); }
-  catch(e){ $('loginErr').textContent = 'No se pudo entrar: ' + e.message; }
+  $('loginOk').textContent = '';
+  const email = $('email').value.trim();
+  if (!email) { $('loginErr').textContent = t.needEmail; return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+  } catch(_){}
+  $('loginOk').textContent = t.sent;
+}
+applyLoginLang();
+
+$('btnLogin').onclick = async () => {
+  const t = LOGIN_I18N[loginLang()];
+  $('loginErr').textContent = '';
+  $('loginOk').textContent = '';
+  try {
+    const persist = $('keepIn') && $('keepIn').checked
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+    await auth.setPersistence(persist);
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+  } catch(e){ $('loginErr').textContent = t.fail + e.message; }
 };
 $('btnLogout').onclick = () => auth.signOut();
 
