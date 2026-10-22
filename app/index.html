@@ -18,7 +18,9 @@
 <script src="/js/jobTemplates.js"></script>
 <style>
   * { box-sizing: border-box; }
-  html, body { max-width: 100%; overflow-x: hidden; }
+  html { max-width: 100%; }
+  body { overflow-x: hidden; }
+  body.ready { overflow-x: auto; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
   header { background: #34C759; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   header h1 { margin: 0; font-size: 17px; font-weight: 800; }
@@ -38,8 +40,8 @@
   #board { display: none; height: calc(100dvh - 56px); flex-direction: row; }
   body.ready #board { display: flex; }
   body.ready #login { display: none; }
-  #sidebar { width: 300px; min-width: 300px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
-  #sidebar h2 { margin: 0; padding: 14px 14px 6px; font-size: 16px; }
+  #sidebar { width: 210px; min-width: 210px; max-width: 210px; flex: 0 0 210px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
+  #sidebar h2 { margin: 0; padding: 12px 10px 6px; font-size: 15px; }
   #bList { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
   .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
@@ -71,16 +73,30 @@
   .tech { display: flex; border-bottom: 1px solid #E5E5EA; min-height: 136px; background: #fff; }
   .tech-name { width: 140px; min-width: 140px; padding: 12px; font-size: 14px; font-weight: 800; }
   .tech-name span { display: block; font-weight: 500; color: #8E8E93; font-size: 12px; }
-  .lane { position: relative; display: flex; height: 136px; overflow-x: auto; flex: 1; }
-  .slot { min-width: 90px; width: 90px; height: 136px; border-left: 1px solid #EEEEEE; }
+  .lane { position: relative; display: flex; min-height: 136px; overflow-x: auto; flex: 1; }
+  .slot { min-width: 90px; width: 90px; min-height: 136px; height: 100%; border-left: 1px solid #EEEEEE; }
   .slot.over { background: #E8F8EC; }
   .jcard {
-    position: absolute; top: 8px; height: 120px; min-height: 60px; padding: 16px; border-radius: 12px;
+    position: absolute; top: 8px; min-height: 92px; min-width: 150px; padding: 8px 10px; border-radius: 12px;
     background: #34C759; color: #fff; font-size: 14px; cursor: grab; z-index: 2;
-    display: flex; flex-direction: column; justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    overflow: hidden; box-sizing: border-box;
+    word-break: normal; overflow-wrap: normal; hyphens: none;
   }
-  .jcard b { font-size: 12px; }
-  .jcard .t { font-size: 16px; font-weight: 600; }
+  .jcard, .jcard * { word-break: normal; overflow-wrap: normal; }
+  .jcard-addr {
+    font-weight: 700; font-size: 14px; line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto;
+  }
+  .jcard-kind {
+    font-size: 12px; font-weight: 800; line-height: 1.25; text-transform: uppercase;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+    overflow: hidden; white-space: normal; word-break: normal; overflow-wrap: break-word; flex: 1 1 auto;
+  }
+  .jcard-t, .jcard .t {
+    font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 0 0 auto; line-height: 1.2;
+  }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #8E8E93; font-size: 14px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
   #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; }
@@ -102,7 +118,7 @@
   .mrow { display: flex; min-height: 64px; border-bottom: 1px solid #F2F2F7; }
   .mh { width: 64px; min-width: 64px; padding: 10px 6px; font-size: 12px; font-weight: 800; color: #6B7280; }
   .mjobs { flex: 1; padding: 6px 8px 6px 0; }
-  .mcard { position: relative; left: auto !important; width: 100% !important; height: auto; min-height: 60px; margin-bottom: 6px; cursor: pointer; }
+  .mcard { position: relative; left: auto !important; width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 88px; margin-bottom: 6px; cursor: pointer; }
   .mempty { color: #C7C7CC; font-size: 14px; min-height: 48px; display: flex; align-items: center; }
   .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
   #typeBar { display: none; flex-wrap: wrap; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; align-items: center; }
@@ -128,7 +144,7 @@
     body.ready header { padding-right: 118px; }
   }
   body.desk #board { flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 56px); }
-  body.desk #sidebar { width: 260px; min-width: 260px; }
+  body.desk #sidebar { width: 210px; min-width: 210px; max-width: 210px; display: flex; }
   body.desk #main { min-width: 720px; }
   body.desk #phoneTabs, body.desk #bottomNav, body.desk #mapPane, body.desk #teamPane { display: none !important; }
   body.desk #deskToggle { display: block; }
@@ -269,7 +285,7 @@ let preStartClock = '';
 let preEndClock = '';
 let editJobId = '';
 let companyList = [];
-let companiesOpen = false;
+let companiesOpen = true;
 const companyLoaded = {};
 function isPhone(){ return window.matchMedia('(max-width: 1023px)').matches; }
 function useDesk(){ return !isPhone() || forceDesktop; }
@@ -768,16 +784,32 @@ function assignedOf(j){
   return j.assignedTo || j.assignedUid || j.assignedUserId || j.uid || '';
 }
 
-function jobCardHtml(j, extraClass, posStyle){
+function cardAddr(j){
+  const raw = String(j.address || j.buildingName || j.title || 'Job').split(/[—–|]/)[0];
+  return raw.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function cardGeom(j){
   const st = jobTime(j);
   const en = jobEnd(j, st);
-  const addr = j.address || j.title || j.buildingName || 'Job';
+  const hours = Math.max(0.5, (en - st) / 3600000);
+  return {
+    st, en,
+    left: ((st.getHours() + st.getMinutes() / 60) - START) * SLOT,
+    w: Math.max(150, hours * SLOT),
+    h: Math.max(92, Math.min(148, hours * 96))
+  };
+}
+function jobCardHtml(j, extraClass, posStyle){
+  const g = cardGeom(j);
+  const addr = cardAddr(j);
   const kind = j.kind || 'INSPECTION';
   const tp = typeOf(kind);
-  const when = fmt(st)+' – '+fmt(en);
-  const pos = posStyle || '';
+  const when = fmt(g.st)+' – '+fmt(g.en);
+  const pos = posStyle || `left:${g.left}px;width:${g.w}px;height:${g.h}px`;
   return `<div class="jcard ${extraClass||''}" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openEdit('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
-    <div>${esc(tp.icon||'')} ${esc(addr)}</div><b>${esc(kind)}</b><div class="t">${when}</div></div>`;
+    <div class="jcard-addr">${esc(tp.icon||'')} ${esc(addr)}</div>
+    <div class="jcard-kind">${esc(kind)}</div>
+    <div class="jcard-t">${when}</div></div>`;
 }
 function renderRows(){
   if (!useDesk()) { renderMobileAgenda(); return; }
@@ -786,19 +818,18 @@ function renderRows(){
   $('hours').innerHTML = hs.map(h => `<div class="hour">${hLabel(h)}</div>`).join('');
   $('rows').innerHTML = techs.map(t => {
     const list = jobsForTech(t);
-    const slots = hs.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`).join('');
+    let laneH = 136;
+    list.forEach(j => { laneH = Math.max(laneH, cardGeom(j).h + 16); });
+    const slots = hs.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)" style="height:${laneH}px"></div>`).join('');
     let cards = '';
     list.forEach(j => {
-      const st = jobTime(j);
-      const en = jobEnd(j, st);
-      const left = ((st.getHours()+st.getMinutes()/60)-START)*SLOT;
-      const w = Math.max(88, ((en-st)/3600000)*SLOT);
-      cards += jobCardHtml(j, '', `left:${left}px;width:${w}px`);
+      const g = cardGeom(j);
+      cards += jobCardHtml(j, '', `left:${g.left}px;width:${g.w}px;height:${g.h}px`);
     });
     const empty = list.length ? '' : `<div class="empty" onclick="slotClick('${t.uid}',${START})">No jobs scheduled</div>`;
-    return `<div class="tech">
+    return `<div class="tech" style="min-height:${laneH}px">
       <div class="tech-name">${esc(t.name)}<span>${list.length} jobs</span></div>
-      <div class="lane">${slots}${cards}${empty}</div>
+      <div class="lane" style="min-height:${laneH}px;height:${laneH}px">${slots}${cards}${empty}</div>
     </div>`;
   }).join('');
 }
