@@ -956,7 +956,6 @@ function openAssign(kindPref){
   const bopts = '<option value="">— Dirección / sitio —</option>' + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
   const kopts = allTypes(true).map(k=>`<option value="${esc(k.name)}" ${k.name===chosen?'selected':''}>${esc(k.icon||'')} ${esc(k.name)}</option>`).join('');
-  const preset = typeOf(chosen);
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
     <h3>${editJobId?'Editar / reasignar':'Assign Job'}</h3>
@@ -967,7 +966,7 @@ function openAssign(kindPref){
     <label class="muted">Start time</label><input id="ajStart" type="time" step="60" value="${startVal}">
     <label class="muted">End time</label><input id="ajEnd" type="time" step="60" value="${endVal}">
     <label class="muted">Tipo de trabajo</label><select id="ajK" onchange="onKindChange()">${kopts}</select>
-    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Qué hay que hacer">${esc((existing&&existing.description)||preset.descriptionTemplate||'')}</textarea>
+    <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Opcional. Vacío si no escribes nada.">${esc(existing?(existing.instructions||existing.description||''):'')}</textarea>
     <div class="err" id="ajErr"></div>
     ${canManageTypes()?'<p class="muted"><a href="/app/settings/job-types/">＋ Crear tipo</a></p>':''}
     <button class="btn" onclick="saveAssign()">${editJobId?'Guardar':'Asignar'}</button>
@@ -976,7 +975,10 @@ function openAssign(kindPref){
 }
 function onKindChange(){
   const t = typeOf($('ajK').value);
-  if (t.descriptionTemplate) $('ajD').value = t.descriptionTemplate;
+  const box = $('ajD');
+  if (!box) return;
+  if (t.descriptionTemplate) box.value = t.descriptionTemplate;
+  else if (!editJobId) box.value = '';
 }
 function rangesOverlapWorker(uid, start, end, exceptId){
   const tech = techs.find(t => t.uid === uid) || {uid, name:''};
@@ -1008,7 +1010,8 @@ async function saveAssign(){
   const payload = {
     companyId: cid(), buildingId: bid || '', assignedTo: uid, assignedUid: uid,
     title, address: addrIn || title, kind,
-    description: ($('ajD')&&$('ajD').value.trim()) || typeOf(kind).descriptionTemplate || '',
+    description: ($('ajD')&&$('ajD').value.trim()) || '',
+    instructions: ($('ajD')&&$('ajD').value.trim()) || '',
     color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
     hour: start.getHours(), minute: start.getMinutes(),
