@@ -146,11 +146,44 @@
   .mcard { position: relative; left: auto !important; width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 88px; margin-bottom: 6px; cursor: pointer; }
   .mempty { color: #C7C7CC; font-size: 14px; min-height: 48px; display: flex; align-items: center; }
   .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
-  #typeBar { display: none; flex-wrap: wrap; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; align-items: center; }
+  #typeBar { display: none; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; }
   body.ready #typeBar { display: flex; }
-  #typeBar .lbl { font-size: 13px; font-weight: 800; color: #6B7280; width: 100%; }
-  #typeBar .tchip { border: none; color: #fff; border-radius: 20px; padding: 8px 12px; font-size: 14px; min-height: 40px; cursor: pointer; font-weight: 700; }
-  #typeBar .tchip.add { background: #F0F0F0; color: #111; }
+  #typeBar .lbl, .type-picker .lbl { font-size: 13px; font-weight: 800; color: #6B7280; }
+  .type-picker { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
+  .type-combo-row { display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0; }
+  .type-combo { position: relative; flex: 1; min-width: 0; }
+  .type-combo-btn {
+    width: 100%; min-height: 44px; display: flex; align-items: center;
+    border: 1px solid #D1D1D6; border-radius: 10px; background: #fff; padding: 6px 10px;
+    cursor: pointer; text-align: left;
+  }
+  .sel-chip {
+    display: inline-flex; align-items: center; max-width: 100%;
+    color: #fff; border-radius: 16px; padding: 6px 12px; font-weight: 700; font-size: 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .type-ph { color: #8E8E93; font-size: 15px; }
+  .type-combo-drop {
+    position: fixed; z-index: 70; background: #fff; border: 1px solid #E5E5EA; border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.14); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .type-combo-drop.hidden { display: none !important; }
+  .type-combo-drop input[type=search] { margin: 8px; width: calc(100% - 16px); }
+  .type-combo-list { overflow: auto; max-height: 240px; -webkit-overflow-scrolling: touch; }
+  .type-opt {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+    border: none; background: #fff; cursor: pointer; font-size: 15px; text-align: left; min-height: 44px;
+  }
+  .type-opt:hover, .type-opt.on { background: #E8F8EC; }
+  .type-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .freq-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; min-width: 0; }
+  .freq-lbl { font-size: 12px; font-weight: 800; color: #6B7280; }
+  .tchip {
+    border: none; color: #fff; border-radius: 20px; padding: 8px 12px; font-size: 13px;
+    min-height: 36px; cursor: pointer; font-weight: 700; white-space: nowrap;
+    max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tchip.add { background: #F0F0F0; color: #111; flex-shrink: 0; max-width: none; }
   @media (max-width: 1023px) {
     body.ready:not(.desk) { overflow-x: hidden; }
     body.ready:not(.desk) #phoneTabs { display: flex; }
@@ -792,16 +825,146 @@ async function selectCompany(id){
   selectedBuilding = '';
   await loadBoard();
 }
+function frequentTypes(){
+  const types = allTypes(true);
+  const counts = {};
+  (jobs||[]).forEach(j => {
+    const k = String(j.kind||'').toLowerCase();
+    if (k) counts[k] = (counts[k]||0) + 1;
+  });
+  const scored = types.map(t => {
+    const key = String(t.name||'').toLowerCase();
+    const slug = String(t.slug||'').toLowerCase();
+    const n = (counts[key]||0) + (slug && slug !== key ? (counts[slug]||0) : 0)
+      + (Number(t.useCount||t.usageCount||t.count||0)||0);
+    return { t, n };
+  });
+  if (scored.some(x => x.n > 0)) scored.sort((a,b) => b.n - a.n);
+  return scored.slice(0, 5).map(x => x.t);
+}
+function typeChipHtml(t){
+  return `<span class="sel-chip" style="background:${esc(t.color||'#34C759')}">${esc(t.icon||'')} ${esc(t.name)}</span>`;
+}
+function typePickerHtml(id, selectedName){
+  const types = allTypes(true);
+  const sel = selectedName || (types[0] && types[0].name) || '';
+  const t = typeOf(sel);
+  const freq = frequentTypes();
+  const hid = id === 'aj' ? 'ajK' : ('comboVal-'+id);
+  return `<div class="type-picker">
+    <span class="lbl">Tipo de trabajo</span>
+    <div class="type-combo-row">
+      <div class="type-combo" data-combo="${esc(id)}">
+        <button type="button" class="type-combo-btn" id="comboBtn-${esc(id)}" onclick="toggleTypeCombo('${esc(id)}', event)">
+          ${sel ? typeChipHtml(t) : '<span class="type-ph">Elegir tipo…</span>'}
+        </button>
+        <div class="type-combo-drop hidden" id="comboDrop-${esc(id)}">
+          <input type="search" id="comboQ-${esc(id)}" placeholder="Buscar tipo…" autocomplete="off"
+            oninput="filterTypeCombo('${esc(id)}')" onclick="event.stopPropagation()">
+          <div class="type-combo-list" id="comboList-${esc(id)}"></div>
+        </div>
+        <input type="hidden" id="${hid}" value="${esc(sel)}">
+      </div>
+      <button type="button" class="tchip add" onclick="location.href='/app/settings/job-types/'">＋ Nuevo</button>
+    </div>
+    <div class="freq-row">${freq.length ? '<span class="freq-lbl">Frecuentes</span>' : ''}${freq.map(ft =>
+      `<button type="button" class="tchip" style="background:${esc(ft.color||'#34C759')}" data-kind="${encodeURIComponent(ft.name)}" onclick="chooseType('${esc(id)}', this.dataset.kind)">${esc(ft.icon||'')} ${esc(ft.name)}</button>`
+    ).join('')}</div>
+  </div>`;
+}
+function closeTypeCombos(){
+  document.querySelectorAll('.type-combo-drop').forEach(d => d.classList.add('hidden'));
+}
+function placeTypeDrop(id){
+  const btn = $('comboBtn-'+id);
+  const drop = $('comboDrop-'+id);
+  if (!btn || !drop) return;
+  if (drop.closest('.modal')) {
+    drop.style.position = 'absolute';
+    drop.style.left = '0';
+    drop.style.right = '0';
+    drop.style.width = '100%';
+    drop.style.top = '100%';
+    drop.style.bottom = 'auto';
+    drop.style.maxHeight = '220px';
+    return;
+  }
+  drop.style.position = 'fixed';
+  const r = btn.getBoundingClientRect();
+  const width = Math.max(r.width, 220);
+  const left = Math.min(r.left, Math.max(8, window.innerWidth - width - 8));
+  const spaceBelow = window.innerHeight - r.bottom - 12;
+  const openUp = spaceBelow < 180 && r.top > spaceBelow;
+  drop.style.left = left+'px';
+  drop.style.width = width+'px';
+  drop.style.maxHeight = Math.min(280, Math.max(160, openUp ? r.top - 12 : spaceBelow))+'px';
+  if (openUp) {
+    drop.style.top = 'auto';
+    drop.style.bottom = (window.innerHeight - r.top + 4)+'px';
+  } else {
+    drop.style.bottom = 'auto';
+    drop.style.top = (r.bottom + 4)+'px';
+  }
+}
+function fillTypeComboList(id, q){
+  const list = $('comboList-'+id);
+  if (!list) return;
+  const query = String(q||'').trim().toLowerCase();
+  const hid = id === 'aj' ? $('ajK') : $('comboVal-'+id);
+  const cur = hid ? hid.value : '';
+  const types = allTypes(true).filter(t =>
+    !query || String(t.name||'').toLowerCase().includes(query) || String(t.slug||'').toLowerCase().includes(query)
+  );
+  list.innerHTML = types.map(t =>
+    `<button type="button" class="type-opt ${t.name===cur?'on':''}" data-kind="${encodeURIComponent(t.name)}" onclick="chooseType('${id}', this.dataset.kind)">
+      <span class="type-dot" style="background:${esc(t.color||'#34C759')}"></span>
+      <span>${esc(t.icon||'')} ${esc(t.name)}</span>
+    </button>`
+  ).join('') || '<div class="muted" style="padding:12px">Sin tipos</div>';
+}
+function toggleTypeCombo(id, ev){
+  if (ev) ev.stopPropagation();
+  const drop = $('comboDrop-'+id);
+  if (!drop) return;
+  const open = drop.classList.contains('hidden');
+  closeTypeCombos();
+  if (!open) return;
+  fillTypeComboList(id, '');
+  drop.classList.remove('hidden');
+  placeTypeDrop(id);
+  const q = $('comboQ-'+id);
+  if (q) { q.value = ''; q.focus(); }
+}
+function filterTypeCombo(id){
+  const q = $('comboQ-'+id);
+  fillTypeComboList(id, q ? q.value : '');
+}
+function chooseType(id, encoded){
+  const name = decodeURIComponent(encoded||'');
+  const hid = id === 'aj' ? $('ajK') : $('comboVal-'+id);
+  if (hid) hid.value = name;
+  const btn = $('comboBtn-'+id);
+  if (btn) btn.innerHTML = typeChipHtml(typeOf(name));
+  closeTypeCombos();
+  if (id === 'aj') onKindChange();
+  if (id === 'bar') quickAssign(name);
+}
+let typeComboBound = false;
+function bindTypeComboUi(){
+  if (typeComboBound) return;
+  typeComboBound = true;
+  document.addEventListener('click', e => {
+    if (e.target.closest('.type-combo') || e.target.closest('.type-combo-drop')) return;
+    closeTypeCombos();
+  });
+  window.addEventListener('resize', () => closeTypeCombos());
+}
 function renderTypeBar(){
   const bar = $('typeBar');
   if (!bar) return;
   const types = allTypes(true);
-  let html = '<span class="lbl">Tipos rápidos:</span>';
-  types.forEach(t => {
-    html += `<button class="tchip" style="background:${esc(t.color||'#34C759')}" onclick="quickAssign('${esc(t.name)}')">${esc(t.icon||'')} ${esc(t.name)}</button>`;
-  });
-  if (canManageTypes()) html += `<button class="tchip add" onclick="location.href='/app/settings/job-types/'">＋ Nuevo</button>`;
-  bar.innerHTML = html;
+  bar.innerHTML = typePickerHtml('bar', (types[0] && types[0].name) || '');
+  bindTypeComboUi();
 }
 function quickAssign(kind){
   preKind = kind;
@@ -1074,7 +1237,6 @@ function openAssign(kindPref){
   preKind = '';
   const bopts = '<option value="">— Dirección / sitio —</option>' + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
-  const kopts = allTypes(true).map(k=>`<option value="${esc(k.name)}" ${k.name===chosen?'selected':''}>${esc(k.icon||'')} ${esc(k.name)}</option>`).join('');
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
     <h3>${editJobId?'Editar / reasignar':'Assign Job'}</h3>
@@ -1084,13 +1246,13 @@ function openAssign(kindPref){
     <label class="muted">Trabajador</label><select id="ajT">${topts || '<option value="">Sin equipo</option>'}</select>
     <label class="muted">Start time</label><input id="ajStart" type="time" step="60" value="${startVal}">
     <label class="muted">End time</label><input id="ajEnd" type="time" step="60" value="${endVal}">
-    <label class="muted">Tipo de trabajo</label><select id="ajK" onchange="onKindChange()">${kopts}</select>
+    ${typePickerHtml('aj', chosen)}
     <label class="muted">Descripción</label><textarea id="ajD" rows="3" placeholder="Opcional. Vacío si no escribes nada.">${esc(existing?(existing.instructions||existing.description||''):'')}</textarea>
     <div class="err" id="ajErr"></div>
-    ${canManageTypes()?'<p class="muted"><a href="/app/settings/job-types/">＋ Crear tipo</a></p>':''}
     <button class="btn" onclick="saveAssign()">${editJobId?'Guardar':'Asignar'}</button>
     <button class="btn ghost" onclick="editJobId='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
+  bindTypeComboUi();
 }
 function onKindChange(){
   const t = typeOf($('ajK').value);
