@@ -30,10 +30,17 @@
   .muted { color: #8E8E93; font-size: 14px; }
   .err { color: #b3261e; font-size: 14px; margin-top: 8px; }
   .okmsg { color: #1B7A36; font-size: 14px; margin-top: 8px; }
-  .lang-toggle, header button.lang-toggle {
-    background: transparent; border: 1.5px solid rgba(255,255,255,.45); color: #fff;
-    border-radius: 9px; padding: 8px 12px; font-weight: 700; cursor: pointer; font-size: 13px; min-height: 44px;
+  .lang-switch { display: inline-flex; border: 1.5px solid #D1D1D6; border-radius: 9px; overflow: hidden; flex-shrink: 0; }
+  .lang-switch button {
+    border: none; background: #fff; color: #6B7280; padding: 8px 12px; min-height: 40px; min-width: 44px;
+    font-weight: 700; cursor: pointer; font-size: 13px;
   }
+  .lang-switch button.on { background: #34C759; color: #fff; }
+  header .lang-switch { border-color: rgba(255,255,255,.45); }
+  header .lang-switch button { background: transparent; color: #fff; }
+  header .lang-switch button.on { background: rgba(255,255,255,.28); color: #fff; }
+  .login-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .login-head h3 { margin: 0; }
   .pw-wrap { position: relative; }
   .pw-wrap input { padding-right: 48px; }
   .pw-eye {
@@ -175,7 +182,10 @@
 <header>
   <h1><a href="/">Walkcheck</a></h1>
   <div style="display:flex;align-items:center;gap:10px">
-    <button type="button" class="lang-toggle" id="langToggle" onclick="toggleLoginLang()">EN</button>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
+      <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
+    </div>
     <span id="roleChip"></span>
     <button id="moneyBtn" class="hidden" onclick="openMoney()">Dinero</button>
     <a id="typesLink" href="/app/settings/job-types/" class="hidden" style="color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:800;font-size:13px;background:rgba(0,0,0,.18)">Tipos</a>
@@ -191,7 +201,13 @@
 </div>
 
 <div id="login">
-  <h3 id="loginTitle">Entrar a Walkcheck</h3>
+  <div class="login-head">
+    <h3 id="loginTitle">Entrar a Walkcheck</h3>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
+      <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
+    </div>
+  </div>
   <p class="muted" id="loginLead">El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.</p>
   <input type="email" id="email" placeholder="Correo" autocomplete="username">
   <div class="pw-wrap">
@@ -458,12 +474,21 @@ const LOGIN_I18N = {
     fail: 'Could not sign in: '
   }
 };
-function loginLang(){ return localStorage.getItem('walkcheck_lang') === 'en' ? 'en' : 'es'; }
+function loginLang(){
+  try { return localStorage.getItem('walkcheck_lang') === 'en' ? 'en' : 'es'; }
+  catch(_) { return 'es'; }
+}
+function setLoginLang(code){
+  try { localStorage.setItem('walkcheck_lang', code === 'en' ? 'en' : 'es'); } catch(_){}
+  applyLoginLang();
+}
 function applyLoginLang(){
-  const t = LOGIN_I18N[loginLang()];
-  const tog = $('langToggle');
-  if (tog) tog.textContent = loginLang() === 'es' ? 'EN' : 'ES';
-  document.documentElement.lang = loginLang();
+  const cur = loginLang();
+  const t = LOGIN_I18N[cur];
+  document.querySelectorAll('[data-set-lang]').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-set-lang') === cur);
+  });
+  document.documentElement.lang = cur;
   if ($('loginTitle')) $('loginTitle').textContent = t.title;
   if ($('loginLead')) $('loginLead').textContent = t.lead;
   if ($('email')) $('email').placeholder = t.email;
@@ -474,10 +499,7 @@ function applyLoginLang(){
   if ($('regLink')) $('regLink').textContent = t.register;
   if ($('pwEye')) $('pwEye').setAttribute('aria-label', t.eye);
 }
-function toggleLoginLang(){
-  localStorage.setItem('walkcheck_lang', loginLang() === 'es' ? 'en' : 'es');
-  applyLoginLang();
-}
+function toggleLoginLang(){ setLoginLang(loginLang() === 'es' ? 'en' : 'es'); }
 function togglePw(){
   const el = $('password');
   if (!el) return;
