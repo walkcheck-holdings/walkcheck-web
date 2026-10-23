@@ -5,50 +5,69 @@ window.JOB_TEMPLATES = {
     searchPlaceholder: 'Buscar edificios…',
     jobs: ['SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE']
   },
+  maintenance: {
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
+    jobs: ['MAINTENANCE', 'Reparacion', 'INSPECTION']
+  },
+  cleaning: {
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
+    jobs: ['Limpieza regular', 'Limpieza profunda', 'Move-out', 'Ventanas']
+  },
+  inspections: {
+    sitesLabel: 'Edificios',
+    searchPlaceholder: 'Buscar edificios…',
+    jobs: ['INSPECTION', 'SEMI ANNUAL INSPECTION', 'Window inspection']
+  },
+  landscaping: {
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
+    jobs: ['Jardineria', 'Exteriores', 'Mantenimiento']
+  },
+  technical: {
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
+    jobs: ['Servicio tecnico', 'Reparacion', 'INSPECTION']
+  },
+  other: {
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
+    jobs: ['Servicio', 'Reparacion', 'INSPECTION']
+  },
   construction: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
     jobs: ['Obra nueva', 'Remodelacion', 'Punch list', 'Inspeccion de obra']
   },
   electrical: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
     jobs: ['Instalacion electrica', 'Reparacion panel', 'Inspeccion electrica', 'Emergencia']
   },
   plumbing: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
     jobs: ['Fuga agua', 'Instalacion tuberias', 'Destape', 'Inspeccion plomeria']
   },
   hvac: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
     jobs: ['Instalacion A/C', 'Mantenimiento', 'Reparacion', 'Inspeccion HVAC']
   },
   roofing: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
+    sitesLabel: 'Sitios',
+    searchPlaceholder: 'Buscar sitios…',
     jobs: ['Reparacion techo', 'Inspeccion techo', 'Instalacion', 'Emergencia filtracion']
-  },
-  cleaning: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
-    jobs: ['Limpieza regular', 'Limpieza profunda', 'Move-out', 'Ventanas']
-  },
-  other: {
-    sitesLabel: 'Clientes/Sitios',
-    searchPlaceholder: 'Search sites...',
-    jobs: ['Servicio', 'Reparacion', 'Inspeccion', 'Emergencia']
   }
 };
 
 window.COMPANY_TYPE_OPTIONS = [
-  { id: 'property_management', label: 'Property Management / Condo Inspections' },
-  { id: 'construction', label: 'Construcción General' },
-  { id: 'electrical', label: 'Electricidad / Electrical' },
-  { id: 'plumbing', label: 'Plomería / Plumbing' },
-  { id: 'hvac', label: 'HVAC / Aire Acondicionado' },
-  { id: 'roofing', label: 'Roofing / Techos' },
-  { id: 'cleaning', label: 'Limpieza / Cleaning' },
-  { id: 'other', label: 'Otro' }
+  { id: 'property_management', label: 'Administración de propiedades' },
+  { id: 'maintenance', label: 'Mantenimiento y reparaciones' },
+  { id: 'cleaning', label: 'Limpieza' },
+  { id: 'inspections', label: 'Inspecciones' },
+  { id: 'landscaping', label: 'Jardinería y exteriores' },
+  { id: 'technical', label: 'Servicios técnicos' },
+  { id: 'other', label: 'Otra' }
 ];

@@ -2,8 +2,8 @@
 <html lang="es"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WalkCheck — Recorridos profesionales de propiedades</title>
-<meta name="description" content="WalkCheck: recorridos mensuales documentados para administradores de condominios. Fotos, reportes y equipo en una sola app.">
+<title>WalkCheck — Organiza tu compañía de servicios</title>
+<meta name="description" content="WalkCheck: horario de tu equipo, trabajos con fotos, reportes mensuales y facturación. Para compañías de servicios. El recorrido de condominios es el ejemplo principal.">
 <style>
 :root{
   --navy:#0E2A47; --navy2:#0A1F36; --navy3:#16467E;
@@ -97,6 +97,11 @@ nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
 .btn-blue{background:#2F6FED;color:#fff}
 .btn-blue:hover{background:#2158C7;transform:translateY(-1px)}
 .fine{text-align:center;color:var(--mut);font-size:13.5px;margin-top:22px}
+.who{background:#fff;padding:56px 0 8px}
+.who h2{text-align:center;font-size:28px;font-weight:800;letter-spacing:-.3px;margin:0 0 22px}
+.who-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:900px;margin:0 auto}
+.who-chip{background:var(--bg);border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font-weight:700;font-size:14.5px;color:var(--navy)}
+.who .lede{margin-top:18px}
 /* ===== FAQ ===== */
 .faq{max-width:760px;margin:40px auto 0}
 .faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;padding:0;overflow:hidden}
@@ -175,6 +180,9 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   .plan.pop{transform:none}
   .plan .price{font-size:34px}
   .faq summary{padding:14px 16px;font-size:15px}
+  .who{padding:36px 0 4px}
+  .who h2{font-size:22px;margin-bottom:14px}
+  .who-chip{font-size:13px;padding:8px 12px}
   .cta-final{padding:32px 18px;margin:40px 0;border-radius:18px}
   .cta-final h2{font-size:22px}
   .cta-final p{font-size:15px;margin:10px 0 18px}
@@ -213,7 +221,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
     <nav class="main">
       <div class="dd"><span data-i18n="navProd">Producto ▾</span>
         <div class="dd-menu">
-          <a href="#pilares"><b data-i18n="ddWc">WalkCheck</b><small data-i18n="ddWcS">Recorridos de condominios</small></a>
+          <a href="#pilares"><b data-i18n="ddWc">WalkCheck</b><small data-i18n="ddWcS">Compañías de servicios · ejemplo: condominios</small></a>
         </div>
       </div>
       <a href="#precios" data-i18n="navPrecios">Precios</a>
@@ -230,8 +238,8 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 <section class="hero">
   <div class="wrap">
     <div>
-      <h1 data-i18n="heroT">La solución todo-en-uno para profesionales de <span class="hl">condominios</span></h1>
-      <p class="sub" data-i18n="heroS">Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.</p>
+      <h1 data-i18n="heroT">La plataforma para organizar tu <span class="hl">compañía de servicios</span></h1>
+      <p class="sub" data-i18n="heroS">Horario de tu equipo, trabajos con fotos, reportes mensuales listos para tu cliente y facturación, en un solo lugar. Para compañías de mantenimiento, limpieza, inspecciones, administración de propiedades y servicios técnicos.</p>
       <div class="hero-cta">
         <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 28px" data-i18n="heroMain">Empezar 15 días gratis</a>
         <a class="btn btn-outline" href="#precios" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-i18n="heroCta2">Ver precios</a>
@@ -256,6 +264,21 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
         <div class="scr-ft"><div class="scr-btn" data-i18n="phBtn">📲 Enviar reporte por WhatsApp</div></div>
       </div></div>
     </div>
+  </div>
+</section>
+
+<section class="who" id="para-quien">
+  <div class="wrap">
+    <h2 data-i18n="whoT">¿Para quién es?</h2>
+    <div class="who-grid">
+      <span class="who-chip" data-i18n="who1">Administración de propiedades</span>
+      <span class="who-chip" data-i18n="who2">Mantenimiento y reparaciones</span>
+      <span class="who-chip" data-i18n="who3">Limpieza</span>
+      <span class="who-chip" data-i18n="who4">Inspecciones</span>
+      <span class="who-chip" data-i18n="who5">Jardinería y exteriores</span>
+      <span class="who-chip" data-i18n="who6">Servicios técnicos</span>
+    </div>
+    <p class="lede" data-i18n="whoS">El caso principal sigue siendo el recorrido de condominios; las demás compañías usan el mismo horario, fotos y reportes.</p>
   </div>
 </section>
 
@@ -317,7 +340,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <div>
         <h3 data-i18n="p3t">Organiza a tu compañía y tu equipo</h3>
         <ul class="feat">
-          <li data-i18n="p3a">Múltiples compañías, cada una con sus edificios y datos separados</li>
+          <li data-i18n="p3a">Múltiples compañías, cada una con sus sitios y datos separados</li>
           <li data-i18n="p3b">Crea usuarios para tus trabajadores con contraseña temporal</li>
           <li data-i18n="p3c">Activa o suspende compañías desde el panel de administrador</li>
           <li data-i18n="p3d">Panel web para que la oficina revise hallazgos y reportes</li>
@@ -416,7 +439,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.</div></details>
       <details><summary data-i18n="fq3">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa3">La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.</div></details>
       <details><summary data-i18n="fq4">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa4">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
-      <details><summary data-i18n="fq5">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa5">Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.</div></details>
+      <details><summary data-i18n="fq5">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa5">Tus trabajos, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.</div></details>
     </div>
   </div>
 </section>
@@ -434,7 +457,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
     <div class="fcols">
       <div>
         <a class="logo" href="#" style="margin-bottom:14px"><span class="lg">🏢</span>WalkCheck</a>
-        <p style="font-size:14.5px;max-width:280px" data-i18n="ftD">Recorridos profesionales de propiedades, hechos en Miami.</p>
+        <p style="font-size:14.5px;max-width:280px" data-i18n="ftD">La plataforma para organizar tu compañía de servicios. Hecho en Miami.</p>
       </div>
       <div>
         <h4 data-i18n="ftP">Producto</h4>
@@ -488,10 +511,12 @@ function bindPlanButtons(){
 var lang = "es";
 var I18N = {
 es:{
-navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Recorridos de condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",
+navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Compañías de servicios · ejemplo: condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",
 aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck. Para empezar, crea tu cuenta en /register/. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
-heroT:'La solución todo-en-uno para profesionales de <span class="hl">condominios</span>',
-heroS:"Documenta tus recorridos mensuales con fotos, genera reportes profesionales por WhatsApp y organiza a tu equipo desde una sola app.",
+heroT:'La plataforma para organizar tu <span class="hl">compañía de servicios</span>',
+heroS:"Horario de tu equipo, trabajos con fotos, reportes mensuales listos para tu cliente y facturación, en un solo lugar. Para compañías de mantenimiento, limpieza, inspecciones, administración de propiedades y servicios técnicos.",
+whoT:"¿Para quién es?",who1:"Administración de propiedades",who2:"Mantenimiento y reparaciones",who3:"Limpieza",who4:"Inspecciones",who5:"Jardinería y exteriores",who6:"Servicios técnicos",
+whoS:"El caso principal sigue siendo el recorrido de condominios; las demás compañías usan el mismo horario, fotos y reportes.",
 heroMain:"Empezar 15 días gratis",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · 15 días gratis al registrarte",
 t1:"Checklists por área",t2:"Fotos con ubicación",t3:"Reporte por WhatsApp",
 phT:"Recorrido · Octubre",phS:"8000 Harding Ave · Piso 3",
@@ -512,7 +537,7 @@ p2c:"Corrector automático de errores de escritura",
 p2d:"Las fotos quedan guardadas en la app y el panel",
 m2t:"Reporte · Octubre 2026",m2a:"Fecha: 16 Oct 2026",m2b:"Estacionamientos: todo en buen orden",m2c:"Lobby: todo bien",m2btn:"💬 Enviar por WhatsApp",
 p3t:"Organiza a tu compañía y tu equipo",
-p3a:"Múltiples compañías, cada una con sus edificios y datos separados",
+p3a:"Múltiples compañías, cada una con sus sitios y datos separados",
 p3b:"Crea usuarios para tus trabajadores con contraseña temporal",
 p3c:"Activa o suspende compañías desde el panel de administrador",
 p3d:"Panel web para que la oficina revise hallazgos y reportes",
@@ -537,15 +562,17 @@ fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página: eliges tu plan y emp
 fq2:"¿Necesito tarjeta de crédito?",fa2:"No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.",
 fq3:"¿Funciona en iPhone?",fa3:"La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.",
 fq4:"¿Puedo cambiar de plan o cancelar?",fa4:"Sí, cuando quieras. Sin contratos ni penalidades.",
-fq5:"¿Mis datos están seguros?",fa5:"Tus edificios, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.",
+fq5:"¿Mis datos están seguros?",fa5:"Tus trabajos, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.",
 ctaT:"Empieza tu primer recorrido hoy",ctaS:"Crea tu cuenta y empieza tus 15 días gratis.",ctaB:"Empezar 15 días gratis",
-ftD:"Recorridos profesionales de propiedades, hechos en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
+ftD:"La plataforma para organizar tu compañía de servicios. Hecho en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
 },
 en:{
-navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Condo walkthroughs",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",
+navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Service companies · lead example: condos",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",
 aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck. To start, create your account at /register/. If you need help, email  soporte@walkcheck.app.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
-heroT:'The all-in-one solution for <span class="hl">condo</span> professionals',
-heroS:"Document your monthly walkthroughs with photos, generate professional WhatsApp reports, and organize your team from a single app.",
+heroT:'The platform to run your <span class="hl">service company</span>',
+heroS:"Team schedule, jobs with photos, monthly reports ready for your client, and billing, in one place. For maintenance, cleaning, inspections, property management, and technical service companies.",
+whoT:"Who is it for?",who1:"Property management",who2:"Maintenance and repairs",who3:"Cleaning",who4:"Inspections",who5:"Landscaping and exteriors",who6:"Technical services",
+whoS:"Condo walkthroughs remain the lead example; other service companies use the same schedule, photos, and reports.",
 heroMain:"Start 15-day free trial",heroCta2:"See pricing",heroNote:"No credit card · 15 days free when you sign up",
 t1:"Checklists by area",t2:"Photos with location",t3:"WhatsApp report",
 phT:"Walkthrough · October",phS:"8000 Harding Ave · Floor 3",
@@ -566,7 +593,7 @@ p2c:"Automatic typo correction",
 p2d:"Photos stay saved in the app and the panel",
 m2t:"Report · October 2026",m2a:"Date: Oct 16, 2026",m2b:"Parking: all in good order",m2c:"Lobby: all good",m2btn:"💬 Send via WhatsApp",
 p3t:"Organize your company and team",
-p3a:"Multiple companies, each with separate buildings and data",
+p3a:"Multiple companies, each with separate sites and data",
 p3b:"Create logins for your workers with temporary passwords",
 p3c:"Activate or suspend companies from the admin panel",
 p3d:"Web panel for the office to review findings and reports",
@@ -591,9 +618,9 @@ fq1:"How do I start?",fa1:"Create your account on this page: choose your plan an
 fq2:"Do I need a credit card?",fa2:"Not to start. You get 15 days free. When you decide to stay, we activate your plan and arrange payment with you.",
 fq3:"Does it work on iPhone?",fa3:"The app runs on Android and the web panel on any device. The iPhone version is in development.",
 fq4:"Can I change plans or cancel?",fa4:"Yes, anytime. No contracts or penalties.",
-fq5:"Is my data safe?",fa5:"Your buildings, photos and reports are stored in the cloud and only your company can see them.",
+fq5:"Is my data safe?",fa5:"Your jobs, photos and reports are stored in the cloud and only your company can see them.",
 ctaT:"Start your first walkthrough today",ctaS:"Create your account and start your 15 free days.",ctaB:"Start 15-day free trial",
-ftD:"Professional property walkthroughs, made in Miami.",ftP:"Product",ftPr:"Pricing",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
+ftD:"The platform to run your service company. Made in Miami.",ftP:"Product",ftPr:"Pricing",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
 }};
 function tab(n){
   document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('on', i===n); });
@@ -635,7 +662,7 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: recorridos de condominios, fotos, reportes, precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis sin tarjeta en walkcheck.app/register. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. Para cerrar, apunta a /register/ y a  soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a  soporte@walkcheck.app. Sé breve."
+    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: plataforma para compañías de servicios (horario, trabajos con fotos, reportes mensuales, facturación). El ejemplo principal es el recorrido de condominios. Precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis sin tarjeta en walkcheck.app/register. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. No inventes funciones. Para cerrar, apunta a /register/ y a  soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a  soporte@walkcheck.app. Sé breve."
 });
 const chat = model.startChat();
 let sent = 0;
