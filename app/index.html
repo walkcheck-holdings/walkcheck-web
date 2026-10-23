@@ -2466,6 +2466,7 @@ function jobCardHtml(j, extraClass, posStyle){
   return `<div class="jcard ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(fill)};color:${ink};${pos}">
     ${addr ? `<div class="jcard-addr"><span class="pin">📍</span>${esc(addr)}</div>` : ''}
     <div class="jcard-t">${esc(when)}${kind ? ' · ' + esc(kind) : ''}</div></div>`;
+}
 function quarterSlotsHtml(extraAttr){
   const parts = [];
   for (let m = DAY_START_MIN; m < DAY_END_MIN; m += STEP) {
