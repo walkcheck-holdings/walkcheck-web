@@ -99,7 +99,7 @@
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
   .addbox { padding: 10px 12px; border-top: 1px solid #E5E5EA; flex: 0 0 auto; }
   .addbox input { margin: 4px 0 6px; padding: 8px 10px; }
-  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
   .weekbar { background: #fff; padding: 8px 14px 0; flex: 0 0 auto; border-bottom: 1px solid #F2F2F7; }
   .weekbar h2 { margin: 0; font-size: 16px; }
@@ -134,7 +134,7 @@
   .qslot.hour { border-top: 1px solid #E5E5EA; }
   .qslot.over { background: #E8F8EC; }
   .hours { display: none; }
-  #rows { overflow: hidden; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; -webkit-overflow-scrolling: touch; }
+  #rows { overflow: auto; flex: 1; min-height: 320px; display: flex; flex-direction: column; background: #fff; -webkit-overflow-scrolling: touch; }
   #rows .daygrid-body { flex: 1 1 auto; }
   .slot.over { background: #E8F8EC; }
   .jcard {
@@ -349,8 +349,10 @@
     display: flex; flex-direction: column; position: fixed; inset: 0; z-index: 4; background: #fff; height: 100dvh;
   }
   body.ready[data-portal="company"] #board { display: flex; flex: 1; min-height: 0; height: auto; }
-  body.ready[data-portal="company"] #main { min-height: 0; }
-  #viewTabs [data-view="map"], #rolesBtn { display: none !important; }
+  body.ready[data-portal="company"] #main { min-height: 0; display: flex; flex-direction: column; }
+  body.ready[data-portal="company"] #staffMain { flex: 1; min-height: 0; }
+  body.ready[data-portal="company"] #rows { flex: 1; min-height: 0; overflow: auto; }
+  #rolesBtn { display: none !important; }
   body.ready #siteHdr { display: none; }
   body.ready[data-portal="owner"] #bottomNav,
   body.ready[data-portal="owner"] #phoneTabs { display: none !important; }
@@ -537,10 +539,10 @@
       <div class="week-tools">
         <div class="view-tabs" id="viewTabs">
           <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
-          <button type="button" data-view="week" onclick="setSchedView('week')" data-i18n="tabWeek">Semana</button>
           <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
+          <button type="button" data-view="map" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
         </div>
-        <h2 id="weekTitle" class="hidden">Agenda</h2>
+        <h2 id="weekTitle">Mi horario</h2>
         <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()" data-i18n="buildings">Edificios</button>
         <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
       </div>
@@ -619,8 +621,8 @@ function liveSlotH(){
   if (!rows) return 16;
   const usable = Math.max(0, rows.clientHeight - 44);
   const n = slotCount();
-  if (usable < 120) return 16;
-  return Math.max(10, usable / n);
+  if (usable < n * 12) return 16;
+  return Math.max(12, usable / n);
 }
 function gridTotalH(){ return slotCount() * SLOT_H; }
 
@@ -849,7 +851,7 @@ const UI_I18N = {
     today:'Hoy', todayBtn:'Hoy', sites:'Sitios', team:'Equipo', newPlus:'＋ Nuevo',
     filters:'Filtros', filtersHint:'Filtros: Inspecciones / Mantenimiento a la izquierda',
     assignJob:'+ Asignar trabajo', teamSchedule:'Agenda del equipo', weekOf:'Semana del',
-    mySchedule:'Mi agenda', jobType:'Tipo de trabajo', chooseType:'Elegir tipo…',
+    mySchedule:'Mi horario', jobType:'Tipo de trabajo', chooseType:'Elegir tipo…',
     searchType:'Buscar tipo…', frequent:'Frecuentes', newType:'＋ Nuevo', noTypes:'Sin tipos',
     newBuilding:'＋ Nuevo edificio', newSite:'＋ Nuevo sitio',
     buildingName:'Nombre del edificio', siteName:'Nombre del sitio / cliente', add:'Agregar', close:'Cerrar',
@@ -955,8 +957,7 @@ function applyPanelLang(){
   }
   renderTypesBox();
   renderWeek();
-  if (currentPortal()==='employee' || (typeof isBoss === 'function' && isBoss())) renderRows();
-  else if (typeof isBoss === 'function' && !isBoss()) renderMySchedule();
+  renderSchedule();
   renderMap();
   renderTeam();
 }
@@ -1068,7 +1069,7 @@ function phonePlus(){
   if (canAssign()) openAssign();
   else if (isBoss()) setTab('edificios');
 }
-window.addEventListener('resize', () => { applyLayout(); if (isBoss()) renderRows(); });
+window.addEventListener('resize', () => { applyLayout(); renderSchedule(); });
 function renderMap(){
   const el = $('mapPane');
   if (!el) return;
@@ -1091,7 +1092,7 @@ document.querySelectorAll('.chip').forEach(ch => {
     ch.classList.add('on');
     bFilter = ch.dataset.f;
     renderBuildings();
-    renderRows();
+    renderSchedule();
   };
 });
 
@@ -1119,8 +1120,13 @@ function myUid(){
 }
 function myTechCols(){
   const uid = myUid();
-  if (currentPortal()==='employee') return techs.filter(t => t.uid === uid);
-  return techs;
+  const named = techs.filter(t => String(t.name||'').trim());
+  if (currentPortal()==='employee') return named.filter(t => t.uid === uid);
+  return named.slice().sort((a,b) => String(a.name).localeCompare(String(b.name),'es'));
+}
+function renderSchedule(){
+  if (currentPortal() === 'owner') return;
+  renderRows();
 }
 
 function renderWeek(){
@@ -1129,9 +1135,7 @@ function renderWeek(){
   const meses = loginLang()==='es'
     ? ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  if ($('weekTitle')) $('weekTitle').textContent = isPhone()
-    ? uiT('teamSchedule')
-    : `${uiT('teamSchedule')} — ${uiT('weekOf')} ${meses[ws.getMonth()]} ${ws.getDate()}–${end.getDate()}, ${ws.getFullYear()}`;
+  if ($('weekTitle')) $('weekTitle').textContent = uiT('mySchedule');
   const letters = loginLang()==='es' ? ['D','L','M','M','J','V','S'] : ['S','M','T','W','T','F','S'];
   let html = '';
   for (let i=0;i<7;i++){
@@ -1223,8 +1227,7 @@ async function loadBoard(){
   renderMap();
   renderTeam();
   if ($('moneyBtn')) $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
-  if (currentPortal()==='employee' || isBoss()) renderRows();
-  else renderMySchedule();
+  renderSchedule();
 }
 async function loadCompaniesSidebar(){
   $('sitesTitle').style.display = 'none';
@@ -1617,10 +1620,8 @@ function setSchedView(v){
   document.querySelectorAll('[data-view]').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-view') === v);
   });
-  if (v === 'map' && currentPortal()!=='employee') { setTab('mapa'); return; }
   if (currentPortal()!=='employee') setTab('agenda');
-  if (isBoss() || currentPortal()==='employee') renderRows();
-  else renderMySchedule();
+  renderSchedule();
 }
 function openTimesheet(months){
   if (!canSeeTimesheet()) return;
@@ -2091,8 +2092,7 @@ function listenCompanyJobs(id){
     jobs = jDocs;
     repairJobAccounts();
     renderMap();
-    if (isBoss() || currentPortal()==='employee') renderRows();
-    else renderMySchedule();
+    renderSchedule();
   }, () => {});
 }
 function repairJobAccounts(){
@@ -2148,18 +2148,17 @@ function quarterSlotsHtml(extraAttr){
 }
 function timeAxisHtml(){
   const parts = [];
-  for (let m = DAY_START_MIN; m < DAY_END_MIN; m += 60) {
+  for (let m = DAY_START_MIN; m <= DAY_END_MIN; m += 60) {
     const top = ((m - DAY_START_MIN) / STEP) * SLOT_H;
     parts.push(`<div class="tmark" style="top:${top}px">${hLabel(Math.floor(m/60))}</div>`);
   }
   return parts.join('');
 }
 function renderRows(){
+  const rowsEl = schedEl('rows');
   if (schedView === 'map') {
     renderMap();
-    if (currentPortal()==='employee' && schedEl('rows') && $('mapPane')) {
-      schedEl('rows').innerHTML = $('mapPane').innerHTML;
-    }
+    if (rowsEl && $('mapPane')) rowsEl.innerHTML = $('mapPane').innerHTML;
     return;
   }
   if (schedView === 'list') { renderMobileAgenda(); return; }
@@ -2167,7 +2166,7 @@ function renderRows(){
   renderDayGrid(myTechCols());
 }
 function renderDayGrid(cols){
-  const listCols = cols || techs;
+  const listCols = cols || myTechCols();
   SLOT_H = liveSlotH();
   const H = gridTotalH();
   const hoursEl = schedEl('hours');
@@ -2175,7 +2174,13 @@ function renderDayGrid(cols){
   if (!rowsEl) return;
   if (!listCols.length) {
     if (hoursEl) hoursEl.innerHTML = '';
-    rowsEl.innerHTML = `<div class="card muted">${esc(uiT('noTeam'))}</div>`;
+    rowsEl.innerHTML = `<div class="daygrid" style="height:100%">
+      <div class="daygrid-head"><div class="gutter"></div><div class="col-head">${esc(uiT('noTeam'))}</div></div>
+      <div class="daygrid-body" style="height:${H}px">
+        <div class="time-axis" style="height:${H}px">${timeAxisHtml()}</div>
+        <div class="wcol" style="height:${H}px">${quarterSlotsHtml(() => '')}</div>
+      </div>
+    </div>`;
     return;
   }
   const head = `<div class="gutter" style="font-size:10px;font-weight:800;color:#8E8E93;padding:8px 4px">${loginLang()==='es'?'Hora':'Time'}</div>` + listCols.map(t => {
@@ -2200,6 +2205,14 @@ function renderDayGrid(cols){
       ${bodies}
     </div>
   </div>`;
+  if (!renderDayGrid._fit) {
+    renderDayGrid._fit = true;
+    requestAnimationFrame(() => {
+      renderDayGrid._fit = false;
+      const next = liveSlotH();
+      if (Math.abs(next - SLOT_H) > 0.5) renderDayGrid(listCols);
+    });
+  }
 }
 function renderWeekGrid(){
   const ws = weekStart(selectedDay);
@@ -2251,7 +2264,7 @@ function renderMobileAgenda(){
     return true;
   }).sort((a,b) => jobTime(a) - jobTime(b));
   const done = list.filter(jobDone).length;
-  let html = `<div id="dayList"><p class="muted" style="margin:0 0 10px">${done}/${list.length} done</p>`;
+  let html = `<div id="dayList"><p class="muted" style="margin:0 0 10px">${done}/${list.length} ${esc(uiT('done'))}</p>`;
   if (!list.length) {
     html += `<div class="day-empty">${esc(uiT('noJobsDay'))}</div>`;
   } else {
