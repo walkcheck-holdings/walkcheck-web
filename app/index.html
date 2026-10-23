@@ -1030,11 +1030,6 @@ auth.onAuthStateChanged(async user => {
   await resolveTypeAdmin(user.uid);
   if (!isSuper() && !await enforceTrial()) return;
   const want = portalForRole();
-  const have = pathPortal();
-  if (have !== want) {
-    location.replace('/app/' + want + '/');
-    return;
-  }
   document.body.setAttribute('data-portal', want);
   document.body.classList.add('ready', 'tab-' + phoneTab);
   if ($('roleChip')) $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
