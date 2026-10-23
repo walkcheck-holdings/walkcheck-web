@@ -28,9 +28,14 @@
   header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; justify-self: start; }
   header h1 a { color: #fff; text-decoration: none; display: block; }
   .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
-  #coSwitch { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.28); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; max-width: 180px; min-height: 40px; }
-  #coName { font-size: 16px; font-weight: 800; text-align: center; justify-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .98; min-width: 0; max-width: 100%; }
-  #coName:empty { visibility: hidden; }
+  #coSwitch {
+    justify-self: center; min-width: 0; max-width: 100%; width: auto;
+    background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 15px; min-height: 36px;
+    text-align: center; cursor: pointer;
+  }
+  #coSwitch:disabled { appearance: none; -webkit-appearance: none; border-color: transparent; background: transparent; cursor: default; padding-right: 12px; }
+  #coName { display: none; }
   header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; min-height: 36px; font-size: 13px; }
   .hdr-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
   .hdr-actions a { color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 36px; display: inline-flex; align-items: center; }
@@ -49,6 +54,25 @@
   header .lang-switch { border-color: rgba(255,255,255,.45); }
   header .lang-switch button { background: transparent; color: #fff; }
   header .lang-switch button.on { background: rgba(255,255,255,.28); color: #fff; }
+  .avatar-wrap { position: relative; flex-shrink: 0; }
+  .avatar-btn {
+    width: 36px; height: 36px; min-height: 36px; min-width: 36px; padding: 0;
+    border-radius: 50%; font-weight: 800; font-size: 12px; letter-spacing: .02em;
+  }
+  .avatar-menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 95;
+    background: #fff; color: #111; border-radius: 12px; min-width: 220px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.18); padding: 8px; text-align: left;
+  }
+  .avatar-menu.open { display: block; }
+  .avatar-who { padding: 8px 10px 10px; border-bottom: 1px solid #E5E5EA; margin-bottom: 6px; }
+  .avatar-who b { display: block; font-size: 14px; }
+  .avatar-who span { font-size: 13px; color: #6B7280; }
+  .avatar-menu button {
+    width: 100%; text-align: left; background: #fff; color: #111; min-height: 44px;
+    font-weight: 700; font-size: 14px; padding: 8px 10px;
+  }
+  .avatar-menu button:hover { background: #F2F2F7; }
   .login-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .login-head h3 { margin: 0; }
   .pw-wrap { position: relative; }
@@ -126,14 +150,15 @@
   .week-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
   .week-tools h2 { flex: 1 1 auto; min-width: 0; }
   .weekdays { display: flex; }
-  .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 44px; font-size: 14px; }
-  .wd .d { font-size: 11px; color: #8E8E93; }
-  .wd.on { border-bottom: 2px solid #34C759; font-weight: 800; color: #34C759; }
+  .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 48px; font-size: 15px; border-radius: 8px 8px 0 0; }
+  .wd .d { font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #6B7280; text-transform: none; }
+  .wd.on { border-bottom: 3px solid #34C759; font-weight: 800; color: #1B7A36; }
   .view-tabs { display: flex; gap: 4px; }
   .view-tabs button { border: none; background: #F2F2F7; color: #6B7280; border-radius: 8px; padding: 8px 12px; font-weight: 800; font-size: 13px; cursor: pointer; min-height: 36px; }
   .view-tabs button.on { background: #1B7A36; color: #fff; }
-  .wd.today { background: #1B7A36; color: #fff; border-radius: 8px 8px 0 0; }
-  .wd.today .d { color: rgba(255,255,255,.9); }
+  .wd.today { background: #1B7A36; color: #fff; font-weight: 800; box-shadow: inset 0 0 0 2px #145C28; }
+  .wd.today .d { color: #fff; }
+  .wd.today.on { box-shadow: inset 0 -3px 0 #fff, inset 0 0 0 2px #145C28; }
   .jcard.warn { box-shadow: 0 0 0 2px #FF3B30; outline: 1px dashed #fff; }
   .period { display: flex; gap: 8px; margin: 8px 0 14px; flex-wrap: wrap; }
   .period button { border: 1px solid #D1D1D6; background: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 800; cursor: pointer; min-height: 40px; }
@@ -144,12 +169,14 @@
   .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #fff; }
   .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 48px; align-items: stretch; justify-content: stretch; }
   .gutter { width: 56px; min-width: 56px; flex: 0 0 56px; }
-  .col-head { flex: 1 1 0; min-width: 0; max-width: none; padding: 8px 6px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; background: none; color: inherit; width: auto; }
+  .col-head { flex: 1 1 0; min-width: 0; max-width: none; padding: 8px 8px; text-align: center; font-weight: 800; font-size: 13px; border-left: 2px solid #9CA3AF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; background: #F3F4F6; color: inherit; width: auto; }
+  .col-head .col-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
   .col-head .cnt { display: inline-block; margin-left: 0; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; }
   .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; justify-content: stretch; align-items: stretch; }
   .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; background: #fff; }
   .tmark { position: absolute; left: 0; right: 0; font-size: 10px; font-weight: 800; color: #8E8E93; padding-left: 4px; transform: translateY(-6px); }
-  .wcol { flex: 1 1 0; min-width: 0; max-width: none; position: relative; border-left: 1px solid #E5E5EA; background: #fff; }
+  .wcol { flex: 1 1 0; min-width: 0; max-width: none; position: relative; border-left: 2px solid #9CA3AF; background: #fff; }
+  .wcol:last-child { border-right: 2px solid #9CA3AF; }
   .qslot { position: absolute; left: 0; right: 0; border-top: 1px solid #F4F4F5; cursor: pointer; }
   .qslot.hour { border-top: 1px solid #E5E5EA; }
   .qslot.over { background: #E8F8EC; }
@@ -164,18 +191,19 @@
     overflow: hidden; box-sizing: border-box;
   }
   .jcard, .jcard * { word-break: normal; overflow-wrap: normal; }
-  .jcard-addr {
-    font-weight: 700; font-size: 12px; line-height: 1.2;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
-  }
   .jcard-kind {
     font-size: 11px; font-weight: 800; line-height: 1.2; text-transform: uppercase;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
   }
   .jcard-t, .jcard .t {
-    font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    flex: 0 0 auto; line-height: 1.2;
+    font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 0 0 auto; line-height: 1.2; max-width: 100%;
   }
+  .jcard-addr {
+    font-weight: 700; font-size: 12px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-height: 0; max-width: 100%;
+  }
+  .jcard-addr .pin { margin-right: 4px; }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #8E8E93; font-size: 14px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
   #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; flex: 0 0 auto; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -320,6 +348,7 @@
       padding: 10px 12px 12px; padding-top: max(10px, env(safe-area-inset-top));
     }
     #coName { grid-column: 1 / -1; text-align: left; }
+    #coSwitch { grid-column: 1 / -1; justify-self: stretch; text-align: left; }
     header h1 { flex: 1 0 100%; width: 100%; font-size: 18px; }
     .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
     header button, .hdr-actions a {
@@ -540,17 +569,22 @@
     <a href="/">Walkcheck</a>
     <span class="holdings">HOLDINGS LLC</span>
   </h1>
-  <span id="coName"></span>
+  <select id="coSwitch" aria-label="Compañía" onchange="onHeaderCompany(this.value)"></select>
   <div class="hdr-actions">
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
       <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
     </div>
-    <span id="roleChip"></span>
     <button id="moneyBtn" class="hidden" onclick="openMoney()" data-i18n="money">Facturación</button>
     <button type="button" id="reportsBtn" onclick="openReports()" data-i18n="reports">Reportes</button>
     <a id="typesLink" href="/app/settings/job-types/" class="hidden" data-i18n="types">Tipos</a>
-    <button type="button" data-logout data-i18n="logout">Cerrar sesión</button>
+    <div class="avatar-wrap">
+      <button type="button" id="avatarBtn" class="avatar-btn" onclick="toggleAvatar(event)" aria-label="Perfil">·</button>
+      <div id="avatarMenu" class="avatar-menu" role="menu">
+        <div class="avatar-who"><b id="avatarName"></b><span id="avatarRole"></span></div>
+        <button type="button" onclick="auth.signOut()" data-i18n="logout">Cerrar sesión</button>
+      </div>
+    </div>
   </div>
 </header>
 <div id="board">
@@ -914,7 +948,7 @@ const UI_I18N = {
     save:'Guardar', assign:'Asignar', cancel:'Cancelar', noTeam:'Sin equipo',
     siteOrAddr:'— Dirección / sitio —', openMaps:'Abrir en Mapas',
     noMap:'Sin sitios para el mapa.', noTeamList:'Sin equipo.',
-    pickCompany:'Elige una compañía a la izquierda.', cannotAssign:'No puedes asignar trabajos con este rol.',
+    pickCompany:'Elige una compañía en el encabezado.', cannotAssign:'No puedes asignar trabajos con este rol.',
     done:'completados', needBuilding:'Escribe el nombre del edificio',
     companies:'Compañías', noCompanies:'Sin compañías', workers:'Trabajadores',
     noBuildings:'Sin edificios', noSites:'Sin sitios', noPhone:'Sin teléfono', noInstr:'Sin instrucciones.',
@@ -965,7 +999,7 @@ const UI_I18N = {
     save:'Save', assign:'Assign', cancel:'Cancel', noTeam:'No team',
     siteOrAddr:'— Address / site —', openMaps:'Open in Maps',
     noMap:'No sites for the map.', noTeamList:'No team.',
-    pickCompany:'Pick a company on the left.', cannotAssign:'You cannot assign jobs with this role.',
+    pickCompany:'Pick a company in the header.', cannotAssign:'You cannot assign jobs with this role.',
     done:'done', needBuilding:'Enter the building name',
     companies:'Companies', noCompanies:'No companies', workers:'Workers',
     noBuildings:'No buildings', noSites:'No sites', noPhone:'No phone', noInstr:'No instructions.',
@@ -1007,6 +1041,7 @@ function applyPanelLang(){
   if ($('roleChip') && profile) {
     $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   }
+  fillAvatar();
   renderTypesBox();
   renderWeek();
   renderSchedule();
@@ -1087,6 +1122,7 @@ auth.onAuthStateChanged(async user => {
   document.body.classList.add('ready', 'tab-' + phoneTab);
   if ($('roleChip')) $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   if ($('empRoleChip')) $('empRoleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
+  fillAvatar();
   applyPanelLang();
   if (want === 'owner') await openOwnerPortal();
   else if (want === 'employee') await openEmployeePortal();
@@ -1137,12 +1173,22 @@ function renderTeam(){
     || `<div class="card muted">${esc(uiT('noTeamList'))}</div>`;
 }
 
-$('bSearch').oninput = e => { bQuery = e.target.value; if (isSuper()) renderCompanies(); else renderBuildings(); };
+$('bSearch').oninput = e => { bQuery = e.target.value; renderBuildings(); };
 
 function weekStart(d){
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  x.setDate(x.getDate() - (x.getDay()));
+  if (loginLang() === 'es') {
+    const dow = x.getDay();
+    x.setDate(x.getDate() - (dow === 0 ? 6 : dow - 1));
+  } else {
+    x.setDate(x.getDate() - x.getDay());
+  }
   return x;
+}
+function weekDayLabels(){
+  return loginLang() === 'es'
+    ? ['Lu','Ma','Mi','Ju','Vi','Sá','Do']
+    : ['Su','Mo','Tu','We','Th','Fr','Sa'];
 }
 function sameDay(a,b){
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
@@ -1179,7 +1225,7 @@ function renderWeek(){
     ? ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   if ($('weekTitle')) $('weekTitle').textContent = uiT('mySchedule');
-  const letters = loginLang()==='es' ? ['D','L','M','M','J','V','S'] : ['S','M','T','W','T','F','S'];
+  const letters = weekDayLabels();
   let html = '';
   for (let i=0;i<7;i++){
     const d = new Date(ws); d.setDate(ws.getDate()+i);
@@ -1198,7 +1244,7 @@ async function colGet(pathTry){
 async function loadBoard(){
   renderWeek();
   if (isSuper() && !cid()) {
-    await loadCompaniesSidebar();
+    await loadCompanyOptions();
     if (!viewCid && companyList[0]) viewCid = companyList[0].id;
   }
   const id = cid();
@@ -1549,10 +1595,68 @@ async function addTypeFromBox(){
     renderTypesBox();
   } catch(e){ alert(e.message||e); }
 }
+function contrastOn(bg){
+  let hex = String(bg || '#34C759').replace('#','').trim();
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  if (hex.length < 6) hex = '34C759';
+  const n = parseInt(hex.slice(0,6), 16);
+  if (isNaN(n)) return '#111';
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return ((r * 299 + g * 587 + b * 114) / 1000) >= 158 ? '#111' : '#fff';
+}
+function avatarInitials(){
+  const n = String((profile && (profile.displayName || profile.email)) || '?').trim();
+  const p = n.split(/\s+/).filter(Boolean);
+  if (p.length >= 2) return (p[0][0] + p[1][0]).toUpperCase();
+  return n.slice(0, 2).toUpperCase();
+}
+function fillAvatar(){
+  const btn = $('avatarBtn');
+  if (btn) btn.textContent = avatarInitials();
+  if ($('avatarName')) $('avatarName').textContent = (profile && (profile.displayName || profile.email)) || '';
+  if ($('avatarRole')) $('avatarRole').textContent = roleLabel();
+}
+function toggleAvatar(ev){
+  if (ev) ev.stopPropagation();
+  const m = $('avatarMenu');
+  if (m) m.classList.toggle('open');
+}
+function closeAvatar(){
+  const m = $('avatarMenu');
+  if (m) m.classList.remove('open');
+}
+async function loadCompanyOptions(){
+  if (!isSuper()) {
+    const id = profile.companyId || cid();
+    if (id) companyList = [{ id, name: companyName || '' }];
+    fillCompanyHeader();
+    return;
+  }
+  try {
+    const snap = await db.collection('companies').limit(80).get();
+    companyList = [];
+    snap.forEach(d => companyList.push({ id: d.id, ...d.data() }));
+    companyList.sort((a,b) => String(a.name||'').localeCompare(String(b.name||'')));
+  } catch(_) {}
+  fillCompanyHeader();
+}
 function fillCompanyHeader(){
-  const nm = $('coName');
-  if (!nm) return;
-  nm.textContent = (!companyName || /^walkcheck$/i.test(companyName)) ? '' : companyName;
+  const sel = $('coSwitch');
+  if (!sel) return;
+  const cur = cid();
+  let opts = companyList.slice();
+  if (!opts.length && cur) opts = [{ id: cur, name: companyName || cur }];
+  if (companyName && cur) {
+    opts = opts.map(c => c.id === cur ? Object.assign({}, c, { name: companyName || c.name }) : c);
+  }
+  sel.innerHTML = opts.map(c =>
+    `<option value="${esc(c.id)}" ${c.id===cur?'selected':''}>${esc(c.name || c.id)}</option>`
+  ).join('') || `<option value="${esc(cur||'')}">${esc(companyName || '—')}</option>`;
+  sel.disabled = !isSuper() || opts.length < 2;
+}
+function onHeaderCompany(id){
+  if (!id || id === cid()) return;
+  selectCompany(id);
 }
 async function openOwnerPortal(){
   await loadCompaniesSidebar();
@@ -1574,6 +1678,7 @@ async function openCompanyPortal(){
   }
   applyLayout();
   syncChrome();
+  await loadCompanyOptions();
   await loadBoard();
 }
 async function openEmployeePortal(){
@@ -1762,11 +1867,8 @@ function navMore(){
   if (sh.classList.contains('open')) { closeMore(); return; }
   const items = [];
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
-  if (currentPortal()==='company' && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openMoney()">${esc(uiT('money'))}</button>`);
   if (currentPortal()!=='employee') items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
-  if (canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
   if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
-  items.push(`<button type="button" onclick="auth.signOut()">${esc(uiT('logout'))}</button>`);
   items.push(`<button type="button" onclick="closeMore()">${esc(uiT('closeMenu'))}</button>`);
   sh.innerHTML = items.join('');
   sh.classList.add('open');
@@ -1794,6 +1896,7 @@ function syncChrome(){
 document.addEventListener('click', e => {
   if (e.target.closest('#moreSheet') || e.target.closest('#navMore') || e.target.closest('#empNavMore')) return;
   closeMore();
+  if (!e.target.closest('.avatar-wrap')) closeAvatar();
   if (!e.target.closest('.type-dd-wrap')) {
     const dd = $('typeDd');
     if (dd) dd.classList.remove('open');
@@ -2317,13 +2420,16 @@ function jobCardHtml(j, extraClass, posStyle){
   const addr = cardAddr(j);
   const kind = j.kind || '';
   const tp = typeOf(kind);
+  const fill = tp.color || '#34C759';
+  const ink = contrastOn(fill);
   const when = fmt(g.st)+' – '+fmt(g.en);
   const pos = posStyle || `top:${g.top}px;height:${g.h}px`;
   const check = jobDone(j) ? ' ✓' : '';
-  return `<div class="jcard ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
+  const showAddr = g.h >= 56 && addr;
+  return `<div class="jcard ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(fill)};color:${ink};${pos}">
     <div class="jcard-kind">${esc(kind)}${check}</div>
-    <div class="jcard-addr">${esc(addr)}</div>
-    <div class="jcard-t">${when}</div></div>`;
+    <div class="jcard-t">${when}</div>
+    ${showAddr ? `<div class="jcard-addr"><span class="pin">📍</span>${esc(addr)}</div>` : ''}</div>`;
 }
 function quarterSlotsHtml(extraAttr){
   const parts = [];
@@ -2373,7 +2479,7 @@ function renderDayGrid(cols){
   }
   const head = `<div class="gutter" style="font-size:10px;font-weight:800;color:#8E8E93;padding:8px 4px">${loginLang()==='es'?'Hora':'Time'}</div>` + listCols.map(t => {
     const list = jobsForTech(t);
-    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')">${esc(t.name||'')}<span class="cnt">${list.filter(jobDone).length}/${list.length}</span></button>`;
+    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')"><span class="col-name">${esc(t.name||'')}</span><span class="cnt">${list.filter(jobDone).length}/${list.length}</span></button>`;
   }).join('');
   const bodies = listCols.map(t => {
     const list = jobsForTech(t);
@@ -2407,7 +2513,7 @@ function renderWeekGrid(){
   const days = [];
   for (let i=0;i<7;i++){ const d=new Date(ws); d.setDate(ws.getDate()+i); days.push(d); }
   const H = gridTotalH();
-  const letters = loginLang()==='es' ? ['D','L','M','M','J','V','S'] : ['S','M','T','W','T','F','S'];
+  const letters = weekDayLabels();
   const head = `<div class="gutter"></div>` + days.map((d,i) => {
     const n = jobs.filter(j => {
       const t = jobTime(j);
