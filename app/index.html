@@ -25,7 +25,7 @@
   body.ready { overflow-x: hidden; overflow-y: hidden; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
   header { background: #1B7A36; color: #fff; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px 16px; }
-  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; justify-self: start; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; justify-self: start; min-width: 128px; }
   header h1 a { color: #fff; text-decoration: none; display: block; }
   .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
   #coSwitch {
@@ -450,9 +450,11 @@
   .role-card { background: #fff; border-radius: 12px; padding: 12px; margin-top: 10px; }
   .role-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F2F2F7; }
   .role-row select { width: auto; margin: 0; min-width: 160px; }
-  #rolesPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+  #rolesPane, #companiesPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
   body.view-roles #staffMain, body.view-roles #hoursPane { display: none; }
   body.view-roles #rolesPane { display: block; }
+  body.view-companies #staffMain, body.view-companies #hoursPane, body.view-companies #reportsPane { display: none; }
+  body.view-companies #companiesPane { display: block; }
   #empBoard { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
   #empRows { overflow: auto; flex: 1; }
   @media (max-width: 767px) {
@@ -527,7 +529,6 @@
   <div class="owner-body">
     <h2 data-i18n="allCompanies">Compañías</h2>
     <p class="muted" data-i18n="ownerHint">Activa o suspende compañías y asigna managers y supervisores.</p>
-    <div id="ownerList"></div>
   </div>
 </div>
 
@@ -654,6 +655,7 @@
     <div id="hoursPane"></div>
     <div id="reportsPane"></div>
     <div id="rolesPane"></div>
+    <div id="companiesPane"><div id="ownerList"></div></div>
     <div id="workerPane"></div>
     <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
   </section>
@@ -809,9 +811,10 @@ function currentPortal(){
   return document.body.getAttribute('data-portal') || '';
 }
 function portalForRole(){
-  if (isSuper()) return 'owner';
-  if (['owner','admin','manager','supervisor'].includes(normRole())) return 'company';
-  return 'employee';
+  return 'company';
+}
+function isWorker(){
+  return !isSuper() && normRole() === 'worker';
 }
 function pathPortal(){
   const p = location.pathname || '';
@@ -833,7 +836,8 @@ function canManageRoles(){
   return isSuper() || ['owner','admin'].includes(normRole()) || isCompanyCreatorLike();
 }
 function canSeeTimesheet(){
-  return ['owner','admin','manager'].includes(normRole());
+  if (isWorker()) return false;
+  return isSuper() || ['owner','admin','manager'].includes(normRole());
 }
 let companyAdminUid = '';
 function canManageTypes(){
@@ -882,7 +886,7 @@ function ymd(d){
   return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 }
 function canSeeMoney(){
-  if (currentPortal() === 'employee' || currentPortal() === 'owner') return false;
+  if (isWorker()) return false;
   if (isSuper()) return !!cid();
   if (!['owner','admin'].includes(normRole()) && !isCompanyCreatorLike()) return false;
   return !!cid();
@@ -1133,9 +1137,7 @@ auth.onAuthStateChanged(async user => {
   if ($('empRoleChip')) $('empRoleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   fillAvatar();
   applyPanelLang();
-  if (want === 'owner') await openOwnerPortal();
-  else if (want === 'employee') await openEmployeePortal();
-  else await openCompanyPortal();
+  await openCompanyPortal();
 });
 
 function applyLayout(){
@@ -1216,11 +1218,6 @@ function sameDay(a,b){
 }
 function hLabel(h){ const h12 = h%12===0?12:h%12; return h12 + ' ' + (h<12?'AM':'PM'); }
 function schedEl(which){
-  if (currentPortal()==='employee') {
-    if (which==='rows') return $('empRows');
-    if (which==='hours') return $('empHours');
-    return $('empWeekdays');
-  }
   if (which==='rows') return $('rows');
   if (which==='hours') return $('hours');
   return $('weekdays');
@@ -1231,11 +1228,14 @@ function myUid(){
 function myTechCols(){
   const uid = myUid();
   const named = techs.filter(t => String(t.name||'').trim());
-  if (currentPortal()==='employee') return named.filter(t => t.uid === uid);
+  if (isWorker()) {
+    const me = named.filter(t => t.uid === uid);
+    if (me.length) return me;
+    return [{ uid, name: (profile.displayName || profile.email || 'Yo'), role: 'worker' }];
+  }
   return named.slice().sort((a,b) => String(a.name).localeCompare(String(b.name),'es'));
 }
 function renderSchedule(){
-  if (currentPortal() === 'owner') return;
   renderRows();
 }
 
@@ -1421,7 +1421,8 @@ async function toggleCompany(id){
 async function selectCompany(id){
   viewCid = id;
   selectedBuilding = '';
-  document.body.classList.remove('sites-open');
+  document.body.classList.remove('sites-open', 'view-companies', 'view-roles', 'view-reports', 'view-hours', 'view-worker');
+  fillCompanyHeader();
   await loadBoard();
 }
 function frequentTypes(){
@@ -1696,10 +1697,14 @@ function onHeaderCompany(id){
   if (!id || id === cid()) return;
   selectCompany(id);
 }
-async function openOwnerPortal(){
-  await loadCompaniesSidebar();
+async function openCompaniesPane(){
+  if (!isSuper()) return;
+  closeMore();
+  document.body.classList.add('view-companies');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker');
+  await loadCompanyOptions();
   renderOwnerList();
-  syncChrome();
+  markNav('more');
 }
 async function openCompanyPortal(){
   if (isSuper() && !viewCid && profile.companyId) viewCid = profile.companyId;
@@ -1711,12 +1716,17 @@ async function openCompanyPortal(){
   if ($('typesLink')) $('typesLink').classList.toggle('hidden', !canManageTypes());
   if ($('rolesBtn')) $('rolesBtn').classList.add('hidden');
   if ($('typesBox')) {
+    $('typesBox').classList.toggle('hidden', isWorker());
     const addBtn = $('typesBox').querySelector('.type-new');
-    if (addBtn) addBtn.style.display = '';
+    if (addBtn) addBtn.style.display = canManageTypes() ? '' : 'none';
   }
   applyLayout();
   syncChrome();
   await loadCompanyOptions();
+  if (isSuper() && !cid() && companyList.length) {
+    viewCid = companyList[0].id;
+    fillCompanyHeader();
+  }
   await loadBoard();
   markNav('horario');
 }
@@ -1800,7 +1810,8 @@ async function setMemberRole(uid, role){
     if (t) t.role = role;
     if (auth.currentUser && auth.currentUser.uid === uid) profile.role = role;
     alert(uiT('roleSaved'));
-    if (currentPortal() === 'company') openRolesPane();
+    if (document.body.classList.contains('view-roles')) openRolesPane();
+    if (document.body.classList.contains('view-companies')) renderOwnerList();
   } catch(e){ alert(e.message||e); }
 }
 function openWorker(uid){
@@ -1808,7 +1819,7 @@ function openWorker(uid){
   if (!t) return;
   closeMore();
   document.body.classList.add('view-worker');
-  document.body.classList.remove('view-hours', 'view-reports', 'view-roles');
+  document.body.classList.remove('view-hours', 'view-reports', 'view-roles', 'view-companies');
   const pane = $('workerPane');
   if (!pane) return;
   const list = jobs.filter(j => accountUidOf(j) === t.uid).sort((a,b) => jobTime(a)-jobTime(b));
@@ -1836,7 +1847,7 @@ function openWorker(uid){
 function openRolesPane(){
   if (!canManageRoles()) return;
   document.body.classList.add('view-roles');
-  document.body.classList.remove('view-hours', 'view-reports');
+  document.body.classList.remove('view-hours', 'view-reports', 'view-companies');
   const pane = $('rolesPane');
   if (!pane) return;
   pane.innerHTML = `<h3>${esc(uiT('teamRoles'))}</h3>
@@ -1850,7 +1861,7 @@ function openRolesPane(){
 }
 function setSchedView(v){
   schedView = v;
-  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies');
   closeMore();
   document.querySelectorAll('[data-view]').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-view') === v);
@@ -1864,7 +1875,7 @@ function closeMore(){
   if (sh) sh.classList.remove('open');
 }
 function closeExtraViews(){
-  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'sites-open');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'sites-open');
   closeMore();
 }
 function navHome(){
@@ -1881,12 +1892,11 @@ function navHorario(){
 function navHours(){
   if (!canSeeTimesheet()) return;
   closeMore();
-  document.body.classList.remove('view-roles', 'view-reports', 'view-worker');
+  document.body.classList.remove('view-roles', 'view-reports', 'view-worker', 'view-companies');
   openTimesheet(1);
   markNav('hours');
 }
 function navSearch(){
-  if (currentPortal() !== 'company') return;
   closeMore();
   document.body.classList.add('sites-open');
   setTab('agenda');
@@ -1906,8 +1916,9 @@ function navMore(){
   if (sh.classList.contains('open')) { closeMore(); return; }
   const items = [];
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
-  if (currentPortal()!=='employee') items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
+  if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
   if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
+  if (isSuper()) items.push(`<button type="button" onclick="closeMore();openCompaniesPane()">${esc(uiT('allCompanies'))}</button>`);
   items.push(`<button type="button" onclick="closeMore()">${esc(uiT('closeMenu'))}</button>`);
   sh.innerHTML = items.join('');
   sh.classList.add('open');
@@ -1921,15 +1932,18 @@ function markNav(which){
   });
 }
 function syncChrome(){
-  const p = currentPortal();
   const hoursOk = canSeeTimesheet();
-  const assignOk = canAssign();
   if ($('navHours')) $('navHours').classList.toggle('hidden', !hoursOk);
-  if ($('navSearch')) $('navSearch').classList.toggle('hidden', p !== 'company');
+  if ($('navSearch')) $('navSearch').classList.remove('hidden');
   if ($('moneyBtn')) $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
-  if ($('reportsBtn')) $('reportsBtn').classList.toggle('hidden', p === 'employee');
+  if ($('reportsBtn')) $('reportsBtn').classList.toggle('hidden', isWorker());
   if ($('typesLink')) $('typesLink').classList.toggle('hidden', !canManageTypes());
   if ($('addbox')) $('addbox').classList.toggle('hidden', !canAssign());
+  if ($('typesBox')) {
+    $('typesBox').classList.toggle('hidden', isWorker());
+    const addBtn = $('typesBox').querySelector('.type-new');
+    if (addBtn) addBtn.style.display = canManageTypes() ? '' : 'none';
+  }
   fillCompanyHeader();
 }
 document.addEventListener('click', e => {
@@ -2110,7 +2124,7 @@ function siteInspectedInMonth(b, ym){
 async function openReports(){
   closeMore();
   document.body.classList.add('view-reports');
-  document.body.classList.remove('view-hours','view-roles','view-worker','sites-open');
+  document.body.classList.remove('view-hours','view-roles','view-worker','view-companies','sites-open');
   const pane = $('reportsPane');
   if (!pane) return;
   const paint = () => {
@@ -2580,7 +2594,7 @@ function renderWeekGrid(){
   </div>`;
 }
 function jobVisible(j){
-  if (currentPortal() !== 'employee') return true;
+  if (!isWorker()) return true;
   return accountUidOf(j) === myUid();
 }
 function renderMobileAgenda(){
