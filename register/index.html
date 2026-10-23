@@ -29,7 +29,7 @@
 </header>
 <div class="card">
   <h2>Crear mi cuenta</h2>
-  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Elige el tipo de compañía.</p>
+  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. El panel se adapta a la especialidad de tu compañía.</p>
   <label>Plan</label>
   <select id="plan">
     <option value="crew5">CREW 5 $99.99</option>
@@ -99,7 +99,7 @@ document.getElementById('go').onclick = async () => {
     const plan = normalizePlan(planSel.value) || fromUrl || 'crew10';
     const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
     await ref.set({
-      id: ref.id, name, companyType, industry: label, panel: companyType, plan,
+      id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
       status: 'active', adminUid: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       trial_start: firebase.firestore.FieldValue.serverTimestamp(),

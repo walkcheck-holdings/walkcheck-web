@@ -17,15 +17,19 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   * { box-sizing: border-box; }
-  html { max-width: 100%; }
+  html, body { max-width: 100%; height: 100%; }
   body { overflow-x: hidden; }
-  body.ready { overflow-x: auto; }
+  body.ready { overflow-x: hidden; overflow-y: hidden; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
-  header { background: #34C759; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.2; }
-  header h1 a { color: #fff; text-decoration: none; }
+  header { background: #1B7A36; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; }
+  header h1 a { color: #fff; text-decoration: none; display: block; }
+  .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
+  #coSwitch { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.28); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; max-width: 180px; min-height: 40px; }
+  #coName { font-size: 13px; font-weight: 700; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .95; }
   header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 44px; font-size: 14px; }
   .hdr-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 1; }
   .hdr-actions a { color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 44px; display: inline-flex; align-items: center; }
@@ -68,9 +72,16 @@
   #board { display: none; height: calc(100dvh - 56px); flex-direction: row; }
   body.ready #board { display: flex; }
   body.ready #login { display: none; }
-  #sidebar { width: 210px; min-width: 210px; max-width: 210px; flex: 0 0 210px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
-  #sidebar h2 { margin: 0; padding: 12px 10px 6px; font-size: 15px; }
-  #bList { overflow: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+  #sidebar { width: 240px; min-width: 240px; max-width: 240px; flex: 0 0 240px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
+  #sidebar h2 { margin: 0; padding: 12px 10px 6px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #6B7280; }
+  #bList { overflow: auto; flex: 1; min-height: 80px; -webkit-overflow-scrolling: touch; }
+  .types-box { margin: 8px 10px 12px; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 8px; background: #fff; display: flex; flex-direction: column; min-height: 0; flex: 0 0 auto; }
+  .types-box .ttl { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #6B7280; margin: 0 0 6px; }
+  .types-box select { margin: 0 0 8px; }
+  #typeList { border: 1px solid #E5E5EA; border-radius: 10px; overflow: auto; max-height: 160px; min-height: 96px; flex: 1 1 auto; }
+  .type-row { display: flex; align-items: center; gap: 8px; width: 100%; border: none; background: #fff; padding: 8px 10px; text-align: left; cursor: pointer; font-size: 13px; font-weight: 600; min-height: 36px; }
+  .type-row:hover, .type-row.on { background: #E8F8EC; }
+  .types-box .btn { margin-top: 8px; }
   .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
   .co-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 12px 10px; cursor: pointer; min-height: 48px; font-weight: 800; font-size: 14px; border-bottom: 1px solid #E5E5EA; }
@@ -86,10 +97,11 @@
   .chips { padding: 0 14px 8px; display: flex; gap: 6px; flex-wrap: wrap; }
   .chip { font-size: 14px; padding: 8px 12px; border-radius: 16px; border: 1px solid #D1D1D6; background: #fff; cursor: pointer; min-height: 36px; }
   .chip.on { background: #D1F5D8; border-color: #34C759; font-weight: 700; }
-  .addbox { padding: 12px 14px; border-top: 1px solid #E5E5EA; }
+  .addbox { padding: 10px 12px; border-top: 1px solid #E5E5EA; flex: 0 0 auto; }
+  .addbox input { margin: 4px 0 6px; padding: 8px 10px; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
-  .weekbar { background: #fff; padding: 10px 14px 6px; }
+  .weekbar { background: #fff; padding: 8px 14px 0; flex: 0 0 auto; border-bottom: 1px solid #F2F2F7; }
   .weekbar h2 { margin: 0; font-size: 16px; }
   .week-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
   .week-tools h2 { flex: 1 1 auto; min-width: 0; }
@@ -97,23 +109,39 @@
   .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 44px; font-size: 14px; }
   .wd .d { font-size: 11px; color: #8E8E93; }
   .wd.on { border-bottom: 2px solid #34C759; font-weight: 800; color: #34C759; }
-  .hours { display: flex; padding-left: 140px; overflow-x: auto; background: #fff; border-bottom: 1px solid #E5E5EA; }
-  .hour { min-width: 90px; width: 90px; font-size: 12px; font-weight: 700; color: #6B7280; padding: 8px 0; }
-  #rows { overflow: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; -webkit-overflow-scrolling: touch; }
-  .tech { display: flex; align-items: stretch; border-bottom: 1px solid #E5E5EA; min-height: 136px; background: #fff; flex: 0 0 auto; }
-  .tech-name { width: 140px; min-width: 140px; padding: 12px; font-size: 14px; font-weight: 800; }
-  .tech-name span { display: block; font-weight: 500; color: #8E8E93; font-size: 12px; }
-  .lane { position: relative; display: flex; min-height: 136px; overflow-x: auto; flex: 1; align-self: stretch; }
-  .slot { min-width: 90px; width: 90px; min-height: 136px; align-self: stretch; border-left: 1px solid #EEEEEE; }
-  .tech.grid-fill { flex: 1 1 auto; min-height: 48px; border-bottom: none; }
-  .tech.grid-fill .lane, .tech.grid-fill .slot { min-height: 0; height: auto; }
+  .view-tabs { display: flex; gap: 4px; }
+  .view-tabs button { border: none; background: #F2F2F7; color: #6B7280; border-radius: 8px; padding: 8px 12px; font-weight: 800; font-size: 13px; cursor: pointer; min-height: 36px; }
+  .view-tabs button.on { background: #1B7A36; color: #fff; }
+  .wd.today { background: #1B7A36; color: #fff; border-radius: 8px 8px 0 0; }
+  .wd.today .d { color: rgba(255,255,255,.9); }
+  .jcard.warn { box-shadow: 0 0 0 2px #FF3B30; outline: 1px dashed #fff; }
+  .period { display: flex; gap: 8px; margin: 8px 0 14px; flex-wrap: wrap; }
+  .period button { border: 1px solid #D1D1D6; background: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 800; cursor: pointer; min-height: 40px; }
+  .period button.on { background: #1B7A36; color: #fff; border-color: #1B7A36; }
+  #hoursPane table { width: 100%; background: #fff; border-radius: 12px; border-collapse: collapse; }
+  #hoursPane th, #hoursPane td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; }
+  #hoursPane h3 { margin: 4px 0 8px; }
+  .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #fff; }
+  .daygrid-head { display: flex; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 44px; align-items: center; }
+  .gutter { width: 56px; min-width: 56px; flex: 0 0 56px; }
+  .col-head { flex: 1; min-width: 140px; padding: 8px 8px 10px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #F2F2F7; }
+  .col-head .cnt { display: inline-block; margin-left: 6px; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; }
+  .daygrid-body { display: flex; flex: 1; min-height: 0; overflow: auto; position: relative; }
+  .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; }
+  .tmark { position: absolute; left: 0; right: 0; font-size: 10px; font-weight: 800; color: #8E8E93; padding-left: 4px; transform: translateY(-6px); }
+  .wcol { flex: 1; min-width: 140px; position: relative; border-left: 1px solid #EEEEEE; }
+  .qslot { position: absolute; left: 0; right: 0; border-top: 1px solid #F4F4F5; cursor: pointer; }
+  .qslot.hour { border-top: 1px solid #E5E5EA; }
+  .qslot.over { background: #E8F8EC; }
+  .hours { display: none; }
+  #rows { overflow: hidden; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #fff; -webkit-overflow-scrolling: touch; }
+  #rows .daygrid-body { flex: 1 1 auto; }
   .slot.over { background: #E8F8EC; }
   .jcard {
-    position: absolute; top: 8px; min-height: 92px; min-width: 150px; padding: 8px 10px; border-radius: 12px;
-    background: #34C759; color: #fff; font-size: 14px; cursor: grab; z-index: 2;
-    display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    position: absolute; left: 4px; right: 4px; width: auto; min-width: 0; min-height: 22px; padding: 6px 8px; border-radius: 8px;
+    background: #34C759; color: #fff; font-size: 12px; cursor: grab; z-index: 2;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 2px;
     overflow: hidden; box-sizing: border-box;
-    word-break: normal; overflow-wrap: normal; hyphens: none;
   }
   .jcard, .jcard * { word-break: normal; overflow-wrap: normal; }
   .jcard-addr {
@@ -131,7 +159,44 @@
   }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #8E8E93; font-size: 14px; border-top: 1px dashed #C7C7CC; margin: 60px 16px 0 16px; }
-  #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; flex: 0 0 auto; }
+  #assignBar { padding: 10px 14px; background: #fff; border-top: 1px solid #E5E5EA; flex: 0 0 auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  #assignBar .btn { width: auto; flex: 1; }
+  #hoursPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+  body.view-hours #staffMain { display: none; }
+  body.view-hours #hoursPane { display: block; }
+  #reportsPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+  body.view-reports #staffMain, body.view-reports #hoursPane { display: none; }
+  body.view-reports .weekbar { display: none; }
+  body.view-reports #reportsPane { display: block; }
+  .rpt-kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+  .rpt-kpi { background: #fff; border-radius: 12px; padding: 12px 14px; flex: 1; min-width: 140px; }
+  .rpt-kpi b { display: block; font-size: 22px; color: #1B7A36; }
+  .rpt-form { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .rpt-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .rpt-actions .btn { width: auto; flex: 1; min-width: 140px; }
+  .rpt-paper {
+    background: #fff; max-width: 800px; margin: 0 auto 24px; padding: 28px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08); color: #111;
+  }
+  .rpt-brand { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #1B7A36; padding-bottom: 12px; margin-bottom: 16px; }
+  .rpt-logo { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: #1B7A36; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; }
+  .rpt-brand h2 { margin: 0; font-size: 20px; }
+  .rpt-meta { font-size: 14px; color: #4B5563; margin: 0 0 16px; }
+  .rpt-sum { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .rpt-sum span { background: #E8F8EC; color: #1B7A36; border-radius: 8px; padding: 6px 10px; font-weight: 800; font-size: 13px; }
+  .rpt-finding { border: 1px solid #E5E5EA; border-radius: 10px; padding: 12px; margin: 8px 0; }
+  .rpt-finding img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; margin: 6px 8px 0 0; }
+  .st-ok { color: #1B7A36; font-weight: 800; }
+  .st-pend { color: #B45309; font-weight: 800; }
+  @media (max-width: 767px) {
+    .rpt-paper { padding: 16px 12px; box-shadow: none; }
+    .rpt-actions .btn { min-width: 0; }
+  }
+  @media print {
+    header, #sidebar, #assignBar, #bottomNav, .rpt-form, .rpt-kpis, .rpt-actions, .weekbar { display: none !important; }
+    #reportsPane { display: block !important; background: #fff; padding: 0; }
+    .rpt-paper { box-shadow: none; max-width: none; }
+  }
   #adminLink { background: rgba(0,0,0,.18); }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 40; padding: 12px; }
   .modal .box { background: #fff; border-radius: 16px; padding: 18px; width: 360px; max-width: 92vw; max-height: 90dvh; overflow: auto; }
@@ -172,8 +237,7 @@
   .day-assign { margin-top: 8px; }
   #dayList { padding: 12px; }
   .map-item { display: block; padding: 14px; background: #fff; border-bottom: 1px solid #E5E5EA; color: #111; text-decoration: none; min-height: 60px; font-size: 16px; }
-  #typeBar { display: none; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #E5E5EA; }
-  body.ready #typeBar { display: flex; }
+  #typeBar { display: none !important; }
   #typeBar .lbl, .type-picker .lbl { font-size: 13px; font-weight: 800; color: #6B7280; }
   .type-picker { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
   .type-combo-row { display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0; }
@@ -241,7 +305,8 @@
       display: block; margin: 8px 14px 0; width: calc(100% - 28px);
     }
     #main, #mapPane, #teamPane { width: 100%; min-width: 0; }
-    #hours, .hours { display: none !important; }
+    .gutter, .time-axis { width: 44px; min-width: 44px; flex-basis: 44px; }
+    .col-head, .wcol { min-width: 120px; }
     #sitesToggle { display: inline-flex; }
     #filtersBtn { display: none; }
     .weekbar h2 { font-size: 17px; padding: 0; }
@@ -264,7 +329,7 @@
     .jobhead h2 { flex: 1 1 auto; min-width: 0; word-break: break-word; }
     .jobhead .back { min-height: 44px; min-width: 44px; color: #fff; font-size: 16px; font-weight: 700; }
     .card { margin: 10px; }
-    #rows { overflow: visible; }
+    #rows { overflow: auto; }
   }
   @media (min-width: 768px) {
     #sitesToggle { display: none !important; }
@@ -272,24 +337,61 @@
     #phoneTabs, #bottomNav { display: none !important; }
   }
   body.desk #board { flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; height: calc(100dvh - 56px); }
-  body.desk #sidebar { width: 210px; min-width: 210px; max-width: 210px; display: flex; }
+  body.desk #sidebar { width: 240px; min-width: 240px; max-width: 240px; display: flex; }
   body.desk #main { min-width: 720px; }
   body.desk #phoneTabs, body.desk #bottomNav, body.desk #mapPane, body.desk #teamPane { display: none !important; }
+  .portal { display: none; }
+  body.ready[data-portal="owner"] #portalOwner,
+  body.ready[data-portal="company"] #portalCompany,
+  body.ready[data-portal="employee"] #portalEmployee { display: flex; flex-direction: column; min-height: calc(100dvh - 0px); }
+  body.ready[data-portal="company"] { height: 100dvh; overflow: hidden; background: #fff; }
+  body.ready[data-portal="company"] #portalCompany {
+    display: flex; flex-direction: column; position: fixed; inset: 0; z-index: 4; background: #fff; height: 100dvh;
+  }
+  body.ready[data-portal="company"] #board { display: flex; flex: 1; min-height: 0; height: auto; }
+  body.ready[data-portal="company"] #main { min-height: 0; }
+  #viewTabs [data-view="map"], #rolesBtn { display: none !important; }
+  body.ready #siteHdr { display: none; }
+  body.ready[data-portal="owner"] #bottomNav,
+  body.ready[data-portal="owner"] #phoneTabs { display: none !important; }
+  body.ready[data-portal="employee"] #bottomNav { display: none !important; }
+  body.ready[data-portal="employee"] #empNav { display: flex; }
+  #empNav { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E5E5EA; padding-bottom: env(safe-area-inset-bottom); z-index: 25; }
+  #empNav button { flex: 1; border: none; background: none; min-height: 52px; font-size: 12px; font-weight: 700; }
+  .owner-body { padding: 16px; max-width: 980px; margin: 0 auto; width: 100%; }
+  .owner-table { width: 100%; background: #fff; border-radius: 12px; border-collapse: collapse; overflow: hidden; }
+  .owner-table th, .owner-table td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; font-size: 14px; vertical-align: top; }
+  .st-pill { display: inline-block; border-radius: 10px; padding: 2px 8px; font-size: 12px; font-weight: 800; }
+  .st-pill.on { background: #E8F8EC; color: #1B7A36; }
+  .st-pill.off { background: #FEECEC; color: #B3261E; }
+  .role-card { background: #fff; border-radius: 12px; padding: 12px; margin-top: 10px; }
+  .role-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F2F2F7; }
+  .role-row select { width: auto; margin: 0; min-width: 160px; }
+  #rolesPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+  body.view-roles #staffMain, body.view-roles #hoursPane { display: none; }
+  body.view-roles #rolesPane { display: block; }
+  #empBoard { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
+  #empRows { overflow: auto; flex: 1; }
+  @media (max-width: 767px) {
+    body.ready[data-portal="employee"] #empNav { display: flex; }
+    body.ready[data-portal="employee"] #empBoard { padding-bottom: 72px; }
+  }
+  @media (min-width: 768px) {
+    #empNav { display: none !important; }
+  }
 </style>
 </head>
 <body class="tab-agenda">
-<header>
-  <h1><a href="/">Walkcheck</a></h1>
+<header id="siteHdr">
+  <h1>
+    <a href="/">Walkcheck</a>
+    <span class="holdings">HOLDINGS LLC</span>
+  </h1>
   <div class="hdr-actions">
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
       <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
     </div>
-    <span id="roleChip"></span>
-    <button id="moneyBtn" class="hidden" onclick="openMoney()" data-i18n="money">Dinero</button>
-    <a id="typesLink" href="/app/settings/job-types/" class="hidden" data-i18n="types">Tipos</a>
-    <a id="adminLink" href="/admin/" class="hidden">SUPER ADMIN</a>
-    <button id="btnLogout" class="hidden" data-i18n="logout">Cerrar sesión</button>
   </div>
 </header>
 <button class="btn" id="deskToggle" onclick="toggleDesk()">Ver 2 columnas</button>
@@ -324,12 +426,91 @@
   <p class="muted" style="margin-top:16px;text-align:center"><a href="mailto:soporte@walkcheck.app">Soporte:  soporte@walkcheck.app</a></p>
 </div>
 
+<div id="portalOwner" class="portal">
+  <header>
+    <h1>
+      <a href="/">Walkcheck</a>
+      <span class="holdings">HOLDINGS LLC</span>
+    </h1>
+    <div class="hdr-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
+        <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
+      </div>
+      <span data-i18n="appOwner">Dueño de la app</span>
+      <button type="button" data-logout data-i18n="logout">Cerrar sesión</button>
+    </div>
+  </header>
+  <div class="owner-body">
+    <h2 data-i18n="allCompanies">Compañías</h2>
+    <p class="muted" data-i18n="ownerHint">Activa o suspende compañías y asigna managers y supervisores.</p>
+    <div id="ownerList"></div>
+  </div>
+</div>
+
+<div id="portalEmployee" class="portal">
+  <header>
+    <h1>
+      <a href="/">Walkcheck</a>
+      <span class="holdings">HOLDINGS LLC</span>
+    </h1>
+    <div class="hdr-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
+        <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
+      </div>
+      <span id="empRoleChip"></span>
+      <button type="button" data-logout data-i18n="logout">Cerrar sesión</button>
+    </div>
+  </header>
+  <div id="empBoard">
+    <div class="weekbar">
+      <div class="week-tools">
+        <div class="view-tabs">
+          <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
+          <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
+          <button type="button" data-view="map" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
+        </div>
+        <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
+      </div>
+      <div class="weekdays" id="empWeekdays"></div>
+    </div>
+    <div class="hours" id="empHours"></div>
+    <div id="empRows"></div>
+  </div>
+  <nav id="empNav">
+    <button type="button" onclick="setSchedView('day')" data-i18n="home">Inicio</button>
+    <button type="button" onclick="setSchedView('day')" data-i18n="horario">Horario</button>
+    <button type="button" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
+    <button type="button" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
+  </nav>
+</div>
+
+<div id="portalCompany" class="portal">
+<header>
+  <h1>
+    <a href="/">Walkcheck</a>
+    <span class="holdings">HOLDINGS LLC</span>
+  </h1>
+  <div class="hdr-actions">
+    <span id="coName"></span>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
+      <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
+    </div>
+    <span id="roleChip"></span>
+    <button id="moneyBtn" class="hidden" onclick="openMoney()" data-i18n="money">Facturación</button>
+    <button type="button" id="reportsBtn" onclick="openReports()" data-i18n="reports">Reportes</button>
+    <a id="typesLink" href="/app/settings/job-types/" class="hidden" data-i18n="types">Tipos</a>
+    <button type="button" data-logout data-i18n="logout">Cerrar sesión</button>
+  </div>
+</header>
 <div id="board">
   <aside id="sidebar">
     <button type="button" class="btn ghost sites-close" onclick="toggleSites()" data-i18n="close">Cerrar</button>
-    <h2 id="sitesTitle">Buildings</h2>
+    <h2 id="sitesTitle" data-i18n="buildings">Edificios</h2>
     <div style="padding:0 10px">
-      <input type="text" id="bSearch" placeholder="Search buildings...">
+      <input type="text" id="bSearch" placeholder="Buscar edificios…" data-i18n-ph="searchBuildings">
     </div>
     <div class="chips">
       <button class="chip on" data-f="All" data-i18n="all">Todos</button>
@@ -343,15 +524,25 @@
       <input type="number" id="nbFloors" value="1" min="1" max="100">
       <button class="btn" onclick="addBuilding()" data-i18n="add">Agregar</button>
     </div>
+    <div class="types-box" id="typesBox">
+      <div class="ttl" data-i18n="jobTypes">Tipos de trabajo</div>
+      <select id="typeSelect" onchange="preKind=this.value;renderTypesBox()"></select>
+      <div id="typeList"></div>
+      <button type="button" class="btn" onclick="addTypeFromBox()" data-i18n="newType">＋ Nuevo</button>
+    </div>
   </aside>
   <section id="main">
     <div class="weekbar">
       <div id="typeBar"></div>
       <div class="week-tools">
-        <h2 id="weekTitle">Team Schedule</h2>
-        <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()">Sites</button>
+        <div class="view-tabs" id="viewTabs">
+          <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
+          <button type="button" data-view="week" onclick="setSchedView('week')" data-i18n="tabWeek">Semana</button>
+          <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
+        </div>
+        <h2 id="weekTitle" class="hidden">Agenda</h2>
+        <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()" data-i18n="buildings">Edificios</button>
         <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
-        <button class="btn ok ghost" id="filtersBtn" data-i18n="filters" onclick="alert(uiT('filtersHint'))">Filtros</button>
       </div>
       <div class="weekdays" id="weekdays"></div>
     </div>
@@ -360,18 +551,26 @@
       <div id="rows"></div>
       <div id="assignBar" class="hidden">
         <button class="btn" onclick="openAssign()" data-i18n="assignJob">+ Asignar trabajo</button>
+        <button class="btn ghost" onclick="setSchedView('day')" data-i18n="horario">Horario</button>
+        <button class="btn ghost" onclick="openTimesheet(1)" data-i18n="hoursTeam">Horas del equipo</button>
+        <button class="btn ghost" onclick="openReports()" data-i18n="reports">Reportes</button>
       </div>
     </div>
+    <div id="hoursPane"></div>
+    <div id="reportsPane"></div>
+    <div id="rolesPane"></div>
     <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
   </section>
   <div id="mapPane"></div>
   <div id="teamPane"></div>
 </div>
+</div>
 <nav id="bottomNav">
-  <button onclick="goToday();setTab('agenda')" data-i18n="today">Hoy</button>
-  <button onclick="toggleSites()" data-i18n="sites">Sitios</button>
-  <button onclick="setTab('equipo')" data-i18n="team">Equipo</button>
-  <button class="plus" onclick="phonePlus()" data-i18n="newPlus">＋ Nuevo</button>
+  <button onclick="goToday();setTab('agenda');setSchedView('day')" data-i18n="home">Inicio</button>
+  <button onclick="setTab('agenda');setSchedView('day')" data-i18n="horario">Horario</button>
+  <button onclick="openTimesheet(1)" data-i18n="hoursShort">Horas</button>
+  <button onclick="toggleSites()" data-i18n="search">Buscar</button>
+  <button onclick="setTab('equipo')" data-i18n="more">Más</button>
 </nav>
 
 <div id="viewJobs" class="hidden"></div>
@@ -395,20 +594,35 @@ const storage = firebase.storage();
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const SLOT = 90;
-let START = 6;
+let START = 5;
+const DAY_START_MIN = 5 * 60;
+const DAY_END_MIN = 20 * 60;
+const STEP = 15;
+let SLOT_H = 16;
+let schedView = 'day';
+let timesheetMonths = 1;
 function dayHours(){
-  let minH = 6, maxH = 20;
-  jobs.filter(jobDayOk).forEach(j => {
-    const st = jobTime(j);
-    const en = jobEnd(j, st);
-    minH = Math.min(minH, st.getHours());
-    maxH = Math.max(maxH, en.getHours(), st.getHours());
-  });
-  if (preHour != null) { minH = Math.min(minH, preHour); maxH = Math.max(maxH, preHour+1); }
   const arr = [];
-  for (let h = minH; h <= maxH; h++) arr.push(h);
+  for (let h = 5; h <= 20; h++) arr.push(h);
   return arr;
 }
+function minOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
+function clampMin(m){ return Math.max(DAY_START_MIN, Math.min(DAY_END_MIN, m)); }
+function gridTop(d){ return ((clampMin(minOfDay(d)) - DAY_START_MIN) / STEP) * SLOT_H; }
+function gridHeight(st, en){
+  const a = clampMin(minOfDay(st)), b = clampMin(minOfDay(en));
+  return Math.max(SLOT_H, ((b - a) / STEP) * SLOT_H);
+}
+function slotCount(){ return (DAY_END_MIN - DAY_START_MIN) / STEP; }
+function liveSlotH(){
+  const rows = (typeof schedEl === 'function' && schedEl('rows')) || $('rows');
+  if (!rows) return 16;
+  const usable = Math.max(0, rows.clientHeight - 44);
+  const n = slotCount();
+  if (usable < 120) return 16;
+  return Math.max(10, usable / n);
+}
+function gridTotalH(){ return slotCount() * SLOT_H; }
 
 let profile = { role: 'worker', companyId: '', displayName: '' };
 let buildings = [];
@@ -421,6 +635,8 @@ let bQuery = '';
 let selectedBuilding = '';
 let companyType = 'property_management';
 let companyName = '';
+let companyLogo = '';
+let companyPhone = '';
 let customTypes = [];
 let preKind = '';
 let forceDesktop = false;
@@ -446,49 +662,83 @@ function toggleSites(){
   }
   document.body.classList.toggle('sites-open', open);
   const btn = $('sitesToggle');
-  if (btn) btn.textContent = open ? uiT('close') : uiT('sites');
+  if (btn) btn.textContent = open ? uiT('close') : siteT('title');
+}
+function isPm(){
+  return companyType === 'property_management';
+}
+function siteT(which){
+  const pm = isPm();
+  if (which === 'title') return uiT(pm ? 'buildings' : 'sites');
+  if (which === 'search') return uiT(pm ? 'searchBuildings' : 'searchSites');
+  if (which === 'add') return uiT(pm ? 'newBuilding' : 'newSite');
+  if (which === 'name') return uiT(pm ? 'buildingName' : 'siteName');
+  if (which === 'need') return uiT(pm ? 'needBuilding' : 'needSite');
+  if (which === 'none') return uiT(pm ? 'noBuildings' : 'noSites');
+  return uiT(pm ? 'buildings' : 'sites');
 }
 function pack(){
   const t = window.JOB_TEMPLATES || {};
-  return t[companyType] || t.property_management || {sitesLabel:'Buildings', searchPlaceholder:'Search buildings...', jobs:['INSPECTION']};
-}
-function panelTitle(){
-  return ({
-    cleaning: 'Panel Limpieza',
-    construction: 'Panel Construcción',
-    electrical: 'Panel Electricidad',
-    plumbing: 'Panel Plomería',
-    hvac: 'Panel HVAC',
-    roofing: 'Panel Roofing',
-    other: 'Panel Walkcheck',
-    property_management: 'Panel Inspecciones'
-  })[companyType] || 'Walkcheck · Panel';
+  return t[companyType] || t.other || t.property_management || { jobs: ['INSPECTION'] };
 }
 function applyCompanyPanel(){
-  document.body.dataset.panel = companyType;
+  document.body.dataset.trade = companyType || 'walkcheck';
   const h = document.querySelector('header h1 a');
   if (h) h.textContent = 'Walkcheck';
-  document.title = 'Walkcheck · ' + panelTitle();
-  const pm = companyType === 'property_management';
-  document.querySelectorAll('.pm-only').forEach(el => { el.style.display = pm ? '' : 'none'; });
+  document.title = 'Walkcheck · Panel';
+  document.querySelectorAll('.pm-only').forEach(el => { el.style.display = isPm() ? '' : 'none'; });
   const addLbl = $('addboxLbl') || document.querySelector('#addbox .muted');
-  if (addLbl) addLbl.textContent = pm ? uiT('newBuilding') : uiT('newSite');
+  if (addLbl) addLbl.textContent = siteT('add');
   const nb = $('nbName');
-  if (nb) nb.placeholder = pm ? uiT('buildingName') : uiT('siteName');
+  if (nb) nb.placeholder = siteT('name');
   const ed = document.querySelector('#phoneTabs [data-tab="edificios"]');
-  if (ed) ed.textContent = pm ? uiT('buildings') : uiT('sites');
+  if (ed) ed.textContent = siteT('title');
+  const st = $('sitesTitle');
+  if (st && !isSuper()) st.textContent = siteT('title');
+  const search = $('bSearch');
+  if (search && !isSuper()) search.placeholder = siteT('search');
+  const tog = $('sitesToggle');
+  if (tog && !document.body.classList.contains('sites-open')) tog.textContent = siteT('title');
 }
 
 function isSuper(){
   return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
 }
+function normRole(){
+  const r = String((profile && profile.role) || '').toLowerCase();
+  if (r === 'employee' || r === 'tech' || r === 'worker') return 'worker';
+  if (r === 'editor') return 'manager';
+  return r;
+}
+function currentPortal(){
+  return document.body.getAttribute('data-portal') || '';
+}
+function portalForRole(){
+  if (isSuper()) return 'company';
+  if (['owner','admin','manager','supervisor'].includes(normRole())) return 'company';
+  return 'company';
+}
+function pathPortal(){
+  const p = location.pathname || '';
+  if (/\/app\/owner/.test(p)) return 'owner';
+  if (/\/app\/employee/.test(p)) return 'employee';
+  if (/\/app\/company/.test(p)) return 'company';
+  return '';
+}
 function isBoss(){
-  if (isSuper()) return true;
-  return ['owner','admin','manager','supervisor','editor'].includes(String(profile.role||'').toLowerCase());
+  return isSuper() || ['owner','admin','manager','supervisor'].includes(normRole());
 }
 function canAssign(){
-  return ['owner','admin','manager','supervisor'].includes(String(profile.role||'').toLowerCase())
-    || isSuper();
+  return isSuper() || ['owner','admin','manager'].includes(normRole());
+}
+function canVerifyJobs(){
+  return ['owner','admin','manager','supervisor'].includes(normRole());
+}
+function canManageRoles(){
+  return isSuper() || ['owner','admin'].includes(normRole()) || isCompanyCreatorLike();
+}
+function canSeeTimesheet(){
+  return ['owner','admin','manager'].includes(normRole());
 }
 let companyAdminUid = '';
 function canManageTypes(){
@@ -537,9 +787,9 @@ function ymd(d){
   return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 }
 function canSeeMoney(){
-  const r = String(profile.role||'').toLowerCase();
-  if (r !== 'owner' && r !== 'admin' && !isCompanyCreatorLike()) return false;
-  if (isSuper() && cid() && cid() !== profile.companyId) return false;
+  if (currentPortal() === 'employee' || currentPortal() === 'owner') return false;
+  if (isSuper()) return !!cid();
+  if (!['owner','admin'].includes(normRole()) && !isCompanyCreatorLike()) return false;
   return !!cid();
 }
 function isCompanyCreatorLike(){
@@ -557,6 +807,11 @@ async function enforceTrial(){
     if (raw && raw.toDate) end = raw.toDate();
     else if (typeof raw === 'string') end = new Date(raw);
     if (!end || isNaN(end.getTime())) return true;
+    if (String(d.status||'').toLowerCase() === 'suspended') {
+      alert(uiT('suspended'));
+      auth.signOut();
+      return false;
+    }
     if (Date.now() < end.getTime()) return true;
     location.href = '/pricing/';
     return false;
@@ -575,7 +830,21 @@ const UI_I18N = {
     needEmail: 'Escribe tu correo para enviarte el enlace.',
     sent: 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.',
     fail: 'No se pudo entrar: ',
-    money:'Dinero', types:'Tipos', logout:'Cerrar sesión',
+    money:'Facturación', types:'Tipos', logout:'Cerrar sesión', reports:'Reportes',
+    genReport:'Generar reporte', downloadPdf:'Descargar PDF', sendWa:'Enviar por WhatsApp', sendMail:'Enviar por correo',
+    pickBuildingMonth:'Elige edificio y mes', inspectedBld:'Edificios inspeccionados', pendingBld:'Edificios pendientes',
+    openFindings:'Hallazgos abiertos', resolved:'Resuelto', pending:'Pendiente', pendingSince:'Pendiente desde',
+    reportMonth:'Mes del reporte', inspectionsDone:'Inspecciones hechas', jobsDone:'Trabajos completados',
+    findingsTitle:'Hallazgos', summaryTitle:'Resumen', noReportData:'No hay datos de este edificio en ese mes.',
+    jobTypes:'Tipos de trabajo', tabDay:'Día', tabWeek:'Semana', tabList:'Lista', tabMap:'Mapa',
+    appOwner:'Dueño de la app', allCompanies:'Compañías', ownerHint:'Activa o suspende compañías y asigna managers y supervisores.',
+    teamRoles:'Equipo / Roles', activate:'Activar', suspend:'Suspender', setRole:'Rol',
+    roleSaved:'Rol actualizado', suspended:'Esta compañía está suspendida.',
+    workersCount:'trabajadores', statusLbl:'Estado', actions:'Acciones',
+    statusActive:'Activa', statusSuspended:'Suspendida',
+    horario:'Horario', hoursTeam:'Horas del equipo', hoursShort:'Horas', home:'Inicio', search:'Buscar', more:'Más',
+    month1:'1 mes', month2:'2 meses', month3:'3 meses', timesheet:'Horas del equipo', hoursWorked:'Horas trabajadas',
+    noJobsDay:'Sin trabajos este día',
     buildings:'Edificios', agenda:'Agenda', map:'Mapa',
     today:'Hoy', todayBtn:'Hoy', sites:'Sitios', team:'Equipo', newPlus:'＋ Nuevo',
     filters:'Filtros', filtersHint:'Filtros: Inspecciones / Mantenimiento a la izquierda',
@@ -595,9 +864,10 @@ const UI_I18N = {
     pickCompany:'Elige una compañía a la izquierda.', cannotAssign:'No puedes asignar trabajos con este rol.',
     done:'completados', needBuilding:'Escribe el nombre del edificio',
     companies:'Compañías', noCompanies:'Sin compañías', workers:'Trabajadores',
-    noBuildings:'Sin edificios', noPhone:'Sin teléfono', noInstr:'Sin instrucciones.',
+    noBuildings:'Sin edificios', noSites:'Sin sitios', noPhone:'Sin teléfono', noInstr:'Sin instrucciones.',
     owner:'Dueño', admin:'Administrador', manager:'Manager', supervisor:'Supervisor', workerRole:'Trabajador',
-    boss:'Jefe / Admin', searchBuildings:'Buscar edificios…'
+    boss:'Jefe / Admin', searchBuildings:'Buscar edificios…', searchSites:'Buscar sitios…',
+    needSite:'Escribe el nombre del sitio'
   },
   en: {
     title: 'Sign in to Walkcheck',
@@ -610,7 +880,21 @@ const UI_I18N = {
     needEmail: 'Enter your email so we can send the reset link.',
     sent: 'If that email has an account, we sent a link to reset the password.',
     fail: 'Could not sign in: ',
-    money:'Money', types:'Types', logout:'Sign out',
+    money:'Billing', types:'Types', logout:'Sign out', reports:'Reports',
+    genReport:'Generate report', downloadPdf:'Download PDF', sendWa:'Send via WhatsApp', sendMail:'Send via email',
+    pickBuildingMonth:'Pick building and month', inspectedBld:'Buildings inspected', pendingBld:'Buildings pending',
+    openFindings:'Open findings', resolved:'Resolved', pending:'Pending', pendingSince:'Pending since',
+    reportMonth:'Report month', inspectionsDone:'Inspections done', jobsDone:'Jobs completed',
+    findingsTitle:'Findings', summaryTitle:'Summary', noReportData:'No data for this building in that month.',
+    jobTypes:'Job types', tabDay:'Day', tabWeek:'Week', tabList:'List', tabMap:'Map',
+    appOwner:'App owner', allCompanies:'Companies', ownerHint:'Activate or suspend companies and assign managers and supervisors.',
+    teamRoles:'Team / Roles', activate:'Activate', suspend:'Suspend', setRole:'Role',
+    roleSaved:'Role updated', suspended:'This company is suspended.',
+    workersCount:'workers', statusLbl:'Status', actions:'Actions',
+    statusActive:'Active', statusSuspended:'Suspended',
+    horario:'Schedule', hoursTeam:'Team hours', hoursShort:'Hours', home:'Home', search:'Search', more:'More',
+    month1:'1 month', month2:'2 months', month3:'3 months', timesheet:'Team hours', hoursWorked:'Hours worked',
+    noJobsDay:'No jobs this day',
     buildings:'Buildings', agenda:'Schedule', map:'Map',
     today:'Today', todayBtn:'Today', sites:'Sites', team:'Team', newPlus:'＋ New',
     filters:'Filters', filtersHint:'Filters: Inspections / Maintenance on the left',
@@ -630,9 +914,10 @@ const UI_I18N = {
     pickCompany:'Pick a company on the left.', cannotAssign:'You cannot assign jobs with this role.',
     done:'done', needBuilding:'Enter the building name',
     companies:'Companies', noCompanies:'No companies', workers:'Workers',
-    noBuildings:'No buildings', noPhone:'No phone', noInstr:'No instructions.',
+    noBuildings:'No buildings', noSites:'No sites', noPhone:'No phone', noInstr:'No instructions.',
     owner:'Owner', admin:'Admin', manager:'Manager', supervisor:'Supervisor', workerRole:'Worker',
-    boss:'Admin', searchBuildings:'Search buildings…'
+    boss:'Admin', searchBuildings:'Search buildings…', searchSites:'Search sites…',
+    needSite:'Enter the site name'
   }
 };
 function loginLang(){
@@ -668,9 +953,10 @@ function applyPanelLang(){
   if ($('roleChip') && profile) {
     $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   }
-  renderTypeBar();
+  renderTypesBox();
   renderWeek();
-  if (typeof isBoss === 'function' && !isBoss()) renderMySchedule();
+  if (currentPortal()==='employee' || (typeof isBoss === 'function' && isBoss())) renderRows();
+  else if (typeof isBoss === 'function' && !isBoss()) renderMySchedule();
   renderMap();
   renderTeam();
 }
@@ -723,13 +1009,12 @@ $('btnLogin').onclick = async () => {
     await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
   } catch(e){ $('loginErr').textContent = t.fail + e.message; }
 };
-$('btnLogout').onclick = () => auth.signOut();
+document.querySelectorAll('[data-logout]').forEach(b => { b.onclick = () => auth.signOut(); });
 
 auth.onAuthStateChanged(async user => {
-  document.body.classList.toggle('ready', false);
-  $('btnLogout').classList.toggle('hidden', !user);
-  $('adminLink').classList.add('hidden');
-  $('roleChip').textContent = '';
+  document.body.classList.remove('ready');
+  document.body.removeAttribute('data-portal');
+  if ($('roleChip')) $('roleChip').textContent = '';
   $('viewJobs').classList.add('hidden');
   if (!user) return;
   const doc = await db.collection('users').doc(user.uid).get();
@@ -742,30 +1027,29 @@ auth.onAuthStateChanged(async user => {
     profile.uid = user.uid;
     if (user.email) profile.email = user.email.toLowerCase();
   } catch(_){}
-  $('adminLink').classList.toggle('hidden', !isSuper());
   await resolveTypeAdmin(user.uid);
-  if (!await enforceTrial()) return;
-  $('typesLink').classList.toggle('hidden', !canManageTypes());
-  $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
-  document.body.classList.add('ready');
-  const staff = isBoss();
-  $('addbox').classList.toggle('hidden', !staff || isSuper());
-  $('staffMain').classList.toggle('hidden', !staff);
-  $('workerMain').classList.toggle('hidden', staff);
-  $('assignBar').classList.toggle('hidden', !canAssign());
-  $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
-  document.body.classList.add('tab-' + phoneTab);
-  applyLayout();
-  await loadBoard();
-  if (!staff) renderMySchedule();
+  if (!isSuper() && !await enforceTrial()) return;
+  const want = portalForRole();
+  const have = pathPortal();
+  if (have !== want) {
+    location.replace('/app/' + want + '/');
+    return;
+  }
+  document.body.setAttribute('data-portal', want);
+  document.body.classList.add('ready', 'tab-' + phoneTab);
+  if ($('roleChip')) $('roleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
+  if ($('empRoleChip')) $('empRoleChip').textContent = roleLabel() + (profile.displayName ? ' · ' + profile.displayName : '');
   applyPanelLang();
+  if (want === 'owner') await openOwnerPortal();
+  else if (want === 'employee') await openEmployeePortal();
+  else await openCompanyPortal();
 });
 
 function applyLayout(){
   document.body.classList.toggle('desk', false);
   if ($('deskToggle')) $('deskToggle').style.display = 'none';
   const btn = $('sitesToggle');
-  if (btn && !document.body.classList.contains('sites-open')) btn.textContent = pack().sitesLabel || 'Sites';
+  if (btn && !document.body.classList.contains('sites-open')) btn.textContent = siteT('title');
   renderMap();
   renderTeam();
 }
@@ -825,6 +1109,24 @@ function sameDay(a,b){
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
 function hLabel(h){ const h12 = h%12===0?12:h%12; return h12 + ' ' + (h<12?'AM':'PM'); }
+function schedEl(which){
+  if (currentPortal()==='employee') {
+    if (which==='rows') return $('empRows');
+    if (which==='hours') return $('empHours');
+    return $('empWeekdays');
+  }
+  if (which==='rows') return $('rows');
+  if (which==='hours') return $('hours');
+  return $('weekdays');
+}
+function myUid(){
+  return (auth.currentUser && auth.currentUser.uid) || (profile && profile.uid) || '';
+}
+function myTechCols(){
+  const uid = myUid();
+  if (currentPortal()==='employee') return techs.filter(t => t.uid === uid);
+  return techs;
+}
 
 function renderWeek(){
   const ws = weekStart(selectedDay);
@@ -832,16 +1134,17 @@ function renderWeek(){
   const meses = loginLang()==='es'
     ? ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  $('weekTitle').textContent = isPhone()
+  if ($('weekTitle')) $('weekTitle').textContent = isPhone()
     ? uiT('teamSchedule')
     : `${uiT('teamSchedule')} — ${uiT('weekOf')} ${meses[ws.getMonth()]} ${ws.getDate()}–${end.getDate()}, ${ws.getFullYear()}`;
-  const letters = ['S','M','T','W','T','F','S'];
+  const letters = loginLang()==='es' ? ['D','L','M','M','J','V','S'] : ['S','M','T','W','T','F','S'];
   let html = '';
   for (let i=0;i<7;i++){
     const d = new Date(ws); d.setDate(ws.getDate()+i);
-    html += `<div class="wd ${sameDay(d,selectedDay)?'on':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
+    html += `<div class="wd ${sameDay(d,selectedDay)?'on':''} ${sameDay(d,new Date())?'today':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
   }
-  $('weekdays').innerHTML = html;
+  const wd = schedEl('weekdays');
+  if (wd) wd.innerHTML = html;
 }
 function pickDay(ms){ selectedDay = new Date(ms); loadBoard(); }
 function goToday(){ selectedDay = new Date(); loadBoard(); }
@@ -864,6 +1167,9 @@ async function loadBoard(){
   try {
     const co = await db.collection('companies').doc(id).get();
     companyName = (co.exists && co.data().name) || '';
+    companyLogo = (co.exists && (co.data().logoUrl || co.data().logo || '')) || '';
+    companyPhone = (co.exists && (co.data().phone || '')) || '';
+    fillCompanyHeader();
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
     companyType = String(raw).toLowerCase().replace(/\s+/g,'_');
     if (!(window.JOB_TEMPLATES||{})[companyType]) {
@@ -877,13 +1183,10 @@ async function loadBoard(){
     }
   } catch(_) { companyType = 'property_management'; }
   applyCompanyPanel();
-  if (isSuper()) await loadCompaniesSidebar();
-  else {
-    $('sitesTitle').style.display = '';
-    $('sitesTitle').textContent = uiT('buildings');
-    $('bSearch').placeholder = uiT('searchBuildings');
-    $('addbox').classList.toggle('hidden', !isBoss());
-  }
+  $('sitesTitle').style.display = '';
+  $('sitesTitle').textContent = siteT('title');
+  if ($('bSearch')) $('bSearch').placeholder = siteT('search');
+  $('addbox').classList.toggle('hidden', !canAssign());
   const bDocs = [];
   let s = await colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
   if (s) s.forEach(d => bDocs.push({id:d.id, ...d.data()}));
@@ -898,7 +1201,7 @@ async function loadBoard(){
     const u = d.data() || {};
     tDocs.push({
       uid: d.id,
-      name: u.displayName || 'Tech',
+      name: u.displayName || u.email || '',
       role: u.role || 'worker',
       email: String(u.email || '').toLowerCase()
     });
@@ -907,7 +1210,7 @@ async function loadBoard(){
   if (me && profile.companyId === id && !tDocs.some(t => t.uid === me)) {
     tDocs.unshift({
       uid: me,
-      name: profile.displayName || 'Yo',
+      name: profile.displayName || profile.email || '',
       role: profile.role || 'worker',
       email: String(profile.email || (auth.currentUser && auth.currentUser.email) || '').toLowerCase()
     });
@@ -919,12 +1222,13 @@ async function loadBoard(){
     const ts = await db.collection('companies').doc(id).collection('customJobTypes').limit(50).get();
     ts.forEach(d => customTypes.push({id:d.id, ...d.data()}));
   } catch(_){}
-  renderTypeBar();
-  if (!isSuper()) renderBuildings();
+  fillCompanyHeader();
+  renderTypesBox();
+  renderBuildings();
   renderMap();
   renderTeam();
-  $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
-  if (isBoss()) renderRows();
+  if ($('moneyBtn')) $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
+  if (currentPortal()==='employee' || isBoss()) renderRows();
   else renderMySchedule();
 }
 async function loadCompaniesSidebar(){
@@ -946,6 +1250,7 @@ async function loadCompaniesSidebar(){
     companyList.sort((a,b)=> String(a.name||'').localeCompare(String(b.name||'')));
   } catch(e){ companyList = []; }
   renderCompanies();
+  fillCompanyHeader();
 }
 function toggleCompaniesList(){
   companiesOpen = !companiesOpen;
@@ -1141,12 +1446,514 @@ function bindTypeComboUi(){
   });
   window.addEventListener('resize', () => closeTypeCombos());
 }
-function renderTypeBar(){
-  const bar = $('typeBar');
-  if (!bar) return;
+function renderTypeBar(){ renderTypesBox(); }
+function renderTypesBox(){
   const types = allTypes(true);
-  bar.innerHTML = typePickerHtml('bar', (types[0] && types[0].name) || '');
-  bindTypeComboUi();
+  const sel = $('typeSelect');
+  const list = $('typeList');
+  const cur = preKind || (sel && sel.value) || (types[0] && types[0].name) || '';
+  if (sel) {
+    sel.innerHTML = types.map(t => `<option value="${esc(t.name)}" ${t.name===cur?'selected':''}>${esc(t.name)}</option>`).join('');
+  }
+  if (list) {
+    const chosen = (sel && sel.value) || cur;
+    list.innerHTML = types.map(t =>
+      `<button type="button" class="type-row ${t.name===chosen?'on':''}" onclick="pickSidebarType('${encodeURIComponent(t.name)}')">
+        <span class="type-dot" style="background:${esc(t.color||'#34C759')}"></span>
+        <span>${esc(t.name)}</span>
+      </button>`
+    ).join('') || `<div class="muted" style="padding:10px">${esc(uiT('noTypes'))}</div>`;
+  }
+}
+function pickSidebarType(enc){
+  const name = decodeURIComponent(enc);
+  preKind = name;
+  const sel = $('typeSelect');
+  if (sel) sel.value = name;
+  renderTypesBox();
+}
+async function addTypeFromBox(){
+  if (!canManageTypes()) { location.href = '/app/settings/job-types/'; return; }
+  const name = prompt(uiT('jobType'));
+  if (!name || !name.trim()) return;
+  const payload = {
+    name: name.trim(),
+    slug: slugify(name.trim()),
+    icon: '🔧',
+    color: '#34C759',
+    descriptionTemplate: '',
+    category: 'custom',
+    isActive: true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    createdBy: auth.currentUser && auth.currentUser.uid
+  };
+  try {
+    await db.collection('companies').doc(cid()).collection('customJobTypes').add(payload);
+    customTypes.push(payload);
+    preKind = payload.name;
+    renderTypesBox();
+  } catch(e){ alert(e.message||e); }
+}
+function fillCompanyHeader(){
+  const nm = $('coName');
+  if (!nm) return;
+  nm.textContent = (!companyName || /^walkcheck$/i.test(companyName)) ? '' : companyName;
+}
+async function openOwnerPortal(){
+  await loadCompaniesSidebar();
+  renderOwnerList();
+}
+async function openCompanyPortal(){
+  if (isSuper() && !viewCid && profile.companyId) viewCid = profile.companyId;
+  if ($('addbox')) $('addbox').classList.toggle('hidden', !canAssign());
+  if ($('staffMain')) $('staffMain').classList.remove('hidden');
+  if ($('workerMain')) $('workerMain').classList.add('hidden');
+  if ($('assignBar')) $('assignBar').classList.toggle('hidden', !canAssign());
+  if ($('moneyBtn')) $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
+  if ($('typesLink')) $('typesLink').classList.toggle('hidden', !canManageTypes());
+  if ($('rolesBtn')) $('rolesBtn').classList.add('hidden');
+  if ($('typesBox')) {
+    const addBtn = $('typesBox').querySelector('.btn');
+    if (addBtn) addBtn.style.display = canManageTypes() ? '' : 'none';
+  }
+  applyLayout();
+  await loadBoard();
+}
+async function openEmployeePortal(){
+  applyLayout();
+  await loadBoard();
+  renderRows();
+}
+function roleSelectHtml(uid, role){
+  const cur = String(role||'worker').toLowerCase() === 'employee' ? 'worker' : String(role||'worker').toLowerCase();
+  const opts = [
+    ['worker', uiT('workerRole')],
+    ['supervisor', uiT('supervisor')],
+    ['manager', uiT('manager')]
+  ];
+  return `<select onchange="setMemberRole('${uid}', this.value)">${opts.map(([v,l]) =>
+    `<option value="${v}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+}
+function renderOwnerList(){
+  const el = $('ownerList');
+  if (!el) return;
+  el.innerHTML = `<table class="owner-table"><thead><tr>
+    <th>${esc(uiT('allCompanies'))}</th>
+    <th>${esc(uiT('workersCount'))}</th>
+    <th>${esc(uiT('statusLbl'))}</th>
+    <th>${esc(uiT('actions'))}</th>
+  </tr></thead><tbody>${companyList.map(c => {
+    const on = String(c.status||'active').toLowerCase() !== 'suspended';
+    return `<tr>
+      <td><b>${esc(c.name||c.id)}</b><div class="muted">${esc(c.industry||c.companyType||'')}</div>
+        <div class="role-card" id="oroles-${c.id}"></div></td>
+      <td>${c.workers||0}</td>
+      <td><span class="st-pill ${on?'on':'off'}">${esc(on?uiT('statusActive'):uiT('statusSuspended'))}</span></td>
+      <td>
+        <button class="btn ${on?'ghost':''}" style="width:auto;margin:0 0 8px" onclick="setCompanyStatus('${c.id}','${on?'suspended':'active'}')">${esc(on?uiT('suspend'):uiT('activate'))}</button>
+        <button class="btn ghost" style="width:auto" onclick="loadOwnerRoles('${c.id}')">${esc(uiT('teamRoles'))}</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4">${esc(uiT('noCompanies'))}</td></tr>`}</tbody></table>`;
+}
+async function setCompanyStatus(id, status){
+  try {
+    await db.collection('companies').doc(id).set({ status }, {merge:true});
+    const c = companyList.find(x => x.id === id);
+    if (c) c.status = status;
+    renderOwnerList();
+  } catch(e){ alert(e.message||e); }
+}
+async function loadOwnerRoles(id){
+  const box = document.getElementById('oroles-'+id);
+  if (!box) return;
+  box.innerHTML = '<p class="muted">…</p>';
+  const users = [];
+  try {
+    const u = await db.collection('users').where('companyId','==',id).limit(50).get();
+    u.forEach(d => users.push({uid:d.id, ...d.data()}));
+  } catch(e){ box.innerHTML = `<p class="err">${esc(e.message||e)}</p>`; return; }
+  box.innerHTML = users.map(u => {
+    const r = String(u.role||'worker').toLowerCase();
+    const locked = r === 'owner' || r === 'admin';
+    return `<div class="role-row"><div>${esc(u.displayName||u.email||u.uid)}<div class="muted">${esc(u.email||'')}</div></div>
+      ${locked ? `<b>${esc(roleWord(r))}</b>` : roleSelectHtml(u.uid, r)}</div>`;
+  }).join('') || `<p class="muted">${esc(uiT('noTeam'))}</p>`;
+}
+function roleWord(r){
+  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), worker: uiT('workerRole') };
+  return map[r] || r;
+}
+async function setMemberRole(uid, role){
+  if (!canManageRoles() && !isSuper()) return;
+  if (!['worker','manager','supervisor'].includes(role)) return;
+  try {
+    await db.collection('users').doc(uid).set({ role }, {merge:true});
+    try {
+      const u = await db.collection('users').doc(uid).get();
+      const cid0 = (u.data()||{}).companyId;
+      if (cid0) await db.collection('companies').doc(cid0).collection('members').doc(uid).set({ role, uid }, {merge:true});
+    } catch(_){}
+    const t = techs.find(x => x.uid === uid);
+    if (t) t.role = role;
+    if (auth.currentUser && auth.currentUser.uid === uid) profile.role = role;
+    alert(uiT('roleSaved'));
+    if (currentPortal() === 'company') openRolesPane();
+  } catch(e){ alert(e.message||e); }
+}
+function openRolesPane(){
+  if (!canManageRoles()) return;
+  document.body.classList.add('view-roles');
+  document.body.classList.remove('view-hours', 'view-reports');
+  const pane = $('rolesPane');
+  if (!pane) return;
+  pane.innerHTML = `<h3>${esc(uiT('teamRoles'))}</h3>
+    ${techs.map(t => {
+      const r = String(t.role||'worker').toLowerCase();
+      const locked = r === 'owner' || r === 'admin';
+      return `<div class="role-row"><div>${esc(t.name)}<div class="muted">${esc(t.email||t.role||'')}</div></div>
+        ${locked ? `<b>${esc(roleWord(r))}</b>` : roleSelectHtml(t.uid, r)}</div>`;
+    }).join('') || `<p class="muted">${esc(uiT('noTeam'))}</p>`}
+    <button class="btn ghost" style="margin-top:12px;width:auto" onclick="document.body.classList.remove('view-roles');setSchedView('day')">${esc(uiT('horario'))}</button>`;
+}
+function setSchedView(v){
+  schedView = v;
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports');
+  document.querySelectorAll('[data-view]').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-view') === v);
+  });
+  if (v === 'map' && currentPortal()!=='employee') { setTab('mapa'); return; }
+  if (currentPortal()!=='employee') setTab('agenda');
+  if (isBoss() || currentPortal()==='employee') renderRows();
+  else renderMySchedule();
+}
+function openTimesheet(months){
+  if (!canSeeTimesheet()) return;
+  timesheetMonths = months || timesheetMonths || 1;
+  document.body.classList.add('view-hours');
+  document.body.classList.remove('sites-open');
+  const pane = $('hoursPane');
+  if (!pane) return;
+  const until = new Date();
+  const from = new Date();
+  from.setMonth(from.getMonth() - timesheetMonths);
+  const rows = techs.map(t => {
+    let ms = 0;
+    jobs.forEach(j => {
+      if (accountUidOf(j) !== t.uid) return;
+      const st = jobTime(j);
+      if (st < from || st > until) return;
+      const en = jobEnd(j, st);
+      ms += Math.max(0, en - st);
+    });
+    return `<tr><td>${esc(t.name)}</td><td>${(ms/3600000).toFixed(1)}</td></tr>`;
+  }).join('');
+  pane.innerHTML = `<h3>${esc(uiT('timesheet'))}</h3>
+    <div class="period">
+      <button type="button" class="${timesheetMonths===1?'on':''}" onclick="openTimesheet(1)">${esc(uiT('month1'))}</button>
+      <button type="button" class="${timesheetMonths===2?'on':''}" onclick="openTimesheet(2)">${esc(uiT('month2'))}</button>
+      <button type="button" class="${timesheetMonths===3?'on':''}" onclick="openTimesheet(3)">${esc(uiT('month3'))}</button>
+    </div>
+    <table><thead><tr><th>${esc(uiT('worker'))}</th><th>${esc(uiT('hoursWorked'))}</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="2">${esc(uiT('noTeam'))}</td></tr>`}</tbody></table>`;
+}
+
+let reportWalks = [];
+let lastReportPdf = { blob: null, url: '', name: '', title: '' };
+function siteKey(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+}
+function monthLabel(ym){
+  const [y,m] = String(ym||'').split('-');
+  if (!y || !m) return ym || '';
+  const d = new Date(Number(y), Number(m)-1, 1);
+  return d.toLocaleDateString(uiLang==='en'?'en-US':'es-ES', { month:'long', year:'numeric' });
+}
+function wtYearMonth(wt){
+  if (wt.yearMonth) return String(wt.yearMonth);
+  const t = wt.closedAt || wt.completedAt || wt.createdAt || wt.date;
+  let d = t;
+  if (t && typeof t.toDate === 'function') d = t.toDate();
+  else if (typeof t === 'string') d = /^\d{4}-\d{2}$/.test(t) ? null : new Date(t);
+  if (!d && typeof t === 'string' && /^\d{4}-\d{2}/.test(t)) return t.slice(0,7);
+  if (d instanceof Date && !isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  return '';
+}
+function findingIsResolved(f){
+  const st = String(f.status || f.state || '').toLowerCase();
+  return f.resolved === true || f.solved === true || ['resolved','resuelto','closed','done','completado'].includes(st);
+}
+function matchSite(rec, b){
+  if (!b) return false;
+  if (rec.buildingId && b.id && String(rec.buildingId) === String(b.id)) return true;
+  const bk = siteKey(b.name+' '+(b.address||''));
+  const rk = siteKey(rec.address || rec.buildingName || rec.title || rec.name || '');
+  if (!bk || !rk) return false;
+  return bk.includes(rk) || rk.includes(bk) || siteKey(b.name).includes(rk) || rk.includes(siteKey(b.name));
+}
+function workerNameOf(rec){
+  if (rec.assignedName) return rec.assignedName;
+  const uid = rec.assignedUid || rec.workerId || rec.assignedTo || rec.assignedUserId;
+  const t = techs.find(x => x.uid === uid);
+  return (t && t.name) || rec.workerName || '';
+}
+function photosOf(obj){
+  const urls = obj.photoUrls || obj.photos || obj.images || [];
+  if (Array.isArray(urls)) return urls.map(u => typeof u === 'string' ? u : (u.url || u.src || '')).filter(Boolean);
+  if (typeof urls === 'string' && urls) return [urls];
+  if (obj.photoUrl) return [obj.photoUrl];
+  return [];
+}
+async function loadReportWalks(){
+  const id = cid();
+  const out = [];
+  const seen = new Set();
+  const add = (d) => {
+    if (seen.has(d.id)) return;
+    seen.add(d.id);
+    out.push({ id: d.id, ...d.data() });
+  };
+  try {
+    const q = await db.collection('walkthroughs').where('companyId','==',id).limit(200).get();
+    q.forEach(add);
+  } catch(_){}
+  if (!out.length) {
+    try {
+      const q = await db.collection('walkthroughs').limit(200).get();
+      q.forEach(d => {
+        const x = d.data() || {};
+        if (!x.companyId || x.companyId === id) add(d);
+      });
+    } catch(_){}
+  }
+  reportWalks = out;
+  return out;
+}
+function reportBuildings(){
+  const list = buildings.slice();
+  jobs.forEach(j => {
+    const addr = j.address || j.title || '';
+    if (!addr) return;
+    if (list.some(b => matchSite(j, b))) return;
+    list.push({ id: 'addr-'+siteKey(addr), name: addr, address: addr });
+  });
+  reportWalks.forEach(w => {
+    const addr = w.address || w.buildingName || '';
+    if (!addr) return;
+    if (list.some(b => matchSite(w, b))) return;
+    list.push({ id: w.buildingId || ('wt-'+siteKey(addr)), name: addr, address: addr });
+  });
+  return list;
+}
+function inspectionsFor(b, ym){
+  const fromW = reportWalks.filter(w => matchSite(w, b) && wtYearMonth(w) === ym).map(w => ({
+    date: w.date || (w.closedAt && w.closedAt.toDate && w.closedAt.toDate().toISOString().slice(0,10)) || ym,
+    worker: workerNameOf(w),
+    title: w.title || w.kind || uiT('inspectionsDone')
+  }));
+  const fromJ = jobs.filter(j => matchSite(j, b) && String(j.scheduledDate||j.date||'').slice(0,7) === ym && /inspect|walk|recorr/i.test(String(j.kind||j.title||''))).map(j => ({
+    date: j.scheduledDate || j.date || ym,
+    worker: workerNameOf(j),
+    title: j.kind || j.title || ''
+  }));
+  return fromW.concat(fromJ);
+}
+function jobsDoneFor(b, ym){
+  return jobs.filter(j => {
+    if (!matchSite(j, b)) return false;
+    if (String(j.scheduledDate||j.date||'').slice(0,7) !== ym) return false;
+    const st = String(j.status||'').toLowerCase();
+    return ['done','completed','closed','complete','terminado','completado'].includes(st);
+  });
+}
+function findingsFor(b, ym){
+  const byId = new Map();
+  reportWalks.filter(w => matchSite(w, b)).forEach(w => {
+    const wym = wtYearMonth(w);
+    (w.findings || []).forEach((f, i) => {
+      const id = String(f.id || (w.id + '-' + i));
+      const origin = String(f.originMonth || f.openMonth || f.yearMonth || wym);
+      const prev = byId.get(id);
+      if (prev && String(prev._wym) > wym) return;
+      byId.set(id, Object.assign({}, f, {
+        id, originMonth: origin, _wym: wym, worker: workerNameOf(w),
+        date: f.date || w.date || wym
+      }));
+    });
+  });
+  const out = [];
+  byId.forEach(f => {
+    const origin = f.originMonth || f._wym;
+    const res = findingIsResolved(f);
+    if (f._wym === ym) { out.push(Object.assign(f, { carry: origin < ym && !res })); return; }
+    if (!res && origin && origin < ym) out.push(Object.assign(f, { carry: true }));
+  });
+  return out;
+}
+function siteInspectedInMonth(b, ym){
+  return inspectionsFor(b, ym).length > 0 || jobs.some(j => matchSite(j, b) && String(j.scheduledDate||j.date||'').slice(0,7) === ym);
+}
+async function openReports(){
+  document.body.classList.add('view-reports');
+  document.body.classList.remove('view-hours','view-roles','sites-open');
+  if (!buildings.length) await loadBoard();
+  await loadReportWalks();
+  const pane = $('reportsPane');
+  if (!pane) return;
+  const ym = ($('rptMonth') && $('rptMonth').value) || ymd(selectedDay).slice(0,7);
+  const blds = reportBuildings();
+  const inspected = blds.filter(b => siteInspectedInMonth(b, ym));
+  let openN = 0;
+  blds.forEach(b => findingsFor(b, ym).forEach(f => { if (!findingIsResolved(f)) openN++; }));
+  const prefer = ($('rptBld') && $('rptBld').value) || (blds.find(b => /8000/.test(String(b.name||''))) || blds[0] || {}).id;
+  const bopts = blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('');
+  pane.innerHTML = `<div class="rpt-kpis">
+      <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${uiLang==='en'?'of':'de'} ${blds.length}</b></div>
+      <div class="rpt-kpi"><span>${esc(uiT('pendingBld'))}</span><b>${Math.max(0, blds.length - inspected.length)}</b></div>
+      <div class="rpt-kpi"><span>${esc(uiT('openFindings'))}</span><b>${openN}</b></div>
+    </div>
+    <div class="rpt-form">
+      <h3 style="margin:0 0 10px">${esc(uiT('reports'))}</h3>
+      <p class="muted">${esc(uiT('pickBuildingMonth'))}</p>
+      <label class="muted">${esc(siteT('title'))}</label>
+      <select id="rptBld">${bopts}</select>
+      <label class="muted">${esc(uiT('reportMonth'))}</label>
+      <input id="rptMonth" type="month" value="${esc(ym)}" onchange="openReports()">
+      <button class="btn" style="margin-top:12px" onclick="generateClientReport()">${esc(uiT('genReport'))}</button>
+    </div>
+    <div id="rptOut"></div>`;
+  applyUiLang();
+}
+function findingStatusHtml(f){
+  if (findingIsResolved(f)) return `<span class="st-ok">${esc(uiT('resolved'))}</span>`;
+  if (f.carry && f.originMonth) return `<span class="st-pend">${esc(uiT('pendingSince'))} ${esc(monthLabel(f.originMonth))}</span>`;
+  return `<span class="st-pend">${esc(uiT('pending'))}</span>`;
+}
+function photoStrip(urls){
+  if (!urls.length) return `<div class="muted" style="margin-top:6px">Sin foto</div>`;
+  return `<div>${urls.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>`;
+}
+async function generateClientReport(){
+  const ym = ($('rptMonth') && $('rptMonth').value) || ymd(selectedDay).slice(0,7);
+  const bid = $('rptBld') && $('rptBld').value;
+  const b = reportBuildings().find(x => String(x.id) === String(bid)) || reportBuildings()[0];
+  const out = $('rptOut');
+  if (!b || !out) return;
+  await loadReportWalks();
+  const insp = inspectionsFor(b, ym);
+  const finds = findingsFor(b, ym);
+  const done = jobsDoneFor(b, ym);
+  const resolvedN = finds.filter(findingIsResolved).length;
+  const pendingN = finds.length - resolvedN;
+  const co = (companyName && !/^holdings/i.test(companyName)) ? companyName : (companyName || '');
+  const initial = (co || 'C').trim().charAt(0).toUpperCase();
+  const logo = companyLogo
+    ? `<img class="rpt-logo" src="${esc(companyLogo)}" alt="">`
+    : `<div class="rpt-logo">${esc(initial)}</div>`;
+  if (!insp.length && !finds.length && !done.length) {
+    out.innerHTML = `<p class="muted">${esc(uiT('noReportData'))}</p>`;
+    return;
+  }
+  const inspHtml = insp.map(i => `<li>${esc(i.date)} · ${esc(i.worker || '—')} · ${esc(i.title||'')}</li>`).join('') || `<li class="muted">—</li>`;
+  const findHtml = finds.map(f => `<div class="rpt-finding">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <b>${esc(f.itemLabel || f.title || f.location || 'Hallazgo')}</b>
+        ${findingStatusHtml(f)}
+      </div>
+      <div class="muted">${esc([f.location, f.floor ? ('Piso '+f.floor) : ''].filter(Boolean).join(' · '))}</div>
+      <p style="margin:6px 0 0">${esc(f.description || '')}</p>
+      ${photoStrip(photosOf(f))}
+    </div>`).join('') || `<p class="muted">—</p>`;
+  const jobHtml = done.map(j => `<div class="rpt-finding">
+      <b>${esc(j.kind || j.title || '')}</b>
+      <div class="muted">${esc(j.scheduledDate || '')} · ${esc(workerNameOf(j))}</div>
+      ${photoStrip(photosOf(j))}
+    </div>`).join('') || `<p class="muted">—</p>`;
+  const fname = `reporte-${siteKey(b.name||'edificio')}-${ym}.pdf`;
+  lastReportPdf = { blob: null, url: '', name: fname, title: `${co} · ${b.name} · ${monthLabel(ym)}` };
+  out.innerHTML = `<div class="rpt-actions">
+      <button class="btn" onclick="downloadReportPdf()">${esc(uiT('downloadPdf'))}</button>
+      <button class="btn ghost" onclick="sendReportWa()">${esc(uiT('sendWa'))}</button>
+      <button class="btn ghost" onclick="sendReportMail()">${esc(uiT('sendMail'))}</button>
+    </div>
+    <div class="rpt-paper" id="rptPaper">
+      <div class="rpt-brand">${logo}<div>
+        <h2>${esc(co || '—')}</h2>
+        <div class="muted">${esc(uiT('reports'))} · ${esc(monthLabel(ym))}</div>
+      </div></div>
+      <p class="rpt-meta"><b>${esc(b.name||'')}</b><br>${esc(b.address || b.name || '')}</p>
+      <div class="rpt-sum">
+        <span>${insp.length} ${esc(uiT('inspectionsDone'))}</span>
+        <span>${finds.length} ${esc(uiT('findingsTitle'))}</span>
+        <span>${resolvedN} ${esc(uiT('resolved'))}</span>
+        <span>${pendingN} ${esc(uiT('pending'))}</span>
+      </div>
+      <h3>${esc(uiT('inspectionsDone'))}</h3>
+      <ul>${inspHtml}</ul>
+      <h3>${esc(uiT('findingsTitle'))}</h3>
+      ${findHtml}
+      <h3>${esc(uiT('jobsDone'))}</h3>
+      ${jobHtml}
+      <h3>${esc(uiT('summaryTitle'))}</h3>
+      <p>${insp.length} ${esc(uiT('inspectionsDone'))}, ${finds.length} ${esc(uiT('findingsTitle'))}, ${resolvedN} ${esc(uiT('resolved'))}, ${pendingN} ${esc(uiT('pending'))}.</p>
+    </div>`;
+  try {
+    await db.collection('inspection_reports').add({
+      companyId: cid(), buildingId: b.id, buildingName: b.name || '',
+      yearMonth: ym, inspections: insp.length, findings: finds.length,
+      resolved: resolvedN, pending: pendingN, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(_){}
+}
+async function reportPdfBlob(){
+  const el = $('rptPaper');
+  if (!el) throw new Error('No hay reporte');
+  if (typeof html2pdf === 'undefined') {
+    window.print();
+    return null;
+  }
+  const blob = await html2pdf().set({
+    margin: 10,
+    filename: lastReportPdf.name,
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(el).outputPdf('blob');
+  lastReportPdf.blob = blob;
+  return blob;
+}
+async function downloadReportPdf(){
+  const blob = await reportPdfBlob();
+  if (!blob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = lastReportPdf.name;
+  a.click();
+}
+async function uploadReportPdf(){
+  if (lastReportPdf.url) return lastReportPdf.url;
+  const blob = lastReportPdf.blob || await reportPdfBlob();
+  if (!blob) return '';
+  const ref = storage.ref('reports/'+cid()+'/'+lastReportPdf.name);
+  await ref.put(blob);
+  lastReportPdf.url = await ref.getDownloadURL();
+  return lastReportPdf.url;
+}
+async function sendReportWa(){
+  try {
+    const url = await uploadReportPdf();
+    const text = encodeURIComponent((lastReportPdf.title||'Reporte')+'\n'+url);
+    const phone = String(companyPhone||'').replace(/\D/g,'');
+    window.open(phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`, '_blank');
+  } catch(e){ alert(e.message||e); }
+}
+async function sendReportMail(){
+  try {
+    const url = await uploadReportPdf();
+    const sub = encodeURIComponent(lastReportPdf.title || 'Reporte');
+    const body = encodeURIComponent((lastReportPdf.title||'')+'\n\n'+url);
+    location.href = `mailto:?subject=${sub}&body=${body}`;
+  } catch(e){ alert(e.message||e); }
 }
 function quickAssign(kind){
   preKind = kind;
@@ -1164,14 +1971,14 @@ function renderBuildings(){
   });
   $('bList').innerHTML = list.map(b =>
     `<div class="b-item ${b.id===selectedBuilding?'on':''}" onclick="selectBuilding('${b.id}')">${esc(b.name||b.id)}</div>`
-  ).join('') || `<div class="muted" style="padding:14px">${esc(uiT('noBuildings'))}</div>`;
+  ).join('') || `<div class="muted" style="padding:14px">${esc(siteT('none'))}</div>`;
 }
 function selectBuilding(id){
   selectedBuilding = id;
   renderBuildings();
   document.body.classList.remove('sites-open');
   const st = $('sitesToggle');
-  if (st) st.textContent = pack().sitesLabel || 'Sites';
+  if (st) st.textContent = siteT('title');
   if (isPhone()) {
     setTab('agenda');
     if (isBoss()) renderRows();
@@ -1289,7 +2096,7 @@ function listenCompanyJobs(id){
     jobs = jDocs;
     repairJobAccounts();
     renderMap();
-    if (isBoss()) renderRows();
+    if (isBoss() || currentPortal()==='employee') renderRows();
     else renderMySchedule();
   }, () => {});
 }
@@ -1306,72 +2113,158 @@ function repairJobAccounts(){
 }
 
 function cardAddr(j){
-  const raw = String(j.address || j.buildingName || j.title || 'Job').split(/[—–|]/)[0];
+  const raw = String(j.address || j.buildingName || j.title || '').split(/[—–|]/)[0];
   return raw.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function cardGeom(j){
   const st = jobTime(j);
   const en = jobEnd(j, st);
-  const hours = Math.max(0.5, (en - st) / 3600000);
-  return {
-    st, en,
-    left: ((st.getHours() + st.getMinutes() / 60) - START) * SLOT,
-    w: Math.max(150, hours * SLOT),
-    h: Math.max(92, Math.min(148, hours * 96))
-  };
+  return { st, en, top: gridTop(st), h: gridHeight(st, en) };
+}
+function overlapWarn(uid, job){
+  const st = jobTime(job), en = jobEnd(job, st);
+  return jobs.some(o => {
+    if (o.id === job.id || accountUidOf(o) !== uid) return false;
+    const os = jobTime(o), oe = jobEnd(o, os);
+    return sameDay(st, os) && rangesOverlap(st, en, os, oe);
+  });
 }
 function jobCardHtml(j, extraClass, posStyle){
   const g = cardGeom(j);
   const addr = cardAddr(j);
-  const kind = j.kind || 'INSPECTION';
+  const kind = j.kind || '';
   const tp = typeOf(kind);
   const when = fmt(g.st)+' – '+fmt(g.en);
-  const pos = posStyle || `left:${g.left}px;width:${g.w}px;height:${g.h}px`;
+  const pos = posStyle || `top:${g.top}px;height:${g.h}px`;
   const check = jobDone(j) ? ' ✓' : '';
-  return `<div class="jcard ${extraClass||''}" ${isBoss()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
-    <div class="jcard-addr">${esc(tp.icon||'')} ${esc(addr)}${check}</div>
-    <div class="jcard-kind">${esc(kind)}</div>
+  return `<div class="jcard ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(tp.color||'#34C759')};${pos}">
+    <div class="jcard-kind">${esc(kind)}${check}</div>
+    <div class="jcard-addr">${esc(addr)}</div>
     <div class="jcard-t">${when}</div></div>`;
 }
+function quarterSlotsHtml(extraAttr){
+  const parts = [];
+  for (let m = DAY_START_MIN; m < DAY_END_MIN; m += STEP) {
+    const top = ((m - DAY_START_MIN) / STEP) * SLOT_H;
+    const hour = m % 60 === 0;
+    parts.push(`<div class="qslot ${hour?'hour':''}" style="top:${top}px;height:${SLOT_H}px" ${extraAttr(m)} onclick="slotFromEl(this)" ondragover="allowDrop(event)" ondrop="dropJob(event)"></div>`);
+  }
+  return parts.join('');
+}
+function timeAxisHtml(){
+  const parts = [];
+  for (let m = DAY_START_MIN; m < DAY_END_MIN; m += 60) {
+    const top = ((m - DAY_START_MIN) / STEP) * SLOT_H;
+    parts.push(`<div class="tmark" style="top:${top}px">${hLabel(Math.floor(m/60))}</div>`);
+  }
+  return parts.join('');
+}
 function renderRows(){
-  if (!useDesk()) { renderMobileAgenda(); return; }
-  const hs = dayHours();
-  START = hs[0];
-  $('hours').innerHTML = hs.map(h => `<div class="hour">${hLabel(h)}</div>`).join('');
-  $('rows').innerHTML = techs.map(t => {
+  if (schedView === 'map') {
+    renderMap();
+    if (currentPortal()==='employee' && schedEl('rows') && $('mapPane')) {
+      schedEl('rows').innerHTML = $('mapPane').innerHTML;
+    }
+    return;
+  }
+  if (schedView === 'list') { renderMobileAgenda(); return; }
+  if (schedView === 'week') { renderWeekGrid(); return; }
+  renderDayGrid(myTechCols());
+}
+function renderDayGrid(cols){
+  const listCols = cols || techs;
+  SLOT_H = liveSlotH();
+  const H = gridTotalH();
+  const hoursEl = schedEl('hours');
+  const rowsEl = schedEl('rows');
+  if (!rowsEl) return;
+  if (!listCols.length) {
+    if (hoursEl) hoursEl.innerHTML = '';
+    rowsEl.innerHTML = `<div class="card muted">${esc(uiT('noTeam'))}</div>`;
+    return;
+  }
+  const head = `<div class="gutter" style="font-size:10px;font-weight:800;color:#8E8E93;padding:8px 4px">${loginLang()==='es'?'Hora':'Time'}</div>` + listCols.map(t => {
     const list = jobsForTech(t);
-    let laneH = 136;
-    list.forEach(j => { laneH = Math.max(laneH, cardGeom(j).h + 16); });
-    const slots = hs.map(h => `<div class="slot" data-uid="${t.uid}" data-hour="${h}" onclick="slotClick('${t.uid}',${h})" ondragover="allowDrop(event)" ondrop="dropJob(event)" style="height:${laneH}px"></div>`).join('');
+    return `<div class="col-head">${esc(t.name||'')}<span class="cnt">${list.filter(jobDone).length}/${list.length}</span></div>`;
+  }).join('');
+  const bodies = listCols.map(t => {
+    const list = jobsForTech(t);
+    const q = quarterSlotsHtml(m => `data-uid="${t.uid}" data-min="${m}"`);
     let cards = '';
     list.forEach(j => {
       const g = cardGeom(j);
-      cards += jobCardHtml(j, '', `left:${g.left}px;width:${g.w}px;height:${g.h}px`);
+      cards += jobCardHtml(j, overlapWarn(t.uid, j)?'warn':'', `top:${g.top}px;height:${g.h}px`);
     });
-    const empty = list.length ? '' : `<div class="empty" onclick="slotClick('${t.uid}',${START})">No jobs scheduled</div>`;
-    return `<div class="tech" style="min-height:${laneH}px">
-      <div class="tech-name">${esc(t.name)}<span>${list.filter(jobDone).length}/${list.length} done</span></div>
-      <div class="lane" style="min-height:${laneH}px;height:${laneH}px">${slots}${cards}${empty}</div>
-    </div>`;
-  }).join('') + `<div class="tech grid-fill"><div class="tech-name"></div><div class="lane">${hs.map(h => `<div class="slot"></div>`).join('')}</div></div>`;
+    return `<div class="wcol" data-uid="${t.uid}" style="height:${H}px" ondragover="allowDrop(event)" ondrop="dropJob(event)">${q}${cards}</div>`;
+  }).join('');
+  if (hoursEl) hoursEl.innerHTML = '';
+  rowsEl.innerHTML = `<div class="daygrid" style="height:100%">
+    <div class="daygrid-head">${head}</div>
+    <div class="daygrid-body" style="height:${H}px">
+      <div class="time-axis" style="height:${H}px">${timeAxisHtml()}</div>
+      ${bodies}
+    </div>
+  </div>`;
+}
+function renderWeekGrid(){
+  const ws = weekStart(selectedDay);
+  const days = [];
+  for (let i=0;i<7;i++){ const d=new Date(ws); d.setDate(ws.getDate()+i); days.push(d); }
+  const H = gridTotalH();
+  const letters = loginLang()==='es' ? ['D','L','M','M','J','V','S'] : ['S','M','T','W','T','F','S'];
+  const head = `<div class="gutter"></div>` + days.map((d,i) => {
+    const n = jobs.filter(j => {
+      const t = jobTime(j);
+      return sameDay(t, d) && jobVisible(j);
+    }).length;
+    return `<div class="col-head ${sameDay(d,new Date())?'today':''}">${letters[i]} ${d.getDate()}<span class="cnt">${n}</span></div>`;
+  }).join('');
+  const bodies = days.map(d => {
+    const list = jobs.filter(j => sameDay(jobTime(j), d) && jobVisible(j));
+    const q = quarterSlotsHtml(m => `data-day="${d.getTime()}" data-min="${m}"`);
+    let cards = '';
+    list.forEach(j => {
+      const g = cardGeom(j);
+      const uid = accountUidOf(j);
+      cards += jobCardHtml(j, overlapWarn(uid, j)?'warn':'', `top:${g.top}px;height:${g.h}px`);
+    });
+    return `<div class="wcol" data-day="${d.getTime()}" style="height:${H}px" ondragover="allowDrop(event)" ondrop="dropJob(event)">${q}${cards}</div>`;
+  }).join('');
+  const hoursEl = schedEl('hours');
+  const rowsEl = schedEl('rows');
+  if (hoursEl) hoursEl.innerHTML = '';
+  if (rowsEl) rowsEl.innerHTML = `<div class="daygrid">
+    <div class="daygrid-head">${head}</div>
+    <div class="daygrid-body" style="height:${H}px">
+      <div class="time-axis" style="height:${H}px">${timeAxisHtml()}</div>
+      ${bodies}
+    </div>
+  </div>`;
+}
+function jobVisible(j){
+  if (currentPortal() !== 'employee') return true;
+  return accountUidOf(j) === myUid();
 }
 function renderMobileAgenda(){
-  $('hours').innerHTML = '';
+  const hoursEl = schedEl('hours');
+  const rowsEl = schedEl('rows');
+  if (hoursEl) hoursEl.innerHTML = '';
   const list = jobs.filter(j => {
     if (!jobDayOk(j)) return false;
+    if (!jobVisible(j)) return false;
     if (selectedBuilding && j.buildingId && j.buildingId !== selectedBuilding) return false;
     return true;
   }).sort((a,b) => jobTime(a) - jobTime(b));
   const done = list.filter(jobDone).length;
   let html = `<div id="dayList"><p class="muted" style="margin:0 0 10px">${done}/${list.length} done</p>`;
   if (!list.length) {
-    html += '<div class="day-empty">No jobs this day</div>';
+    html += `<div class="day-empty">${esc(uiT('noJobsDay'))}</div>`;
   } else {
     html += list.map(j => {
       const st = jobTime(j), en = jobEnd(j, st);
       const uid = accountUidOf(j);
       const tech = techs.find(t => t.uid===uid);
-      const worker = (tech && tech.name) || j.assignedName || 'Unassigned';
+      const worker = (tech && tech.name) || j.assignedName || '';
       const tp = typeOf(j.kind || 'Job');
       const addr = j.address || j.title || '';
       return `<button type="button" class="daycard" onclick="openJobView('${j.id}')" style="border-left:6px solid ${esc(tp.color||'#34C759')}">
@@ -1384,17 +2277,28 @@ function renderMobileAgenda(){
   }
   if (canAssign()) html += '<button type="button" class="btn day-assign" onclick="openAssign()">+ Assign Job</button>';
   html += '</div>';
-  $('rows').innerHTML = html;
+  if (rowsEl) rowsEl.innerHTML = html;
 }
 function tapCard(id, uid, hour){
   openJobView(id);
 }
-function slotClick(uid, hour){
+function slotFromEl(el){
+  const min = parseInt(el.dataset.min, 10);
+  let uid = el.dataset.uid;
+  if (el.dataset.day) selectedDay = new Date(parseInt(el.dataset.day, 10));
+  if (!uid) uid = preWorker || (techs[0] && techs[0].uid) || '';
+  slotClickMin(uid, min);
+}
+function slotClick(uid, hour){ slotClickMin(uid, (hour||5)*60); }
+function slotClickMin(uid, min){
   if (!canAssign() || justDropped) return;
+  const m = Math.round(min / STEP) * STEP;
   preWorker = uid;
-  preHour = hour;
-  preStartClock = String(hour).padStart(2,'0')+':00';
-  preEndClock = String(Math.min(23, hour+1)).padStart(2,'0')+':00';
+  preHour = Math.floor(m / 60);
+  const mm = m % 60;
+  preStartClock = String(preHour).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  const end = Math.min(DAY_END_MIN, m + 60);
+  preEndClock = String(Math.floor(end/60)).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
   editJobId = '';
   openAssign();
 }
@@ -1414,29 +2318,50 @@ function dropJob(ev){
   justDropped = true;
   setTimeout(() => { justDropped = false; }, 400);
   if (!canAssign()) return;
-  const hour = parseInt(ev.currentTarget.dataset.hour,10);
-  const uid = ev.currentTarget.dataset.uid;
+  let uid = ev.currentTarget.dataset.uid;
+  let min = parseInt(ev.currentTarget.dataset.min, 10);
+  const col = ev.currentTarget.closest('.wcol');
+  if (col) {
+    if (col.dataset.uid) uid = col.dataset.uid;
+    if (col.dataset.day) selectedDay = new Date(parseInt(col.dataset.day, 10));
+    if (isNaN(min)) {
+      const rect = col.getBoundingClientRect();
+      const y = ev.clientY - rect.top;
+      min = DAY_START_MIN + Math.round(y / SLOT_H) * STEP;
+    }
+  }
+  if (ev.currentTarget.dataset.day) selectedDay = new Date(parseInt(ev.currentTarget.dataset.day, 10));
   const id = dragId || ev.dataTransfer.getData('text/plain');
-  if (!id) return;
-  openMove(id, hour, uid);
+  if (!uid && id) {
+    const j = jobs.find(x=>x.id===id);
+    uid = j && accountUidOf(j);
+  }
+  if (!id || !uid || isNaN(min)) return;
+  openMove(id, min, uid);
 }
-function openMove(id, hour, uid){
+function clockLabel(min){
+  const h = Math.floor(min/60), mm = min%60;
+  const d = new Date(2000,0,1,h,mm);
+  return fmt(d);
+}
+function openMove(id, min, uid){
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
-    <h3>¿Mover trabajo a ${hLabel(hour)}?</h3>
+    <h3>¿Mover trabajo a ${clockLabel(min)}?</h3>
     <p class="muted">Razón</p>
-    <button class="btn" onclick="doMove('${id}',${hour},'${uid}','Cliente pidió')">Cliente pidió</button>
-    <button class="btn ghost" onclick="doMove('${id}',${hour},'${uid}','Lluvia')">Lluvia</button>
-    <button class="btn ghost" onclick="doMove('${id}',${hour},'${uid}','Emergencia')">Emergencia</button>
+    <button class="btn" onclick="doMove('${id}',${min},'${uid}','Cliente pidió')">Cliente pidió</button>
+    <button class="btn ghost" onclick="doMove('${id}',${min},'${uid}','Lluvia')">Lluvia</button>
+    <button class="btn ghost" onclick="doMove('${id}',${min},'${uid}','Emergencia')">Emergencia</button>
     <button class="btn ghost" onclick="$('modal').classList.add('hidden')">Cancelar</button>
   </div>`;
 }
-async function doMove(id, hour, uid, reason){
+async function doMove(id, min, uid, reason){
   const j = jobs.find(x=>x.id===id) || {};
   const oldS = jobTime(j);
   const oldE = jobEnd(j, oldS);
   const dur = Math.max(15*60*1000, oldE - oldS);
-  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hour, oldS.getMinutes());
+  const hh = Math.floor(min/60), mm = min%60;
+  const start = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate(), hh, mm);
   const end = new Date(start.getTime()+dur);
   if (rangesOverlapWorker(uid, start, end, id)) {
     if (!confirm('Este horario se cruza con otro trabajo de la misma persona. ¿Guardar igual?')) return;
@@ -1498,11 +2423,11 @@ function openAssign(kindPref){
   $('modal').innerHTML = `<div class="box">
     <h3>${editJobId?esc(uiT('editTitle')):esc(uiT('assignTitle'))}</h3>
     <p class="muted">${ymd(selectedDay)} · ${esc(techs.find(t=>t.uid===worker)?.name||'')}</p>
-    <label class="muted">${esc(uiT('buildings'))}</label><select id="ajB">${bopts}</select>
+    <label class="muted">${esc(siteT('title'))}</label><select id="ajB">${bopts}</select>
     <label class="muted">${esc(uiT('address'))}</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
     <label class="muted">${esc(uiT('worker'))}</label><select id="ajT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
-    <label class="muted">${esc(uiT('start'))}</label><input id="ajStart" type="time" step="60" value="${startVal}">
-    <label class="muted">${esc(uiT('end'))}</label><input id="ajEnd" type="time" step="60" value="${endVal}">
+    <label class="muted">${esc(uiT('start'))}</label><input id="ajStart" type="time" step="900" value="${startVal}">
+    <label class="muted">${esc(uiT('end'))}</label><input id="ajEnd" type="time" step="900" value="${endVal}">
     ${typePickerHtml('aj', chosen)}
     <label class="muted">${esc(uiT('unit'))}</label><input id="ajUnit" type="text" value="${esc(existing&&existing.unit||'')}">
     <label class="muted">${esc(uiT('contact'))}</label><input id="ajContact" type="text" value="${esc(existing&&existing.contactName||'')}">
@@ -1605,6 +2530,19 @@ function requiredReportCount(r){
   ];
   return checks.filter(Boolean).length;
 }
+async function verifyJob(id){
+  if (!canVerifyJobs()) return;
+  try {
+    await db.collection('jobs').doc(id).set({
+      verified: true,
+      verifiedBy: auth.currentUser && auth.currentUser.uid,
+      verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'completed',
+      visitStatus: 'completed'
+    }, {merge:true});
+    closeJobView();
+  } catch(e){ alert(e.message||e); }
+}
 function closeJobView(){
   $('viewJobs').classList.add('hidden');
   $('viewJobs').innerHTML = '';
@@ -1638,6 +2576,7 @@ async function openJobView(id){
       <p>${esc(j.contactName||'—')} · ${phoneHtml}</p>
       <p style="white-space:pre-wrap">${esc(j.instructions||j.description||'Sin instrucciones.')}</p>
       ${canAssign()?`<button class="btn ghost" onclick="closeJobView();openEdit('${j.id}')">Reassign / times</button>`:''}
+      ${canVerifyJobs() && !canAssign()?`<button class="btn" onclick="verifyJob('${j.id}')">Verificar</button>`:''}
     </div>
     <div class="card">
       <h3>Notes</h3>
@@ -1798,12 +2737,12 @@ async function saveMoney(){
 }
 
 async function addBuilding(){
-  if (!isBoss()) return;
+  if (!canAssign()) return;
   const name = $('nbName').value.trim();
   const floors = Math.min(100, Math.max(1, parseInt($('nbFloors').value)||1));
-  if (!name){ alert(uiT('needBuilding')); return; }
+  if (!name){ alert(siteT('need')); return; }
   const ref = db.collection('buildings').doc();
-  await ref.set({ id: ref.id, name, floors, companyId: cid(), kind: companyType === 'property_management' ? 'Inspections' : 'Site', companyType });
+  await ref.set({ id: ref.id, name, floors, companyId: cid(), kind: isPm() ? 'Inspections' : 'Site', companyType });
   try {
     await db.collection('companies').doc(cid()).collection('buildings').doc(ref.id)
       .set({ id: ref.id, name, floors, companyId: cid() });

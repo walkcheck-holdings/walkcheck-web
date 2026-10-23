@@ -1,8 +1,8 @@
 /** Plantillas de job por companyType. Usado por /app/ y /register. */
 window.JOB_TEMPLATES = {
   property_management: {
-    sitesLabel: 'Buildings',
-    searchPlaceholder: 'Search buildings...',
+    sitesLabel: 'Edificios',
+    searchPlaceholder: 'Buscar edificios…',
     jobs: ['SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE']
   },
   construction: {

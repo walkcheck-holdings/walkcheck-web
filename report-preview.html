@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reporte · 8000 Harding Ave · octubre 2026</title>
+<style>
+  body { margin: 0; background: #F2F2F7; font-family: system-ui, Segoe UI, sans-serif; color: #111; }
+  .rpt-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px; max-width: 800px; margin: 0 auto; }
+  .btn { background: #1B7A36; color: #fff; border: 0; border-radius: 10px; padding: 12px 14px; font-weight: 800; flex: 1; min-width: 140px; }
+  .btn.ghost { background: #fff; color: #1B7A36; border: 1px solid #1B7A36; }
+  .rpt-paper { background: #fff; max-width: 800px; margin: 0 auto 24px; padding: 28px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .rpt-brand { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #1B7A36; padding-bottom: 12px; margin-bottom: 16px; }
+  .rpt-logo { width: 52px; height: 52px; border-radius: 10px; background: #1B7A36; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; }
+  .rpt-brand h2 { margin: 0; font-size: 20px; }
+  .muted { color: #6B7280; font-size: 13px; }
+  .rpt-meta { font-size: 14px; color: #4B5563; margin: 0 0 16px; }
+  .rpt-sum { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .rpt-sum span { background: #E8F8EC; color: #1B7A36; border-radius: 8px; padding: 6px 10px; font-weight: 800; font-size: 13px; }
+  .rpt-finding { border: 1px solid #E5E5EA; border-radius: 10px; padding: 12px; margin: 8px 0; }
+  .rpt-finding img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; margin: 6px 8px 0 0; }
+  .st-ok { color: #1B7A36; font-weight: 800; }
+  .st-pend { color: #B45309; font-weight: 800; }
+  @media (max-width: 767px) { .rpt-paper { padding: 16px 12px; box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="rpt-actions">
+  <button class="btn">Descargar PDF</button>
+  <button class="btn ghost">Enviar por WhatsApp</button>
+  <button class="btn ghost">Enviar por correo</button>
+</div>
+<div class="rpt-paper" id="rptPaper">
+  <div class="rpt-brand">
+    <div class="rpt-logo">W</div>
+    <div>
+      <h2>Walkcheck</h2>
+      <div class="muted">Reportes · octubre de 2026</div>
+    </div>
+  </div>
+  <p class="rpt-meta"><b>8000 Harding Ave</b><br>8000 Harding Ave, Miami Beach, FL</p>
+  <div class="rpt-sum">
+    <span>1 Inspecciones hechas</span>
+    <span>3 Hallazgos</span>
+    <span>1 Resuelto</span>
+    <span>2 Pendiente</span>
+  </div>
+  <h3>Inspecciones hechas</h3>
+  <ul>
+    <li>2026-10-08 · Maikel Ramirez · SEMI ANNUAL INSPECTION</li>
+  </ul>
+  <h3>Hallazgos</h3>
+  <div class="rpt-finding">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <b>Goteras en techo</b>
+      <span class="st-pend">Pendiente desde septiembre de 2026</span>
+    </div>
+    <div class="muted">Azotea · Piso 7</div>
+    <p style="margin:6px 0 0">Filtración en membrana de azotea, lado oeste.</p>
+    <img alt="Goteras" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='280'><rect fill='%23475569' width='400' height='280'/><text x='200' y='150' text-anchor='middle' fill='white' font-size='18' font-family='Arial'>Foto · Goteras techo</text></svg>">
+  </div>
+  <div class="rpt-finding">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <b>Pintura descascarada</b>
+      <span class="st-ok">Resuelto</span>
+    </div>
+    <div class="muted">Pasillo piso 3 · Piso 3</div>
+    <p style="margin:6px 0 0">Pintura suelta en muro del pasillo. Reparada y pintada.</p>
+    <img alt="Pintura" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='280'><rect fill='%231B7A36' width='400' height='280'/><text x='200' y='150' text-anchor='middle' fill='white' font-size='18' font-family='Arial'>Foto · Pintura resuelta</text></svg>">
+  </div>
+  <div class="rpt-finding">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <b>Grieta en escalera</b>
+      <span class="st-pend">Pendiente</span>
+    </div>
+    <div class="muted">Escalera norte · Piso 1</div>
+    <p style="margin:6px 0 0">Grieta en descanso de escalera. Pendiente de reparación estructural.</p>
+    <img alt="Grieta" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='280'><rect fill='%23B45309' width='400' height='280'/><text x='200' y='150' text-anchor='middle' fill='white' font-size='Arial'>Foto · Grieta escalera</text></svg>">
+  </div>
+  <h3>Trabajos completados</h3>
+  <div class="rpt-finding">
+    <b>PAINT REPAIR</b>
+    <div class="muted">2026-10-15 · Maikel Ramirez</div>
+    <img alt="Trabajo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='280'><rect fill='%2334C759' width='400' height='280'/><text x='200' y='150' text-anchor='middle' fill='white' font-size='18' font-family='Arial'>Foto · Trabajo completado</text></svg>">
+  </div>
+  <h3>Resumen</h3>
+  <p>1 Inspecciones hechas, 3 Hallazgos, 1 Resuelto, 2 Pendiente.</p>
+</div>
+</body>
+</html>
