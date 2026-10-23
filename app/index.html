@@ -122,14 +122,14 @@
   #hoursPane th, #hoursPane td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; }
   #hoursPane h3 { margin: 4px 0 8px; }
   .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #fff; }
-  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 44px; align-items: center; }
+  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 48px; align-items: center; justify-content: flex-start; }
   .gutter { width: 56px; min-width: 56px; flex: 0 0 56px; }
-  .col-head { flex: 1 1 0; min-width: 140px; padding: 8px 8px 10px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #F2F2F7; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .col-head .cnt { display: inline-block; margin-left: 0; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; }
-  .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; }
-  .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; }
+  .col-head { flex: 1 1 160px; min-width: 160px; max-width: 200px; padding: 8px 6px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .col-head .cnt { display: inline-block; margin-left: 0; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; }
+  .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; justify-content: flex-start; }
+  .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; background: #fff; }
   .tmark { position: absolute; left: 0; right: 0; font-size: 10px; font-weight: 800; color: #8E8E93; padding-left: 4px; transform: translateY(-6px); }
-  .wcol { flex: 1 1 0; min-width: 140px; position: relative; border-left: 1px solid #EEEEEE; }
+  .wcol { flex: 1 1 160px; min-width: 160px; max-width: 200px; position: relative; border-left: 1px solid #E5E5EA; background: #fff; }
   .qslot { position: absolute; left: 0; right: 0; border-top: 1px solid #F4F4F5; cursor: pointer; }
   .qslot.hour { border-top: 1px solid #E5E5EA; }
   .qslot.over { background: #E8F8EC; }
@@ -138,20 +138,19 @@
   #rows .daygrid-body { flex: 1 1 auto; }
   .slot.over { background: #E8F8EC; }
   .jcard {
-    position: absolute; left: 4px; right: 4px; width: auto; min-width: 0; min-height: 22px; padding: 6px 8px; border-radius: 8px;
+    position: absolute; left: 4px; right: 4px; width: auto; min-width: 0; min-height: 44px; padding: 6px 8px; border-radius: 8px;
     background: #34C759; color: #fff; font-size: 12px; cursor: grab; z-index: 2;
-    display: flex; flex-direction: column; justify-content: space-between; gap: 2px;
+    display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 2px;
     overflow: hidden; box-sizing: border-box;
   }
   .jcard, .jcard * { word-break: normal; overflow-wrap: normal; }
   .jcard-addr {
-    font-weight: 700; font-size: 14px; line-height: 1.25;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto;
+    font-weight: 700; font-size: 12px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
   }
   .jcard-kind {
-    font-size: 12px; font-weight: 800; line-height: 1.25; text-transform: uppercase;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-    line-clamp: 2; overflow: hidden; white-space: normal; word-break: normal; overflow-wrap: break-word; flex: 1 1 auto;
+    font-size: 11px; font-weight: 800; line-height: 1.2; text-transform: uppercase;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
   }
   .jcard-t, .jcard .t {
     font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -352,6 +351,13 @@
   body.ready[data-portal="company"] #main { min-height: 0; display: flex; flex-direction: column; }
   body.ready[data-portal="company"] #staffMain { flex: 1; min-height: 0; }
   body.ready[data-portal="company"] #rows { flex: 1; min-height: 0; overflow: auto; }
+  body.ready[data-portal="company"] #assignBar { display: none !important; }
+  body.ready[data-portal="company"] #bottomNav { display: flex !important; }
+  body.ready[data-portal="company"] #board { padding-bottom: 56px; }
+  body.desk[data-portal="company"] #bottomNav { display: flex !important; }
+  @media (min-width: 768px) {
+    body.ready[data-portal="company"] #bottomNav { display: flex !important; }
+  }
   #rolesBtn { display: none !important; }
   body.ready #siteHdr { display: none; }
   body.ready[data-portal="owner"] #bottomNav,
@@ -537,12 +543,12 @@
     <div class="weekbar">
       <div id="typeBar"></div>
       <div class="week-tools">
+        <h2 id="weekTitle">Mi horario</h2>
         <div class="view-tabs" id="viewTabs">
           <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
           <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
           <button type="button" data-view="map" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
         </div>
-        <h2 id="weekTitle">Mi horario</h2>
         <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()" data-i18n="buildings">Edificios</button>
         <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
       </div>
