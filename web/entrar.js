@@ -30,6 +30,19 @@
     var p = profileDoc.data() || {};
     return !!String(p.companyId || '').trim();
   };
+  // No panel access until Stripe confirms payment (company status 'pending').
+  // Returns true when it redirected to the pay page. The app owner is exempt.
+  window.WK_paymentGate = function (email, profile) {
+    if (SUPER[String(email || '').toLowerCase()]) return Promise.resolve(false);
+    var cid = profile && profile.companyId;
+    if (!cid) return Promise.resolve(false);
+    return db.collection('companies').doc(cid).get().then(function (co) {
+      var st = String(((co.exists && co.data()) || {}).status || '').toLowerCase();
+      if (st !== 'pending') return false;
+      location.replace('/web/compartido/pago-pendiente.html');
+      return true;
+    }).catch(function () { return false; });
+  };
   window.WK_denyAccess = function () {
     return auth.signOut().catch(function () {}).then(function () {
       location.replace('/web/compartido/login.html?e=noaccess');

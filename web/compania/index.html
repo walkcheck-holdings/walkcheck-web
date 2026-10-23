@@ -582,6 +582,11 @@ async function enforceTrial(){
   try {
     const co = await db.collection('companies').doc(cid()).get();
     const d = co.data() || {};
+    // Not paid yet: no panel until Stripe confirms (see functions-stripe).
+    if (String(d.status||'').toLowerCase() === 'pending') {
+      location.replace('/web/compartido/pago-pendiente.html');
+      return false;
+    }
     if (d.is_paid === true) return true;
     const raw = d.trialEnds || d.trial_end;
     let end = null;

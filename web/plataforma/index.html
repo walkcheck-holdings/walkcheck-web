@@ -29,6 +29,7 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 .st-pill.on { background:#E8F8EC; color:#1B7A36; }
 .st-pill.off { background:#FEECEC; color:#B3261E; }
 .st-pill.pay { background:#EEF4FF; color:#1D4ED8; }
+.st-pill.pend { background:#FFF4E2; color:#9A5B00; }
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .row-actions .btn { width:auto; padding:8px 12px; min-height:36px; font-size:13px; }
 .q { max-width:320px; margin:0 0 16px; }
@@ -108,21 +109,28 @@ function render() {
     return;
   }
   $('rows').innerHTML = rows.map(function (c) {
-    var on = String(c.status || 'active').toLowerCase() !== 'suspended';
+    var st = String(c.status || 'active').toLowerCase();
+    var pending = st === 'pending';
+    var on = st !== 'suspended' && !pending;
     var plan = c.plan || c.selectedPlan || '—';
+    var pill = pending ? '<span class="st-pill pend">Pago pendiente</span>'
+      : '<span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span>';
+    var btnLabel = pending ? 'Activar a mano' : (on ? 'Suspender' : 'Activar');
     return '<tr>' +
       '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div></td>' +
       '<td class="hide-sm">' + esc(plan) + '</td>' +
       '<td class="hide-sm"><span class="st-pill ' + (paid(c) ? 'pay' : 'off') + '">' + (paid(c) ? 'Pagó' : 'Sin pago') + '</span></td>' +
-      '<td><span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span></td>' +
+      '<td>' + pill + '</td>' +
       '<td><div class="row-actions">' +
-        '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '">' +
-          (on ? 'Suspender' : 'Activar') +
-        '</button>' +
+        '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '"' +
+          (pending ? ' data-confirm="1"' : '') + '>' + btnLabel + '</button>' +
       '</div></td></tr>';
   }).join('');
   $('rows').querySelectorAll('button[data-id]').forEach(function (btn) {
-    btn.onclick = function () { setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-st')); };
+    btn.onclick = function () {
+      if (btn.getAttribute('data-confirm') && !confirm('Esta compañía no ha pagado en Stripe. ¿Activarla a mano de todas formas?')) return;
+      setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-st'));
+    };
   });
 }
 

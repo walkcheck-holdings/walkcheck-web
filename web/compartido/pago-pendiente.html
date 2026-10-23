@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · Pago pendiente</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<link rel="stylesheet" href="/web/compartido/base.css">
+<script src="/web/compartido/firebase.js"></script>
+<script src="/js/paymentLinks.js"></script>
+<style>
+.pp-ic{width:56px;height:56px;border-radius:16px;background:#FFF4E2;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px}
+.pp-plan{background:#F2F2F7;border-radius:12px;padding:12px;margin:14px 0;font-size:15px}
+.pp-plan b{display:block;font-size:17px}
+.pp-actions{display:grid;gap:10px;margin-top:14px}
+.btn.ghost{background:#fff;color:#1C1C1E;border:1.5px solid #D1D1D6}
+.pp-actions a.btn{display:block;text-align:center;text-decoration:none}
+</style>
+</head>
+<body>
+<header class="wk">
+  <a href="/">Walkcheck <small style="font-size:10px;letter-spacing:.18em;opacity:.85">HOLDINGS LLC</small></a>
+  <a href="#" id="outLink">Cerrar sesión</a>
+</header>
+<div class="card">
+  <div class="pp-ic">⏳</div>
+  <h3 id="ppTitle">Tu compañía está pendiente de pago</h3>
+  <p class="muted" id="ppText">El panel se abre en cuanto Stripe confirma el pago de tu plan. Si ya pagaste, toca "Ya pagué" en un minuto.</p>
+  <div class="pp-plan" id="ppPlan"></div>
+  <div class="pp-actions">
+    <a class="btn" id="ppPay" href="#">Pagar y activar mi plan</a>
+    <button type="button" class="btn ghost" id="ppCheck">Ya pagué, revisar</button>
+  </div>
+  <p class="err" id="ppErr"></p>
+  <p class="muted" style="margin-top:16px;text-align:center">¿Ayuda? <a href="tel:+13052052128">305-205-2128</a> · <a href="mailto:info@walkcheck.app">info@walkcheck.app</a></p>
+</div>
+<script>
+var companyId = '';
+$('outLink').onclick = function (e) { e.preventDefault(); auth.signOut(); };
+
+async function check(manual) {
+  var user = auth.currentUser;
+  if (!user) return;
+  $('ppErr').textContent = '';
+  try {
+    var prof = await db.collection('users').doc(user.uid).get();
+    companyId = (prof.exists && prof.data().companyId) || '';
+    if (!companyId) { location.replace('/web/entrar.html'); return; }
+    var co = await db.collection('companies').doc(companyId).get();
+    var d = co.exists ? co.data() : {};
+    var st = String(d.status || '').toLowerCase();
+    if (st !== 'pending') { location.replace('/web/entrar.html'); return; }
+    var plan = (window.normalizePlan && normalizePlan(d.plan)) || 'crew10';
+    $('ppPlan').innerHTML = '<b>' + esc(d.name || 'Tu compañía') + '</b>' + esc((window.PLAN_LABELS || {})[plan] || plan) + '/mes';
+    var href = (window.paymentHref && paymentHref(plan, { email: user.email || '', clientRef: companyId })) || '/pricing/';
+    $('ppPay').href = href;
+    if (manual) $('ppErr').textContent = 'Todavía no llega la confirmación de Stripe. Espera un minuto y vuelve a revisar.';
+  } catch (e) {
+    $('ppErr').textContent = 'No se pudo revisar: ' + (e.message || e);
+  }
+}
+$('ppCheck').onclick = function () { check(true); };
+auth.onAuthStateChanged(function (user) {
+  if (!user) { location.replace('/web/compartido/login.html'); return; }
+  check(false);
+});
+</script>
+</body>
+</html>

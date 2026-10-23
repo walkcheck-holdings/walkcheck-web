@@ -31,7 +31,7 @@
 </header>
 <div class="card">
   <h2>Crear mi cuenta</h2>
-  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Al crear la cuenta te llevamos a Stripe a activar ese plan.</p>
+  <p class="muted">Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Al crear la cuenta te llevamos a Stripe para activar tu plan con tu tarjeta. Tu panel se abre en cuanto Stripe confirma el pago.</p>
   <label>Plan</label>
   <select id="plan">
     <option value="crew5">CREW 5 $99.99</option>
@@ -50,7 +50,7 @@
   <select id="companyType" required>
     <option value="">Selecciona…</option>
   </select>
-  <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta - 15 dias gratis</button>
+  <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta y activar mi plan</button>
   <div class="err" id="err"></div>
   <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
   <p class="muted">¿Dudas? Escríbenos a <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a></p>
@@ -93,14 +93,13 @@ document.getElementById('go').onclick = async () => {
     const ref = db.collection('companies').doc();
     const label = (window.COMPANY_TYPE_OPTIONS||[]).find(o => o.id===companyType)?.label || companyType;
     const plan = normalizePlan(planSel.value) || fromUrl || 'crew10';
-    const trialEnds = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 15*24*60*60*1000));
+    // No access until Stripe confirms payment: the company starts as 'pending'
+    // and only the Stripe webhook (functions-stripe in the walkthrough repo)
+    // turns it 'active'.
     await ref.set({
       id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
-      status: 'active', adminUid: uid,
+      status: 'pending', adminUid: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      trial_start: firebase.firestore.FieldValue.serverTimestamp(),
-      trial_end: trialEnds,
-      trialEnds,
       is_paid: false
     });
     await db.collection('users').doc(uid).set({
@@ -112,16 +111,7 @@ document.getElementById('go').onclick = async () => {
     await ref.collection('members').doc(uid).set({
       uid, role: 'owner', email: email.toLowerCase(), displayName: fullName
     }, { merge: true });
-    try {
-      await db.collection('mail').add({
-        to: [email],
-        message: {
-          subject: 'Tienes 15 dias gratis para probar WalkCheck',
-          text: 'Hola ' + fullName + ',\n\nTienes 15 dias gratis para probar WalkCheck.\n\nEntra: https://walkcheck.app/app/\n',
-          html: '<p>Hola ' + fullName + ',</p><p><b>Tienes 15 dias gratis para probar WalkCheck</b>.</p><p><a href="https://walkcheck.app/app/">Entrar al panel</a></p>'
-        }
-      });
-    } catch(_){}
+    // The welcome email is sent by the Stripe webhook once payment is confirmed.
     const FALLBACK = {
       crew5: 'https://buy.stripe.com/00w8wP5Lo5qt3Ul3iO63K00',
       crew10: 'https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01',
