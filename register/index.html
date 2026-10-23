@@ -30,7 +30,7 @@
 </header>
 <div class="card">
   <h2>Crear mi cuenta</h2>
-  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. El panel se adapta a la especialidad de tu compañía.</p>
+  <p class="muted">15 días gratis. Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Al crear la cuenta te llevamos a Stripe a activar ese plan.</p>
   <label>Plan</label>
   <select id="plan">
     <option value="crew5">CREW 5 $99.99</option>
@@ -65,8 +65,8 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const planSel = document.getElementById('plan');
-fillPlanSelect(planSel);
-const fromUrl = normalizePlan(new URLSearchParams(location.search).get('plan'));
+if (typeof fillPlanSelect === 'function') fillPlanSelect(planSel);
+const fromUrl = (typeof normalizePlan === 'function' ? normalizePlan(new URLSearchParams(location.search).get('plan')) : '') || '';
 if (fromUrl) planSel.value = fromUrl;
 const sel = document.getElementById('companyType');
 (window.COMPANY_TYPE_OPTIONS||[]).forEach(o => {
@@ -121,8 +121,20 @@ document.getElementById('go').onclick = async () => {
         }
       });
     } catch(_){}
-    const pay = paymentHref(plan, { email: email, clientRef: ref.id });
-    location.href = pay || '/app/';
+    const FALLBACK = {
+      crew5: 'https://buy.stripe.com/00w8wP5Lo5qt3Ul3iO63K00',
+      crew10: 'https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01',
+      unlimited: 'https://buy.stripe.com/3cI00jgq22eh1Md7z463K02'
+    };
+    let pay = '';
+    try {
+      if (typeof paymentHref === 'function') pay = paymentHref(plan, { email: email, clientRef: ref.id });
+    } catch (_) {}
+    if (!pay) {
+      const base = FALLBACK[plan] || FALLBACK.crew10;
+      pay = base + '?prefilled_email=' + encodeURIComponent(email) + '&client_reference_id=' + encodeURIComponent(ref.id);
+    }
+    location.replace(pay);
   } catch (e) {
     err.textContent = e.message || 'No se pudo registrar.';
   }
