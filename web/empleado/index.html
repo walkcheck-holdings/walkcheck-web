@@ -17,6 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
+<script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
@@ -895,10 +896,14 @@ function slugify(n){
 }
 function defaultTypes(){
   if (emptyStart) return [];
-  return pack().jobs.map(n => ({
-    name: n, slug: slugify(n), icon: '🔧', color: '#34C759',
-    descriptionTemplate: '', category: companyType, custom: false
-  }));
+  const WT = window.WK_WALKTHROUGH;
+  return pack().jobs.map(n => {
+    const isWt = WT && WT.isWalkthrough({ kind: n });
+    return {
+      name: n, slug: slugify(n), icon: isWt ? WT.icon : '🔧', color: isWt ? WT.color : '#34C759',
+      descriptionTemplate: '', category: companyType, custom: false
+    };
+  });
 }
 function allTypes(activeOnly){
   const defs = defaultTypes();
@@ -3003,8 +3008,114 @@ async function verifyJob(id){
 function closeJobView(){
   $('viewJobs').classList.add('hidden');
   $('viewJobs').innerHTML = '';
+  visitTab = '';
 }
-let visitTab = 'info';
+let visitTab = '';
+
+/* ===== Walkthrough checklist (worker) — data in /js/walkthroughGuide.js ===== */
+const WT_CSS = `<style>
+.wt-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wt-bar{flex:1;height:8px;border-radius:8px;background:#E5E5EA;overflow:hidden}
+.wt-bar i{display:block;height:100%;background:#34C759;border-radius:8px}
+.wt-count{font-size:13px;font-weight:800;white-space:nowrap}
+.wt-danger{background:#FFF1F0;border:1.5px solid #FFB4AE;color:#8A1C12;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700;margin-bottom:12px}
+.wt-area{border:1.5px solid #E5E5EA;border-radius:14px;padding:12px;margin-bottom:10px;background:#fff}
+.wt-area.ok{border-color:#9FDDB0;background:#F4FBF6}
+.wt-area.issue{border-color:#F5B971;background:#FFFAF2}
+.wt-area.danger{border-color:#FF6B60;background:#FFF5F4}
+.wt-head{display:flex;align-items:center;gap:10px}
+.wt-ic{width:40px;height:40px;border-radius:12px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.wt-head b{font-size:15px;line-height:1.25;display:block}
+.wt-look{font-size:13px;color:#6E6E73;margin:8px 0 10px}
+.wt-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wt-btns button{border:1.5px solid #D1D1D6;background:#fff;border-radius:10px;padding:10px;font-weight:800;font-size:14px;cursor:pointer;color:#1C1C1E}
+.wt-btns button.on-ok{background:#34C759;border-color:#34C759;color:#fff}
+.wt-btns button.on-issue{background:#FF9500;border-color:#FF9500;color:#fff}
+.wt-form{margin-top:10px;display:grid;gap:8px}
+.wt-form label{font-size:12px;font-weight:800;color:#6E6E73;text-transform:uppercase;letter-spacing:.04em}
+.wt-form input[type=text],.wt-form textarea{width:100%;border:1.5px solid #D1D1D6;border-radius:10px;padding:10px;font-size:15px;font-family:inherit}
+.wt-chk{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#8A1C12}
+.wt-thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.wt-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.wt-guide details{border:1.5px solid #E5E5EA;border-radius:12px;margin-bottom:8px;background:#fff}
+.wt-guide summary{padding:12px;font-weight:800;cursor:pointer}
+.wt-guide ul{margin:0;padding:0 14px 12px 30px}
+.wt-guide li{font-size:14px;margin:6px 0}
+</style>`;
+function wtWorkerHtml(j){
+  const WT = window.WK_WALKTHROUGH;
+  const en = loginLang() === 'en';
+  const m = j.wtAreas || {};
+  const s = WT.summary(j);
+  const pct = Math.round(100 * s.checked / s.total);
+  const areas = WT.areas.map(a => {
+    const v = m[a.id] || {};
+    const cls = v.danger ? 'danger' : (v.status || '');
+    const photos = (v.photos || []).map(u => `<img src="${esc(u)}" alt="">`).join('');
+    const form = v.status === 'issue' ? `<div class="wt-form">
+        <label>${en ? 'Where (building, floor, unit, side)' : 'Dónde (edificio, piso, unidad, lado)'}</label>
+        <input type="text" id="wtWhere-${a.id}" value="${esc(v.where||'')}" placeholder="${en ? 'e.g. Floor 4, south hallway, by unit 412' : 'Ej. Piso 4, pasillo sur, frente a la 412'}">
+        <label>${en ? 'What you saw' : 'Qué viste'}</label>
+        <textarea id="wtWhat-${a.id}" rows="2" placeholder="${en ? 'e.g. Two pairs of shoes and a bike' : 'Ej. Dos pares de zapatos y una bicicleta'}">${esc(v.what||'')}</textarea>
+        <label class="wt-chk"><input type="checkbox" id="wtDanger-${a.id}" ${v.danger?'checked':''}> ${en ? 'Immediate danger' : 'Peligro inmediato'}</label>
+        <label>${en ? 'Photos: wide + close-up' : 'Fotos: una general + una de cerca'}</label>
+        <div class="wt-thumbs">${photos}</div>
+        <input type="file" id="wtFiles-${a.id}" accept="image/*" multiple>
+        <button type="button" class="btn" onclick="wtSaveArea('${j.id}','${a.id}')">${en ? 'Save' : 'Guardar'}</button>
+      </div>` : (photos ? `<div class="wt-thumbs" style="margin-top:8px">${photos}</div>` : '');
+    return `<div class="wt-area ${cls}">
+      <div class="wt-head"><span class="wt-ic">${a.icon}</span><b>${esc(en ? a.en : a.es)}</b></div>
+      <p class="wt-look">${esc(en ? a.lookEn : a.lookEs)}</p>
+      <div class="wt-btns">
+        <button type="button" class="${v.status==='ok'?'on-ok':''}" onclick="wtSetArea('${j.id}','${a.id}','ok')">✓ ${en ? 'All good' : 'Todo bien'}</button>
+        <button type="button" class="${v.status==='issue'?'on-issue':''}" onclick="wtSetArea('${j.id}','${a.id}','issue')">⚠ ${en ? 'Problem' : 'Problema'}</button>
+      </div>
+      ${form}
+    </div>`;
+  }).join('');
+  const guide = WT.rules.map(r => `<details><summary>${esc(en ? r.en : r.es)}</summary><ul>${
+    (en ? r.en_items : r.es_items).map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>`).join('');
+  return `${WT_CSS}
+    <div class="wt-top"><div class="wt-bar"><i style="width:${pct}%"></i></div>
+      <span class="wt-count">${s.checked}/${s.total} ${en ? 'areas' : 'áreas'} · ${s.issues} ${en ? 'problems' : 'problemas'}</span></div>
+    <div class="wt-danger">⚠ ${en ? 'Immediate danger (falling concrete, exposed wires, blocked exit)? Tell the office NOW by WhatsApp or phone. Do not wait for the report.' : '¿Peligro inmediato (concreto cayéndose, cables expuestos, salida bloqueada)? Avisa a la oficina YA por WhatsApp o teléfono. No esperes al reporte.'}</div>
+    ${areas}
+    <h3 style="margin:16px 0 8px">${en ? 'Work instructions' : 'Instrucciones de trabajo'}</h3>
+    <div class="wt-guide">${guide}</div>`;
+}
+async function wtWrite(jobId, areaId, patch){
+  const by = auth.currentUser && auth.currentUser.uid;
+  const data = { wtAreas: { [areaId]: Object.assign({}, patch, { by: by || '', at: new Date().toISOString() }) },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+  await db.collection('jobs').doc(jobId).set(data, { merge: true });
+}
+async function wtSetArea(jobId, areaId, status){
+  try {
+    await wtWrite(jobId, areaId, { status });
+    await openJobView(jobId);
+  } catch (e) { alert(e.message || e); }
+}
+async function wtSaveArea(jobId, areaId){
+  const en = loginLang() === 'en';
+  const where = (($('wtWhere-'+areaId) || {}).value || '').trim();
+  const what = (($('wtWhat-'+areaId) || {}).value || '').trim();
+  const danger = !!(($('wtDanger-'+areaId) || {}).checked);
+  if (!where || !what) {
+    alert(en ? 'Write WHERE it is and WHAT you saw. A photo alone is not enough.' : 'Escribe DÓNDE está y QUÉ viste. Una foto sola no basta.');
+    return;
+  }
+  try {
+    let prev = [];
+    const d = await db.collection('jobs').doc(jobId).get();
+    if (d.exists) prev = (((d.data().wtAreas || {})[areaId] || {}).photos) || [];
+    const files = Array.from((($('wtFiles-'+areaId) || {}).files) || []);
+    const added = [];
+    for (const f of files) added.push(await uploadJobFile(jobId, 'wt_'+areaId, f));
+    await wtWrite(jobId, areaId, { status: 'issue', where, what, danger, photos: prev.concat(added) });
+    if (danger) alert(en ? 'Immediate danger: call or WhatsApp the office now.' : 'Peligro inmediato: llama o escribe por WhatsApp a la oficina ahora.');
+    await openJobView(jobId);
+  } catch (e) { alert(e.message || e); }
+}
 async function openJobView(id){
   let j = jobs.find(x=>x.id===id);
   try {
@@ -3025,7 +3136,8 @@ async function openJobView(id){
   const cks = ((jobVisits(j)[0] || {}).checklists || ['inspection','jobReport']).length;
   const maps = 'https://maps.google.com/?q=' + encodeURIComponent(j.address || j.title || '');
   const completed = jobDone(j);
-  const tab = visitTab || 'info';
+  const isWt = !!(window.WK_WALKTHROUGH && WK_WALKTHROUGH.isWalkthrough(j));
+  const tab = visitTab || (isWt ? 'walk' : 'info');
   const info = `<p><b>${esc(j.title || j.kind || 'Job')}</b> · ${esc(j.clientName || j.contactName || '')}</p>
       <p class="t">${esc(j.scheduledDate || ymd(selectedDay))} · ${fmt(st)} – ${fmt(en)}</p>
       <p>${esc(j.address || '')}</p>
@@ -3062,13 +3174,14 @@ async function openJobView(id){
       <div class="err" id="rpErr"></div>
       <button class="btn ghost" onclick="saveJobReport('${j.id}', false)">Save Progress</button>
       <button class="btn" onclick="saveJobReport('${j.id}', true)">✓ Completed</button>`;
-  const body = tab==='client' ? client : tab==='notes' ? (notesHtml + `<textarea id="jobNotes" rows="3"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(loginLang()==='en'?'Add note':'Agregar nota')}</button>`) : tab==='checks' ? checks : info;
+  const body = (tab==='walk' && isWt) ? wtWorkerHtml(j) : tab==='client' ? client : tab==='notes' ? (notesHtml + `<textarea id="jobNotes" rows="3"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(loginLang()==='en'?'Add note':'Agregar nota')}</button>`) : tab==='checks' ? checks : info;
   $('viewJobs').classList.remove('hidden');
   $('viewJobs').innerHTML = `<div class="jobhead">
       <button class="back" onclick="closeJobView()">← ${esc(uiT('horario'))}</button>
       <h2>${esc(j.title||j.kind||'Job')}${completed?' ✓':''}</h2>
     </div>
-    <div class="view-tabs" style="margin:8px 12px">
+    <div class="view-tabs" style="margin:8px 12px;flex-wrap:wrap">
+      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="visitTab='walk';openJobView('${j.id}')">🚶 Walkthrough (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
       <button type="button" class="${tab==='info'?'on':''}" onclick="visitTab='info';openJobView('${j.id}')">Info</button>
       <button type="button" class="${tab==='client'?'on':''}" onclick="visitTab='client';openJobView('${j.id}')">Client</button>
       <button type="button" class="${tab==='notes'?'on':''}" onclick="visitTab='notes';openJobView('${j.id}')">Notes (${notes})</button>

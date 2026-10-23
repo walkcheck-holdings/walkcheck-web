@@ -3,7 +3,7 @@ window.JOB_TEMPLATES = {
   property_management: {
     sitesLabel: 'Edificios',
     searchPlaceholder: 'Buscar edificios…',
-    jobs: ['SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE']
+    jobs: ['Walkthrough', 'SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE']
   },
   maintenance: {
     sitesLabel: 'Sitios',
@@ -18,7 +18,7 @@ window.JOB_TEMPLATES = {
   inspections: {
     sitesLabel: 'Edificios',
     searchPlaceholder: 'Buscar edificios…',
-    jobs: ['INSPECTION', 'SEMI ANNUAL INSPECTION', 'Window inspection']
+    jobs: ['Walkthrough', 'INSPECTION', 'SEMI ANNUAL INSPECTION', 'Window inspection']
   },
   landscaping: {
     sitesLabel: 'Sitios',

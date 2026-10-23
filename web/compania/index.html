@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
+<script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link rel="stylesheet" href="/web/compania/base.css">
@@ -538,10 +539,14 @@ function slugify(n){
 }
 function defaultTypes(){
   if (emptyStart) return [];
-  return pack().jobs.map(n => ({
-    name: n, slug: slugify(n), icon: '🔧', color: '#34C759',
-    descriptionTemplate: '', category: companyType, custom: false
-  }));
+  const WT = window.WK_WALKTHROUGH;
+  return pack().jobs.map(n => {
+    const isWt = WT && WT.isWalkthrough({ kind: n });
+    return {
+      name: n, slug: slugify(n), icon: isWt ? WT.icon : '🔧', color: isWt ? WT.color : '#34C759',
+      descriptionTemplate: '', category: companyType, custom: false
+    };
+  });
 }
 function allTypes(activeOnly){
   const defs = defaultTypes();
@@ -2777,7 +2782,9 @@ function onKindChange(){
   const t = typeOf($('ajK').value);
   const box = $('ajD');
   if (!box) return;
+  const WT = window.WK_WALKTHROUGH;
   if (t.descriptionTemplate) box.value = t.descriptionTemplate;
+  else if (WT && WT.isWalkthrough({ kind: $('ajK').value }) && !box.value.trim()) box.value = WT.instructionsText(loginLang());
   else if (!editJobId) box.value = '';
 }
 function rangesOverlapWorker(uid, start, end, exceptId){
@@ -2816,7 +2823,8 @@ async function saveAssign(){
     unit: ($('ajUnit')&&$('ajUnit').value.trim()) || '',
     contactName: ($('ajContact')&&$('ajContact').value.trim()) || '',
     contactPhone: ($('ajPhone')&&$('ajPhone').value.trim()) || '',
-    instructions: ($('ajD')&&$('ajD').value.trim()) || '',
+    instructions: ($('ajD')&&$('ajD').value.trim())
+      || (window.WK_WALKTHROUGH && WK_WALKTHROUGH.isWalkthrough({ kind }) ? WK_WALKTHROUGH.instructionsText(loginLang()) : ''),
     description: ($('ajD')&&$('ajD').value.trim()) || '',
     color: typeOf(kind).color || '#34C759', icon: typeOf(kind).icon || '🔧',
     companyType, status: 'open',
@@ -2900,6 +2908,33 @@ function closeJobView(){
   $('viewJobs').classList.add('hidden');
   $('viewJobs').innerHTML = '';
 }
+/* ===== Walkthrough results (office, read-only) — data in /js/walkthroughGuide.js ===== */
+function wtOfficeHtml(j){
+  const WT = window.WK_WALKTHROUGH;
+  if (!WT || !WT.isWalkthrough(j)) return '';
+  const en = loginLang() === 'en';
+  const m = j.wtAreas || {};
+  const s = WT.summary(j);
+  const rows = WT.areas.map(a => {
+    const v = m[a.id] || {};
+    const badge = !v.status
+      ? `<span style="background:#F2F2F7;color:#6E6E73;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">${en?'Not checked':'Sin revisar'}</span>`
+      : v.status === 'ok'
+        ? `<span style="background:#E8F8EC;color:#1B7A36;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">✓ ${en?'All good':'Todo bien'}</span>`
+        : `<span style="background:${v.danger?'#FFE5E3':'#FFF1DE'};color:${v.danger?'#B3261E':'#9A5B00'};border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">${v.danger?'🚨 '+(en?'Danger':'Peligro'):'⚠ '+(en?'Problem':'Problema')}</span>`;
+    const detail = v.status === 'issue'
+      ? `<div style="font-size:13.5px;margin-top:4px"><b>${en?'Where':'Dónde'}:</b> ${esc(v.where||'—')}<br><b>${en?'What':'Qué'}:</b> ${esc(v.what||'—')}</div>` : '';
+    const photos = (v.photos||[]).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" style="width:56px;height:56px;object-fit:cover;border-radius:8px"></a>`).join('');
+    return `<div style="padding:10px 0;border-bottom:1px solid #E5E5EA">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${a.icon} ${esc(en?a.en:a.es)}</b>${badge}</div>
+      ${detail}${photos?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${photos}</div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="card">
+      <h3>🚶 Walkthrough · ${s.checked}/${s.total} ${en?'areas':'áreas'} · ${s.issues} ${en?'problems':'problemas'}${s.dangers?` · <span style="color:#B3261E">${s.dangers} ${en?'danger':'peligro'}</span>`:''}</h3>
+      ${rows}
+    </div>`;
+}
 async function openJobView(id){
   let j = jobs.find(x=>x.id===id);
   try {
@@ -2935,6 +2970,7 @@ async function openJobView(id){
       ${canAssign() && !jobArchived(j) ? `<button class="btn ghost" onclick="askArchiveJob('${j.id}')">Archivar</button>`:''}
       ${canAssign() && jobArchived(j) ? `<p class="muted">Archivado: ${esc(j.archiveReason||'')} ${esc(j.archiveNote||'')}</p><button class="btn ghost" onclick="unarchiveJob('${j.id}')">Desarchivar</button>`:''}
     </div>
+    ${wtOfficeHtml(j)}
     <div class="card">
       <h3>Notes</h3>
       <textarea id="jobNotes" rows="3">${esc(j.notes||'')}</textarea>
