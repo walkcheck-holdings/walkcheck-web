@@ -24,17 +24,17 @@
   body { overflow-x: hidden; }
   body.ready { overflow-x: hidden; overflow-y: hidden; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
-  header { background: #1B7A36; color: #fff; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: minmax(110px,auto) minmax(0,1fr) minmax(0,min(560px,52%)); align-items: center; gap: 12px 16px; }
+  header { background: #1B7A36; color: #fff; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px 16px; }
   header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; justify-self: start; }
   header h1 a { color: #fff; text-decoration: none; display: block; }
   .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
   #coSwitch {
-    justify-self: center; min-width: 0; max-width: 100%; width: auto;
-    background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.35);
-    border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 15px; min-height: 36px;
-    text-align: center; cursor: pointer;
+    min-width: 0; max-width: 200px; width: auto;
+    background: #fff; color: #1B7A36; border: none;
+    border-radius: 20px; padding: 6px 12px 6px 14px; font-weight: 800; font-size: 13px; min-height: 36px;
+    text-align: left; cursor: pointer;
   }
-  #coSwitch:disabled { appearance: none; -webkit-appearance: none; border-color: transparent; background: transparent; cursor: default; padding-right: 12px; }
+  #coSwitch:disabled { appearance: none; -webkit-appearance: none; padding-right: 14px; cursor: default; }
   #coName { display: none; }
   header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; min-height: 36px; font-size: 13px; }
   .hdr-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
@@ -99,6 +99,7 @@
   body.ready #login { display: none; }
   #sidebar { width: 240px; min-width: 240px; max-width: 240px; flex: 0 0 240px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; overflow: visible; }
   #sidebar h2 { margin: 0; padding: 12px 10px 6px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #6B7280; }
+  #bSearch { background: #F2F2F7; border: none; border-radius: 14px; }
   #bList { overflow: auto; flex: 1; min-height: 80px; -webkit-overflow-scrolling: touch; }
   .types-box { margin: 8px 10px 12px; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 10px; background: #fff; flex: 0 0 auto; overflow: visible; }
   .types-box .ttl { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #6B7280; margin: 0 0 8px; }
@@ -145,20 +146,23 @@
   .addbox input { margin: 4px 0 6px; padding: 8px 10px; }
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   #staffMain { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
-  .weekbar { background: #fff; padding: 8px 14px 0; flex: 0 0 auto; border-bottom: 1px solid #F2F2F7; }
-  .weekbar h2 { margin: 0; font-size: 16px; }
+  .weekbar { background: #fff; padding: 10px 14px 8px; flex: 0 0 auto; border-bottom: 1px solid #F2F2F7; }
+  .weekbar h2 { margin: 0; font-size: 18px; font-weight: 800; white-space: nowrap; }
+  .week-row { display: flex; align-items: center; gap: 12px; }
+  .week-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .week-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
   .week-tools h2 { flex: 1 1 auto; min-width: 0; }
-  .weekdays { display: flex; }
-  .wd { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; min-height: 48px; font-size: 15px; border-radius: 8px 8px 0 0; }
+  .weekdays { display: flex; align-items: flex-end; gap: 4px; flex: 1; min-width: 0; }
+  .wd { flex: 1; text-align: center; padding: 8px 4px; cursor: pointer; min-height: 48px; font-size: 14px; border-radius: 12px; color: #4B5563; }
   .wd .d { font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #6B7280; text-transform: none; }
-  .wd.on { border-bottom: 3px solid #34C759; font-weight: 800; color: #1B7A36; }
+  .wd.on { flex: 1.6; background: #1B7A36; color: #fff; font-weight: 800; min-height: 56px; display: flex; align-items: center; justify-content: center; }
   .view-tabs { display: flex; gap: 4px; }
   .view-tabs button { border: none; background: #F2F2F7; color: #6B7280; border-radius: 8px; padding: 8px 12px; font-weight: 800; font-size: 13px; cursor: pointer; min-height: 36px; }
   .view-tabs button.on { background: #1B7A36; color: #fff; }
-  .wd.today { background: #1B7A36; color: #fff; font-weight: 800; box-shadow: inset 0 0 0 2px #145C28; }
-  .wd.today .d { color: #fff; }
-  .wd.today.on { box-shadow: inset 0 -3px 0 #fff, inset 0 0 0 2px #145C28; }
+  .wd.today:not(.on) { color: #1B7A36; font-weight: 800; }
+  .wd.today:not(.on) .d { color: #1B7A36; }
+  .wd.on .wd-big { font-size: 22px; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+  .wd.on .d { display: none; }
   .jcard.warn { box-shadow: 0 0 0 2px #FF3B30; outline: 1px dashed #fff; }
   .period { display: flex; gap: 8px; margin: 8px 0 14px; flex-wrap: wrap; }
   .period button { border: 1px solid #D1D1D6; background: #fff; border-radius: 8px; padding: 8px 12px; font-weight: 800; cursor: pointer; min-height: 40px; }
@@ -166,17 +170,18 @@
   #hoursPane table { width: 100%; background: #fff; border-radius: 12px; border-collapse: collapse; }
   #hoursPane th, #hoursPane td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; }
   #hoursPane h3 { margin: 4px 0 8px; }
-  .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #fff; }
-  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 48px; align-items: stretch; justify-content: stretch; }
+  .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #FAFBFA; }
+  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #FAFBFA; border-bottom: none; min-height: 52px; align-items: stretch; justify-content: stretch; gap: 8px; padding: 8px 8px 8px 0; }
   .gutter { width: 56px; min-width: 56px; flex: 0 0 56px; }
-  .col-head { flex: 1 1 0; min-width: 0; max-width: none; padding: 10px 8px; text-align: center; font-weight: 800; font-size: 14px; border-left: 2px solid #6B7280; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; background: #EEF1EF; color: #111; width: auto; min-height: 56px; }
-  .col-head .col-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; font-size: 14px; color: #111; }
-  .col-head .cnt { display: inline-block; margin-left: 0; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; }
+  .col-head { flex: 1 1 0; min-width: 0; max-width: none; padding: 10px 12px; text-align: center; font-weight: 800; font-size: 14px; border: 1px solid #CDE8D4; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; background: #E8F6EC; color: #111; width: auto; min-height: 48px; }
+  .col-head .col-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.25; font-size: 14px; color: #111; }
+  .col-head .col-day { font-size: 12px; font-weight: 700; color: #1B7A36; }
+  .col-head .cnt { display: none; }
   .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; justify-content: stretch; align-items: stretch; }
   .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; background: #fff; }
   .tmark { position: absolute; left: 0; right: 0; font-size: 10px; font-weight: 800; color: #8E8E93; padding-left: 4px; transform: translateY(-6px); }
-  .wcol { flex: 1 1 0; min-width: 0; max-width: none; position: relative; border-left: 2px solid #9CA3AF; background: #fff; }
-  .wcol:last-child { border-right: 2px solid #9CA3AF; }
+  .wcol { flex: 1 1 0; min-width: 0; max-width: none; position: relative; border-left: 1px solid #D1D5DB; background: #fff; }
+  .wcol:last-child { border-right: 1px solid #D1D5DB; }
   .qslot { position: absolute; left: 0; right: 0; border-top: 1px solid #F4F4F5; cursor: pointer; }
   .qslot.hour { border-top: 1px solid #E5E5EA; }
   .qslot.over { background: #E8F8EC; }
@@ -185,23 +190,23 @@
   #rows .daygrid-body { flex: 1 1 auto; }
   .slot.over { background: #E8F8EC; }
   .jcard {
-    position: absolute; left: 4px; right: 4px; width: auto; min-width: 0; min-height: 44px; padding: 6px 8px; border-radius: 8px;
-    background: #34C759; color: #fff; font-size: 12px; cursor: grab; z-index: 2;
-    display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 2px;
-    overflow: hidden; box-sizing: border-box;
+    position: absolute; left: 10px; right: 10px; width: auto; min-width: 0; min-height: 56px; padding: 10px 12px; border-radius: 16px;
+    background: #D8F3E0; color: #111; font-size: 12px; cursor: grab; z-index: 2;
+    display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 4px;
+    overflow: hidden; box-sizing: border-box; box-shadow: 0 1px 4px rgba(0,0,0,.08);
   }
   .jcard, .jcard * { word-break: normal; overflow-wrap: normal; }
   .jcard-kind {
-    font-size: 11px; font-weight: 800; line-height: 1.2; text-transform: uppercase;
+    font-size: 12px; font-weight: 700; line-height: 1.2; text-transform: none;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
   }
   .jcard-t, .jcard .t {
-    font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     flex: 0 0 auto; line-height: 1.2; max-width: 100%;
   }
   .jcard-addr {
-    font-weight: 700; font-size: 12px; line-height: 1.2;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-height: 0; max-width: 100%;
+    font-weight: 800; font-size: 13px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%;
   }
   .jcard-addr .pin { margin-right: 4px; }
   .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -268,12 +273,12 @@
     z-index: 80; align-items: stretch; justify-content: space-around;
   }
   #bottomNav button, #empNav button {
-    flex: 1; border: none; background: none; min-height: 58px; font-size: 11px; font-weight: 700; color: #6B7280;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    flex: 1; border: none; background: none; min-height: 62px; font-size: 11px; font-weight: 700; color: #8E8E93;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   }
   #bottomNav button span, #empNav button span { line-height: 1.1; display: block; color: inherit; }
-  #bottomNav button .nav-ic, #empNav button .nav-ic { width: 22px; height: 22px; display: block; }
-  #bottomNav button.on, #empNav button.on { color: #1B7A36; }
+  #bottomNav button .nav-ic, #empNav button .nav-ic { width: 26px; height: 26px; display: block; }
+  #bottomNav button.on, #empNav button.on { color: #34C759; }
   #bottomNav button.plus { color: #34C759; }
   #moreSheet {
     display: none; position: fixed; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom));
@@ -348,7 +353,7 @@
       padding: 10px 12px 12px; padding-top: max(10px, env(safe-area-inset-top));
     }
     #coName { grid-column: 1 / -1; text-align: left; }
-    #coSwitch { grid-column: 1 / -1; justify-self: stretch; text-align: left; }
+    #coSwitch { max-width: none; }
     header h1 { flex: 1 0 100%; width: 100%; font-size: 18px; }
     .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
     header button, .hdr-actions a {
@@ -382,7 +387,9 @@
     .week-tools { align-items: stretch; }
     .week-tools h2 { flex: 1 1 100%; }
     .week-tools .btn.ok { width: auto; flex: 0 0 auto; }
-    .weekdays { width: 100%; }
+    .week-row { flex-wrap: wrap; }
+    .weekdays { width: 100%; flex: 1 1 100%; order: 3; }
+    .week-right { margin-left: auto; }
     .wd { min-width: 0; font-size: 13px; overflow: hidden; }
     #typeBar { padding: 0 0 8px; }
     body.ready.tab-mapa #main, body.ready.tab-mapa #sidebar { display: none; }
@@ -569,7 +576,6 @@
     <a href="/">Walkcheck</a>
     <span class="holdings">HOLDINGS LLC</span>
   </h1>
-  <select id="coSwitch" aria-label="Compañía" onchange="onHeaderCompany(this.value)"></select>
   <div class="hdr-actions">
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
@@ -578,6 +584,7 @@
     <button id="moneyBtn" class="hidden" onclick="openMoney()" data-i18n="money">Facturación</button>
     <button type="button" id="reportsBtn" onclick="openReports()" data-i18n="reports">Reportes</button>
     <a id="typesLink" href="/app/settings/job-types/" class="hidden" data-i18n="types">Tipos</a>
+    <select id="coSwitch" aria-label="Compañía" onchange="onHeaderCompany(this.value)"></select>
     <div class="avatar-wrap">
       <button type="button" id="avatarBtn" class="avatar-btn" onclick="toggleAvatar(event)" aria-label="Perfil">·</button>
       <div id="avatarMenu" class="avatar-menu" role="menu">
@@ -620,17 +627,19 @@
   <section id="main">
     <div class="weekbar">
       <div id="typeBar"></div>
-      <div class="week-tools">
+      <div class="week-row">
         <h2 id="weekTitle">Mi horario</h2>
-        <div class="view-tabs" id="viewTabs">
-          <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
-          <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
-          <button type="button" data-view="map" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
+        <div class="weekdays" id="weekdays"></div>
+        <div class="week-right">
+          <div class="view-tabs" id="viewTabs">
+            <button type="button" class="on" data-view="day" onclick="setSchedView('day')" data-i18n="tabDay">Día</button>
+            <button type="button" data-view="list" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
+            <button type="button" data-view="map" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
+          </div>
+          <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()" data-i18n="buildings">Edificios</button>
+          <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
         </div>
-        <button type="button" class="btn ok ghost" id="sitesToggle" onclick="toggleSites()" data-i18n="buildings">Edificios</button>
-        <button class="btn ok" onclick="goToday()" data-i18n="todayBtn">Hoy</button>
       </div>
-      <div class="weekdays" id="weekdays"></div>
     </div>
     <div id="staffMain">
       <div class="hours" id="hours"></div>
@@ -1190,6 +1199,18 @@ function weekDayLabels(){
     ? ['Lu','Ma','Mi','Ju','Vi','Sá','Do']
     : ['Su','Mo','Tu','We','Th','Fr','Sa'];
 }
+function weekDayLong(){
+  return loginLang() === 'es'
+    ? ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
+    : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+}
+function dayStamp(d){
+  const ws = weekStart(d);
+  let i = Math.round((d.getTime() - ws.getTime()) / 86400000);
+  if (i < 0) i = 0;
+  if (i > 6) i = 6;
+  return weekDayLong()[i] + ' ' + d.getDate();
+}
 function sameDay(a,b){
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
@@ -1229,7 +1250,11 @@ function renderWeek(){
   let html = '';
   for (let i=0;i<7;i++){
     const d = new Date(ws); d.setDate(ws.getDate()+i);
-    html += `<div class="wd ${sameDay(d,selectedDay)?'on':''} ${sameDay(d,new Date())?'today':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
+    const sel = sameDay(d, selectedDay);
+    const tod = sameDay(d, new Date());
+    html += sel
+      ? `<div class="wd on ${tod?'today':''}" onclick="pickDay(${d.getTime()})"><span class="wd-big">${esc(dayStamp(d))}</span></div>`
+      : `<div class="wd ${tod?'today':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
   }
   const wd = schedEl('weekdays');
   if (wd) wd.innerHTML = html;
@@ -1604,6 +1629,19 @@ function contrastOn(bg){
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   return ((r * 299 + g * 587 + b * 114) / 1000) >= 158 ? '#111' : '#fff';
 }
+function mixHex(a, b, t){
+  const parse = h => {
+    let x = String(h || '').replace('#','');
+    if (x.length === 3) x = x.split('').map(c => c + c).join('');
+    const n = parseInt((x + '000000').slice(0,6), 16);
+    if (isNaN(n)) return [52, 199, 89];
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const A = parse(a), B = parse(b);
+  const rgb = [0,1,2].map(i => Math.round(A[i] + (B[i] - A[i]) * t));
+  return '#' + rgb.map(v => v.toString(16).padStart(2,'0')).join('');
+}
+function pastelFill(hex){ return mixHex(hex || '#34C759', '#ffffff', 0.72); }
 function avatarInitials(){
   const n = String((profile && (profile.displayName || profile.email)) || '?').trim();
   const p = n.split(/\s+/).filter(Boolean);
@@ -1680,6 +1718,7 @@ async function openCompanyPortal(){
   syncChrome();
   await loadCompanyOptions();
   await loadBoard();
+  markNav('horario');
 }
 async function openEmployeePortal(){
   applyLayout();
@@ -2420,17 +2459,13 @@ function jobCardHtml(j, extraClass, posStyle){
   const addr = cardAddr(j);
   const kind = j.kind || '';
   const tp = typeOf(kind);
-  const fill = tp.color || '#34C759';
+  const fill = pastelFill(tp.color || '#34C759');
   const ink = contrastOn(fill);
   const when = fmt(g.st)+' – '+fmt(g.en);
-  const pos = posStyle || `top:${g.top}px;height:${g.h}px`;
-  const check = jobDone(j) ? ' ✓' : '';
-  const showAddr = g.h >= 56 && addr;
+  const pos = posStyle || `top:${g.top}px;height:${Math.max(56, g.h)}px`;
   return `<div class="jcard ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="background:${esc(fill)};color:${ink};${pos}">
-    <div class="jcard-kind">${esc(kind)}${check}</div>
-    <div class="jcard-t">${when}</div>
-    ${showAddr ? `<div class="jcard-addr"><span class="pin">📍</span>${esc(addr)}</div>` : ''}</div>`;
-}
+    ${addr ? `<div class="jcard-addr"><span class="pin">📍</span>${esc(addr)}</div>` : ''}
+    <div class="jcard-t">${esc(when)}${kind ? ' · ' + esc(kind) : ''}</div></div>`;
 function quarterSlotsHtml(extraAttr){
   const parts = [];
   for (let m = DAY_START_MIN; m < DAY_END_MIN; m += STEP) {
@@ -2479,7 +2514,7 @@ function renderDayGrid(cols){
   }
   const head = `<div class="gutter" style="font-size:10px;font-weight:800;color:#8E8E93;padding:8px 4px">${loginLang()==='es'?'Hora':'Time'}</div>` + listCols.map(t => {
     const list = jobsForTech(t);
-    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')"><span class="col-name">${esc(t.name||'')}</span><span class="cnt">${list.filter(jobDone).length}/${list.length}</span></button>`;
+    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')"><span class="col-name">${esc(t.name||'')} · ${esc(dayStamp(selectedDay))}</span></button>`;
   }).join('');
   const bodies = listCols.map(t => {
     const list = jobsForTech(t);
