@@ -2,128 +2,316 @@
 <html lang="es"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WalkCheck — Organiza tu compañía de servicios</title>
-<meta name="description" content="WalkCheck: horario de tu equipo, trabajos con fotos, reportes mensuales y facturación. Para compañías de servicios. El recorrido de condominios es el ejemplo principal.">
+<title>WalkCheck — Del trabajo a la factura, sin papeles</title>
+<meta name="description" content="WalkCheck organiza tu compañía de servicios: crea el trabajo, agenda la visita, tu técnico deja notas con fotos y la factura sale lista. 15 días gratis.">
 <style>
 :root{
   --navy:#0E2A47; --navy2:#0A1F36; --navy3:#16467E;
-  --green:#7AC142; --green-d:#68A838;
-  --wa:#25D366; --wa-d:#1DA851;
-  --bg:#F7FAFD; --card:#FFFFFF; --txt:#1A2B3C; --mut:#5B6B7C;
-  --line:#E3EAF2; --radius:16px;
+  --green:#7AC142; --green-d:#68A838; --green-bg:#EEF7E6;
+  --blue:#2F6FED; --amber:#F2A93B; --red:#E5484D;
+  --bg:#F5F8FC; --card:#FFFFFF; --txt:#15263A; --mut:#5B6B7C;
+  --line:#E2E9F2; --radius:18px;
+  --shadow:0 18px 48px rgba(14,42,71,.12);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:#fff;line-height:1.6;overflow-x:hidden;max-width:100%}
-.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
-/* ===== HEADER ===== */
-header{position:sticky;top:0;z-index:50;background:var(--navy);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);background:#fff;line-height:1.55;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:700;border-radius:12px;padding:14px 26px;font-size:16px;transition:transform .15s,background .15s,border-color .15s;border:0;cursor:pointer;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn-green{background:var(--green);color:var(--navy2)}
+.btn-green:hover{background:var(--green-d)}
+.btn-ghost{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.35)}
+.btn-ghost:hover{border-color:#fff}
+.btn-line{background:#fff;color:var(--txt);border:2px solid var(--line)}
+.btn-line:hover{border-color:var(--green)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:#2158C7}
+.btn-sm{padding:10px 18px;font-size:14.5px}
+.eyebrow{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green-d)}
+
+/* ===== Header ===== */
+header{position:sticky;top:0;z-index:50;background:rgba(10,31,54,.92);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid rgba(255,255,255,.06)}
 .hd{display:flex;align-items:center;gap:28px;height:68px}
-.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:22px;text-decoration:none}
-.logo .lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#fff,#D7E7FA);display:flex;align-items:center;justify-content:center;font-size:22px}
-nav.main{display:flex;gap:4px;margin-left:8px}
-nav.main a, .dd>span{color:#D7E7FA;text-decoration:none;font-size:15px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:block}
-nav.main a:hover,.dd>span:hover{background:rgba(255,255,255,.08);color:#fff}
-.dd{position:relative}
-.dd-menu{position:absolute;top:110%;left:0;min-width:250px;background:#fff;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.22);padding:10px;display:none}
-.dd:hover .dd-menu{display:block}
-.dd-menu a{color:var(--txt)!important;padding:11px 14px!important;font-size:14.5px}
-.dd-menu a:hover{background:var(--bg)}
-.dd-menu a b{display:block;font-size:15px}
-.dd-menu a small{color:var(--mut);font-weight:400}
-.hd-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:12px;padding:13px 26px;font-size:16px;transition:.15s;border:0;cursor:pointer}
-.btn-green{background:var(--green);color:#0A1F36}
-.btn-green:hover{background:var(--green-d);transform:translateY(-1px)}
-.btn-wa{background:var(--wa);color:#fff}
-.btn-wa:hover{background:var(--wa-d);transform:translateY(-1px)}
-.btn-outline{border:2px solid var(--line);color:var(--txt);background:#fff}
-.btn-outline:hover{border-color:var(--green)}
-.btn-sm{padding:10px 20px;font-size:14.5px}
-.lang-toggle{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:13.5px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:21px;text-decoration:none;letter-spacing:-.2px}
+.logo .mark{width:34px;height:34px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center}
+.lgtxt{display:flex;flex-direction:column;line-height:1}
+.lgtxt small{font-size:9px;letter-spacing:.2em;font-weight:800;opacity:.85;margin-top:3px}
+nav.main{display:flex;gap:2px}
+nav.main a{color:#C9DAEE;text-decoration:none;font-size:15px;font-weight:600;padding:9px 13px;border-radius:9px}
+nav.main a:hover{background:rgba(255,255,255,.08);color:#fff}
+.hd-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.lang-toggle{background:transparent;border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:9px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:13px}
 .lang-toggle:hover{border-color:#fff}
-.btn-enter{border:1.5px solid rgba(255,255,255,.45);color:#fff;background:transparent;padding:10px 18px;font-size:14.5px;border-radius:12px;text-decoration:none;font-weight:700}
-.btn-enter:hover{border-color:#fff;color:#fff}
-/* ===== HERO ===== */
-.hero{background:linear-gradient(160deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);color:#fff;padding:88px 0 96px;position:relative;overflow:hidden}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-.hero h1{font-size:46px;line-height:1.15;font-weight:800;letter-spacing:-.5px}
+.btn-enter{color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;padding:9px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35)}
+.btn-enter:hover{border-color:#fff}
+
+/* ===== Hero ===== */
+.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(1200px 600px at 85% -10%,rgba(122,193,66,.18),transparent 60%),linear-gradient(165deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);padding:84px 0 110px}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:90px;background:linear-gradient(to bottom,transparent,rgba(10,31,54,.25))}
+.hero .wrap{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center;position:relative;z-index:1}
+.hero h1{font-size:52px;line-height:1.08;font-weight:800;letter-spacing:-1.2px}
 .hero h1 .hl{color:var(--green)}
-.hero p.sub{color:#BFD6F2;font-size:19px;margin:20px 0 32px;max-width:520px}
-.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
-.hero-note{margin-top:18px;color:#8FA9C9;font-size:14px}
-.trust{display:flex;gap:26px;margin-top:34px;flex-wrap:wrap}
-.trust div{display:flex;align-items:center;gap:9px;color:#D7E7FA;font-size:14.5px;font-weight:600}
-/* phone mockup */
-.phone{width:290px;margin:0 auto;background:#101418;border-radius:44px;padding:14px;box-shadow:0 30px 60px rgba(0,0,0,.45)}
-.screen{background:#fff;border-radius:32px;overflow:hidden;height:560px;display:flex;flex-direction:column}
-.scr-hd{background:linear-gradient(135deg,var(--navy),var(--navy3));color:#fff;padding:18px 16px 14px}
-.scr-hd b{font-size:16px}.scr-hd small{opacity:.75;font-size:12px}
-.scr-bd{padding:12px;flex:1;overflow:hidden}
-.chk{background:var(--bg);border-radius:12px;padding:11px 12px;margin-bottom:9px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600}
-.dot{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800}
-.dot.ok{background:var(--green)}.dot.bad{background:#E5484D}.dot.pend{background:#CBD6E2}
-.scr-ft{padding:12px}
-.scr-btn{background:var(--wa);color:#fff;text-align:center;border-radius:12px;padding:13px;font-weight:700;font-size:14.5px}
-/* ===== PILARES ===== */
-.sec{padding:84px 0}
-.sec h2{font-size:34px;font-weight:800;text-align:center;letter-spacing:-.4px}
-.sec .lede{text-align:center;color:var(--mut);font-size:18px;max-width:640px;margin:14px auto 0}
-.tabs{display:flex;gap:10px;justify-content:center;margin:36px 0;flex-wrap:wrap}
-.tab{border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 22px;font-weight:700;font-size:15.5px;cursor:pointer;color:var(--mut)}
-.tab.on{border-color:var(--green);color:var(--navy);background:#F2F9EA}
-.pillar{display:none;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--bg);border-radius:24px;padding:48px}
-.pillar.on{display:grid}
-.pillar h3{font-size:26px;margin-bottom:14px}
-.feat{list-style:none;margin-top:18px}
-.feat li{display:flex;gap:12px;margin-bottom:14px;font-size:16px}
-.feat li::before{content:"✓";color:var(--green);font-weight:800;flex:none}
-/* ===== PRECIOS ===== */
-#precios{background:#F4F7FB;color:var(--navy)}
-#precios h2{color:var(--navy3);font-size:36px}
-#precios .lede{color:var(--mut)}
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;align-items:stretch}
-.plan{background:#fff;color:var(--txt);border-radius:16px;padding:28px 24px;position:relative;display:flex;flex-direction:column;border:1.5px solid #D6E0EE;box-shadow:0 8px 24px rgba(14,42,71,.06)}
-.plan.pop{border:2px solid #2F6FED;padding-top:44px;box-shadow:0 12px 32px rgba(47,111,237,.18)}
-.pop-tag{position:absolute;top:0;left:0;right:0;background:#2F6FED;color:#fff;font-weight:800;font-size:12px;padding:8px 12px;letter-spacing:.4px;text-align:center;border-radius:14px 14px 0 0}
-.plan h3{font-size:22px;color:var(--navy)}
-.plan .price{font-size:42px;font-weight:800;margin:8px 0 2px;color:var(--navy3)}
-.plan .price small{font-size:14px;color:var(--mut);font-weight:600}
-.plan .desc{color:#2F6FED;font-size:14px;font-weight:700;margin-bottom:16px}
-.plan ul{list-style:none;margin-bottom:22px;flex:1}
-.plan li{display:flex;gap:10px;margin-bottom:10px;font-size:14.5px}
-.plan li::before{content:"✓";color:#2F6FED;font-weight:800;flex:none}
-.plan .btn{width:100%;text-align:center}
-.btn-blue{background:#2F6FED;color:#fff}
-.btn-blue:hover{background:#2158C7;transform:translateY(-1px)}
-.fine{text-align:center;color:var(--mut);font-size:13.5px;margin-top:22px}
-.who{background:#fff;padding:56px 0 8px}
-.who h2{text-align:center;font-size:28px;font-weight:800;letter-spacing:-.3px;margin:0 0 22px}
+.hero .sub{color:#BCD2EC;font-size:19px;margin:22px 0 30px;max-width:540px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-note{margin-top:16px;color:#8FA9C9;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#D7E7FA;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 12px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--green);display:block}
+
+/* Hero app mock: a job card that moves through the 4 steps */
+.mock{position:relative;width:100%;max-width:470px;margin-left:auto}
+.mock-card{background:#fff;color:var(--txt);border-radius:22px;box-shadow:0 40px 80px rgba(0,0,0,.35);overflow:hidden}
+.mock-top{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.mock-top .dot3{display:flex;gap:6px}
+.mock-top .dot3 span{width:10px;height:10px;border-radius:50%;background:#E3EAF2}
+.mock-top b{font-size:14px;margin-left:6px}
+.mock-top .live{margin-left:auto;font-size:12px;font-weight:800;color:var(--green-d);display:flex;align-items:center;gap:6px}
+.mock-top .live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+.steps-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:14px 18px 4px}
+.sb{height:6px;border-radius:6px;background:#E8EEF5;overflow:hidden;position:relative}
+.sb::after{content:"";position:absolute;inset:0;width:0;background:var(--green);border-radius:6px}
+.sb.done::after{width:100%}
+.sb.now::after{animation:fill 3.2s linear forwards}
+.steps-lbl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 18px 0;font-size:11.5px;font-weight:700;color:var(--mut)}
+.steps-lbl span.on{color:var(--navy)}
+.mock-body{position:relative;height:330px}
+.scene{position:absolute;inset:0;padding:16px 18px 18px;opacity:0;transform:translateY(12px);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
+.scene.on{opacity:1;transform:none}
+.row{display:flex;align-items:center;gap:10px}
+.kv{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.kv small{display:block;color:var(--mut);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pill{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 9px}
+.pill.g{background:var(--green-bg);color:#3E7A1C}
+.pill.a{background:#FFF4E2;color:#9A5B00}
+.pill.b{background:#EAF1FE;color:#1D4ED8}
+.title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.title-row h4{font-size:17px;line-height:1.25}
+.title-row p{color:var(--mut);font-size:13px}
+.tech{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--bg);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--navy3);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.cal div{background:var(--bg);border-radius:10px;padding:8px 4px;text-align:center;font-size:11.5px;color:var(--mut);font-weight:700}
+.cal div b{display:block;font-size:16px;color:var(--txt)}
+.cal div.on{background:var(--navy);color:#C9DAEE}
+.cal div.on b{color:#fff}
+.timer{margin-top:12px;display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px}
+.timer b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.timer span{font-size:12px;color:#BCD2EC;font-weight:700}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ph{aspect-ratio:1;border-radius:12px;position:relative;overflow:hidden;opacity:0;transform:scale(.9)}
+.scene.on .ph{animation:pop .45s ease forwards}
+.scene.on .ph:nth-child(2){animation-delay:.25s}
+.scene.on .ph:nth-child(3){animation-delay:.5s}
+.ph span{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:6px;padding:2px 6px}
+.ph1{background:linear-gradient(135deg,#C9D6E4,#8EA4BC)}
+.ph2{background:linear-gradient(135deg,#E9D8B8,#B99863)}
+.ph3{background:linear-gradient(135deg,#BFE0C6,#6FA67C)}
+.note{margin-top:10px;background:#FFFBEA;border:1px solid #F5E6A8;border-radius:12px;padding:10px 12px;font-size:13px}
+.note b{font-size:12px;color:#8A6D00;display:block;margin-bottom:2px}
+.inv-line{display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.inv-line span{color:var(--mut)}
+.inv-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:800;font-size:18px}
+.send{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:var(--navy2);font-weight:800;border-radius:12px;padding:12px;font-size:14px}
+.float-tag{position:absolute;background:#fff;color:var(--txt);border-radius:14px;box-shadow:var(--shadow);padding:10px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;animation:bob 5s ease-in-out infinite}
+.float-tag.t1{left:-40px;top:-22px;z-index:2}
+.float-tag.t2{right:-22px;bottom:-18px;animation-delay:-2.5s}
+.float-tag em{font-style:normal;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--green-bg)}
+
+/* ===== Sections ===== */
+.sec{padding:96px 0}
+.sec-hd{text-align:center;max-width:720px;margin:0 auto 52px}
+.sec-hd h2{font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-.8px;margin-top:10px}
+.sec-hd p{color:var(--mut);font-size:18px;margin-top:14px}
+
+/* Problem strip */
+.pain{background:var(--bg);padding:56px 0}
+.pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.pain-item{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.pain-item b{display:block;font-size:17px;margin-bottom:6px}
+.pain-item p{color:var(--mut);font-size:15px}
+.pain-item .x{width:34px;height:34px;border-radius:10px;background:#FDECEC;color:var(--red);display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:12px}
+
+/* Flow: sticky stepper */
+.flow{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:start}
+.flow-steps{display:flex;flex-direction:column;gap:12px}
+.fstep{display:grid;grid-template-columns:44px 1fr;gap:14px;text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius);padding:18px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s;font:inherit;color:inherit}
+.fstep:hover{border-color:#C9D9EA}
+.fstep.on{border-color:var(--green);box-shadow:0 12px 30px rgba(122,193,66,.18);transform:translateX(4px)}
+.fstep .n{width:44px;height:44px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:var(--navy3);transition:background .2s,color .2s}
+.fstep.on .n{background:var(--green);color:var(--navy2)}
+.fstep h3{font-size:18px;line-height:1.3}
+.fstep p{color:var(--mut);font-size:15px;margin-top:4px}
+.fstep ul{list-style:none;margin-top:10px;display:none}
+.fstep.on ul{display:block}
+.fstep li{font-size:14.5px;display:flex;gap:8px;margin-top:6px}
+.fstep li::before{content:"✓";color:var(--green-d);font-weight:900}
+.flow-view{position:sticky;top:96px;background:linear-gradient(160deg,#EAF1F9,#F7FAFD);border:1px solid var(--line);border-radius:26px;padding:28px;min-height:470px}
+.panel{display:none;animation:rise .45s ease}
+.panel.on{display:block}
+.pcard{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:20px}
+.pcard + .pcard{margin-top:14px}
+.pcard h5{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+.list-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.list-row:last-child{border-bottom:0}
+.list-row .grow{flex:1;min-width:0}
+.list-row .grow small{display:block;color:var(--mut);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.check{width:22px;height:22px;border-radius:7px;border:2px solid #C9D6E4;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff}
+.check.ok{background:var(--green);border-color:var(--green)}
+.big-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.big-photos .ph{opacity:1;transform:none;aspect-ratio:4/3}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--bg);border-radius:14px;padding:14px}
+.stat small{color:var(--mut);font-size:12px;font-weight:700}
+.stat b{display:block;font-size:22px;margin-top:2px}
+
+/* Walkthrough section */
+.wt-sec{background:var(--bg)}
+.wt-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.wt-copy h3{font-size:26px;line-height:1.2;letter-spacing:-.4px}
+.wt-copy p{color:var(--mut);font-size:16.5px;margin-top:10px}
+.ticks{list-style:none;margin-top:18px}
+.ticks li{display:flex;gap:10px;font-size:15.5px;margin-top:10px}
+.ticks li::before{content:"✓";color:var(--green-d);font-weight:900;flex:none}
+.wtm{background:#fff;border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.wtm-hd{background:linear-gradient(135deg,#0E7C66,#16467E);color:#fff;padding:16px 18px}
+.wtm-hd b{font-size:16px;display:block}
+.wtm-hd small{color:#CFE6F5;font-size:12.5px}
+.wtm-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.25);margin-top:10px;overflow:hidden}
+.wtm-bar i{display:block;height:100%;width:62%;background:var(--green);border-radius:6px}
+.wtm-body{padding:12px 14px 14px}
+.wa{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14.5px}
+.wa:last-child{border-bottom:0}
+.wa .em{width:32px;height:32px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex:none}
+.wa .nm{flex:1;font-weight:700;min-width:0}
+.wa-open{background:#FFF5F4;border:1.5px solid #FFB4AE;border-radius:14px;padding:10px 12px;margin:6px 0}
+.wa-open .wa{border:0;padding:0 0 6px}
+.wa-open p{font-size:13px;color:var(--txt)}
+.wa-open p b{color:#8A1C12}
+.pill.r{background:#FFE5E3;color:#B3261E}
+.pill.o{background:#FFF1DE;color:#9A5B00}
+.extras{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
+.xcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column}
+.xcard h4{font-size:18px;margin-top:14px}
+.xcard p{color:var(--mut);font-size:15px;margin-top:6px}
+.months{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.months div{border-radius:12px;aspect-ratio:1;position:relative;overflow:hidden}
+.months span{position:absolute;left:6px;bottom:6px;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:6px;padding:2px 6px}
+.months .m1{background:linear-gradient(135deg,#D9C7A6,#A5865B)}
+.months .m2{background:linear-gradient(135deg,#CFD9E4,#8EA4BC)}
+.months .m3{background:linear-gradient(135deg,#C7E3CE,#77AE85)}
+.doc{background:var(--bg);border-radius:12px;padding:12px;font-size:12.5px}
+.doc b{display:block;font-size:13px;margin-bottom:6px}
+.doc div{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line)}
+.doc div:last-child{border-bottom:0}
+.clock{background:var(--navy);color:#fff;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center}
+.clock b{font-size:20px;font-variant-numeric:tabular-nums}
+.clock span{font-size:12px;color:#BCD2EC;font-weight:700}
+.exp{display:flex;justify-content:space-between;font-size:13px;background:var(--bg);border-radius:10px;padding:8px 10px;margin-top:8px}
+/* Privacy strip (inside roles) */
+.priv{margin-top:28px;background:rgba(122,193,66,.08);border:1px solid rgba(122,193,66,.35);border-radius:22px;padding:24px 28px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.priv .lock{width:52px;height:52px;border-radius:16px;background:rgba(122,193,66,.18);display:flex;align-items:center;justify-content:center}
+.priv h3{font-size:19px}
+.priv ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin-top:10px}
+.priv li{font-size:14.5px;color:#D7E7FA;display:flex;gap:8px}
+.priv li::before{content:"🔒";font-size:12px;margin-top:2px}
+/* Bilingual band */
+.bili{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;background:linear-gradient(160deg,#F2F7FD,#EEF7E6);border:1px solid var(--line);border-radius:26px;padding:40px}
+.bili h2{font-size:32px;line-height:1.15;letter-spacing:-.6px;margin-top:8px}
+.bili p{color:var(--mut);font-size:16.5px;margin-top:10px}
+.phones{display:flex;gap:14px;justify-content:center}
+.mini{width:180px;background:#fff;border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.mini .top{padding:10px 12px;color:#fff;font-size:12px;font-weight:800;display:flex;justify-content:space-between}
+.mini .top em{font-style:normal;background:rgba(255,255,255,.25);border-radius:6px;padding:1px 6px}
+.mini .row{padding:9px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.mini .row small{display:block;color:var(--mut);font-size:11px}
+@media(max-width:1000px){
+  .wt-grid,.bili{grid-template-columns:1fr;gap:28px}
+  .extras{grid-template-columns:1fr;max-width:520px;margin-left:auto;margin-right:auto}
+  .priv ul{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .wt-copy h3{font-size:21px}
+  .wt-copy p{font-size:15.5px}
+  .ticks li{font-size:14.5px}
+  .extras{margin-top:32px;gap:14px}
+  .xcard{padding:18px}
+  .priv{grid-template-columns:1fr;padding:20px;gap:12px}
+  .bili{padding:24px 18px;border-radius:20px}
+  .bili h2{font-size:25px}
+  .bili p{font-size:15.5px}
+  .phones{gap:10px}
+  .mini{width:50%;max-width:170px}
+}
+
+/* Roles */
+.roles{background:var(--navy2);color:#fff}
+.roles .sec-hd p{color:#A9C1DD}
+.roles .eyebrow{color:var(--green)}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.role{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px}
+.role .ic{width:46px;height:46px;border-radius:14px;background:rgba(122,193,66,.15);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.role h3{font-size:20px}
+.role p{color:#A9C1DD;font-size:15px;margin-top:8px}
+.role ul{list-style:none;margin-top:14px}
+.role li{font-size:14.5px;color:#D7E7FA;display:flex;gap:8px;margin-top:8px}
+.role li::before{content:"→";color:var(--green)}
+
+/* Who */
 .who-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:900px;margin:0 auto}
 .who-chip{background:var(--bg);border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font-weight:700;font-size:14.5px;color:var(--navy)}
-.who .lede{margin-top:18px}
-/* ===== FAQ ===== */
-.faq{max-width:760px;margin:40px auto 0}
-.faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;padding:0;overflow:hidden}
-.faq summary{padding:20px 24px;font-weight:700;font-size:16.5px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+
+/* Pricing */
+#precios{background:var(--bg)}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.plan{background:#fff;border-radius:20px;padding:30px 26px;display:flex;flex-direction:column;border:1.5px solid var(--line);position:relative}
+.plan.pop{border:2px solid var(--blue);box-shadow:0 18px 40px rgba(47,111,237,.16)}
+.pop-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-weight:800;font-size:12px;padding:6px 14px;border-radius:999px;letter-spacing:.04em;white-space:nowrap}
+.plan h3{font-size:20px;color:var(--navy);letter-spacing:.04em}
+.plan .price{font-size:42px;font-weight:800;margin:10px 0 2px;color:var(--navy3);letter-spacing:-1px}
+.plan .price small{font-size:14px;color:var(--mut);font-weight:600;letter-spacing:0}
+.plan .desc{color:var(--blue);font-size:14px;font-weight:700;margin-bottom:16px}
+.plan ul{list-style:none;margin-bottom:24px;flex:1}
+.plan li{display:flex;gap:10px;margin-bottom:10px;font-size:14.5px}
+.plan li::before{content:"✓";color:var(--blue);font-weight:800}
+.plan .btn{width:100%}
+.fine{text-align:center;color:var(--mut);font-size:13.5px;margin-top:24px}
+.founder{display:flex;align-items:center;gap:16px;max-width:860px;margin:0 auto 36px;background:linear-gradient(135deg,#0E2A47,#16467E);color:#fff;border-radius:18px;padding:18px 22px;box-shadow:0 14px 34px rgba(14,42,71,.18)}
+.founder .fx{width:46px;height:46px;border-radius:14px;background:var(--green);color:var(--navy2);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+.founder b{font-size:17px;display:block}
+.founder span{color:#C9DAEE;font-size:14.5px}
+.flat{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:22px}
+.flat span{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700;color:var(--navy)}
+.flat span::before{content:"✓ ";color:var(--green-d);font-weight:900}
+@media(max-width:760px){.founder{flex-direction:column;text-align:center;padding:18px}.flat span{font-size:13px}}
+
+/* FAQ */
+.faq{max-width:780px;margin:0 auto}
+.faq details{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.faq summary{padding:20px 24px;font-weight:700;font-size:16.5px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-size:24px;color:var(--green);font-weight:800}
-.faq details[open] summary::after{content:"–"}
+.faq summary::after{content:"+";font-size:24px;color:var(--green-d);font-weight:800;transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
 .faq .a{padding:0 24px 22px;color:var(--mut);font-size:15.5px}
-/* ===== CTA FINAL ===== */
-.cta-final{background:linear-gradient(160deg,var(--navy),var(--navy3));border-radius:28px;padding:64px 40px;text-align:center;color:#fff;margin:84px 0}
-.cta-final h2{color:#fff;font-size:32px}
-.cta-final p{color:#BFD6F2;margin:14px 0 30px;font-size:18px}
-/* ===== FOOTER ===== */
-footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
-.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px}
-.fcols h4{color:#fff;font-size:15px;margin-bottom:16px}
-.fcols a{display:block;color:#BFD6F2;text-decoration:none;font-size:14.5px;margin-bottom:10px}
+
+/* CTA + footer */
+.cta-final{background:radial-gradient(800px 300px at 90% 0%,rgba(122,193,66,.22),transparent 60%),linear-gradient(160deg,var(--navy),var(--navy3));border-radius:28px;padding:64px 40px;text-align:center;color:#fff;margin:96px 0}
+.cta-final h2{font-size:36px;letter-spacing:-.6px;line-height:1.15}
+.cta-final p{color:#BCD2EC;margin:14px auto 30px;font-size:18px;max-width:560px}
+footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
+.fcols{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;margin-bottom:40px}
+.fcols h4{color:#fff;font-size:15px;margin-bottom:14px}
+.fcols a{display:block;color:#BCD2EC;text-decoration:none;font-size:14.5px;margin-bottom:10px}
 .fcols a:hover{color:#fff}
-.fbot{border-top:1px solid rgba(255,255,255,.12);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px;color:#8FA9C9}
-.ai-float{position:fixed;right:22px;bottom:22px;z-index:60;width:62px;height:62px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
+.fbot{border-top:1px solid rgba(255,255,255,.12);padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px;color:#8FA9C9}
+
+/* AI assistant (unchanged behaviour) */
+.ai-float{position:fixed;right:22px;bottom:22px;z-index:60;width:60px;height:60px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
 .ai-float:hover{transform:scale(1.08);background:var(--navy3)}
-.ai-box{position:fixed;right:22px;bottom:96px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
+.ai-box{position:fixed;right:22px;bottom:94px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
 .ai-box.on{display:flex}
 .ai-hd{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
 .ai-hd b{flex:1;font-size:15px}
@@ -133,83 +321,82 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 .ai-bubble.bot{background:#fff;color:var(--txt);border:1px solid var(--line);align-self:flex-start}
 .ai-bubble.me{background:var(--navy);color:#fff;align-self:flex-end}
 .ai-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
-.ai-form input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px}
+.ai-form input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;min-width:0}
 .ai-form button{background:var(--green);color:var(--navy2);border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}
-.modal-bg{position:fixed;inset:0;background:rgba(10,31,54,.55);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-bg.on{display:flex}
-.modal{background:#fff;border-radius:18px;width:min(440px,100%);padding:24px;max-height:90vh;overflow:auto;box-shadow:0 24px 60px rgba(14,42,71,.3)}
-.modal h3{font-size:22px;margin-bottom:6px;color:var(--navy)}
-.modal p.hint{color:var(--mut);font-size:14px;margin-bottom:16px}
-.modal label{display:block;font-size:13px;font-weight:700;margin:10px 0 6px}
-.modal input,.modal select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px}
-.modal .err{color:#C62828;font-size:13.5px;margin-top:10px;min-height:1.2em}
-.modal .ok{display:none;text-align:center;padding:12px 0}
-.modal .ok.on{display:block}
-.modal .ok h4{font-size:18px;margin-bottom:8px}
-.modal-actions{display:flex;gap:10px;margin-top:16px}
-.modal-actions .btn{flex:1;text-align:center}
-@media(max-width:900px){
+
+/* Scroll reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+
+@keyframes fill{from{width:0}to{width:100%}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,193,66,.6)}70%{box-shadow:0 0 0 8px rgba(122,193,66,0)}100%{box-shadow:0 0 0 0 rgba(122,193,66,0)}}
+@keyframes pop{to{opacity:1;transform:none}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+  .ph{opacity:1;transform:none}
+}
+
+/* ===== Tablet ===== */
+@media(max-width:1000px){
+  .hero .wrap{grid-template-columns:1fr;gap:48px}
+  .mock{margin:0 auto}
+  .flow{grid-template-columns:1fr;gap:28px}
+  .flow-view{position:relative;top:0;min-height:0}
+  .role-grid{grid-template-columns:1fr}
+  .plans{grid-template-columns:1fr;max-width:460px;margin:0 auto;gap:28px}
+}
+/* ===== Phone ===== */
+@media(max-width:760px){
   .wrap{padding:0 16px}
   nav.main{display:none}
-  .hd{height:56px;gap:10px}
+  .hd{height:58px;gap:10px}
   .logo{font-size:18px}
-  .logo .lg{width:30px;height:30px;font-size:16px;border-radius:8px}
+  .logo .mark{width:30px;height:30px;border-radius:9px}
   .hd-right{gap:8px}
   .hd-right .btn{display:none}
   .lang-toggle{padding:6px 10px;font-size:12px}
-  .hero{padding:36px 0 40px}
-  .hero .wrap,.pillar{grid-template-columns:1fr;gap:22px}
-  .hero h1{font-size:26px;letter-spacing:-.3px}
-  .hero p.sub{font-size:15px;margin:12px 0 18px}
+  .btn-enter{padding:7px 12px;font-size:13.5px}
+  .hero{padding:40px 0 64px}
+  .hero h1{font-size:32px;letter-spacing:-.6px}
+  .hero .sub{font-size:16px;margin:14px 0 22px}
   .hero-cta{flex-direction:column}
-  .hero-cta .btn{width:100%;text-align:center;padding:12px 16px;font-size:15px}
-  .trust{gap:10px 14px;margin-top:18px}
-  .trust div{font-size:13px}
-  .phone{width:210px}
-  .screen{height:400px}
-  .sec{padding:48px 0}
-  .sec h2{font-size:24px}
-  .sec .lede{font-size:15px}
-  .tabs{margin:20px 0;gap:8px}
-  .tab{padding:8px 12px;font-size:13px}
-  .pillar{padding:20px;border-radius:16px;gap:18px}
-  .pillar h3{font-size:20px}
-  .feat li{font-size:14.5px;margin-bottom:10px}
-  .plans{grid-template-columns:1fr;max-width:100%;margin-top:28px;gap:28px}
-  .plan{padding:24px 20px}
-  .plan.pop{transform:none}
-  .plan .price{font-size:34px}
-  .faq summary{padding:14px 16px;font-size:15px}
-  .who{padding:36px 0 4px}
-  .who h2{font-size:22px;margin-bottom:14px}
+  .hero-cta .btn{width:100%}
+  .chips{margin-top:20px}
+  .chip{font-size:12.5px;padding:6px 10px}
+  .float-tag{display:none}
+  .mock-body{height:320px}
+  .sec{padding:60px 0}
+  .sec-hd{margin-bottom:32px}
+  .sec-hd h2{font-size:28px;letter-spacing:-.4px}
+  .sec-hd p{font-size:16px}
+  .pain{padding:40px 0}
+  .pain-grid{grid-template-columns:1fr;gap:12px}
+  .fstep{grid-template-columns:38px 1fr;padding:14px;gap:12px}
+  .fstep.on{transform:none}
+  .fstep .n{width:38px;height:38px;font-size:16px}
+  .fstep h3{font-size:16.5px}
+  .flow-view{padding:14px;border-radius:20px}
+  .pcard{padding:16px}
+  .stat b{font-size:18px}
+  .role{padding:22px}
   .who-chip{font-size:13px;padding:8px 12px}
-  .cta-final{padding:32px 18px;margin:40px 0;border-radius:18px}
-  .cta-final h2{font-size:22px}
-  .cta-final p{font-size:15px;margin:10px 0 18px}
-  footer{padding:36px 0 90px}
+  .plan .price{font-size:36px}
+  .faq summary{padding:16px 18px;font-size:15px}
+  .faq .a{padding:0 18px 18px;font-size:15px}
+  .cta-final{padding:36px 20px;margin:56px 0;border-radius:20px}
+  .cta-final h2{font-size:26px}
+  .cta-final p{font-size:16px}
+  .cta-final .btn{width:100%}
+  footer{padding:40px 0 96px}
   .fcols{grid-template-columns:1fr;gap:22px;margin-bottom:24px}
-  .ai-float{width:48px;height:48px;right:12px;bottom:12px;font-size:20px}
-  .ai-box{
-    left:auto;
-    right:12px;
-    width:min(300px,calc(100vw - 24px));
-    bottom:68px;
-    height:min(38vh,300px);
-    max-height:300px;
-    border-radius:14px;
-  }
-  .ai-hd{padding:10px 12px}
-  .ai-hd b{font-size:13px}
-  .ai-msgs{padding:10px}
-  .ai-bubble{font-size:13px;padding:8px 10px}
-  .ai-form{padding:8px}
-  .ai-form input{padding:9px 10px;font-size:16px}
-  .ai-form button{padding:9px 12px;font-size:13px}
-}
-@media(max-width:420px){
-  .hero h1{font-size:22px}
-  .phone{display:none}
-  .ai-box{height:min(34vh,260px);max-height:260px;width:min(280px,calc(100vw - 24px))}
+  .ai-float{width:50px;height:50px;right:12px;bottom:12px;font-size:20px}
+  .ai-box{right:12px;width:min(320px,calc(100vw - 24px));bottom:70px;height:min(60vh,420px)}
+  .ai-form input{font-size:16px}
 }
 </style>
 </head>
@@ -217,238 +404,452 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
 
 <header>
   <div class="wrap hd">
-    <a class="logo" href="#"><span class="lg">🏢</span>WalkCheck</a>
+    <a class="logo" href="#top" aria-label="WalkCheck Holdings LLC">
+      <span class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0A1F36" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span><span class="lgtxt">WalkCheck<small>HOLDINGS LLC</small></span>
+    </a>
     <nav class="main">
-      <div class="dd"><span data-i18n="navProd">Producto ▾</span>
-        <div class="dd-menu">
-          <a href="#pilares"><b data-i18n="ddWc">WalkCheck</b><small data-i18n="ddWcS">Compañías de servicios · ejemplo: condominios</small></a>
-        </div>
-      </div>
+      <a href="#flujo" data-i18n="navFlow">Cómo funciona</a>
+      <a href="#walkthrough" data-i18n="navWt">Walkthrough</a>
+      <a href="#roles" data-i18n="navRoles">Para tu equipo</a>
       <a href="#precios" data-i18n="navPrecios">Precios</a>
       <a href="#faq" data-i18n="navFaq">Preguntas</a>
     </nav>
     <div class="hd-right">
-      <button class="lang-toggle" onclick="toggleLang()">EN</button>
-      <a class="btn btn-green btn-sm" href="/register/">15 días gratis</a>
+      <button class="lang-toggle" type="button" onclick="toggleLang()">EN</button>
+      <a class="btn btn-green btn-sm" href="/register/" data-i18n="navTrial">15 días gratis</a>
       <a class="btn-enter" href="/app/" data-i18n="navEnter">Entrar</a>
     </div>
   </div>
 </header>
 
-<section class="hero">
+<section class="hero" id="top">
   <div class="wrap">
     <div>
-      <h1 data-i18n="heroT">La plataforma para organizar tu <span class="hl">compañía de servicios</span></h1>
-      <p class="sub" data-i18n="heroS">Horario de tu equipo, trabajos con fotos, reportes mensuales listos para tu cliente y facturación, en un solo lugar. Para compañías de mantenimiento, limpieza, inspecciones, administración de propiedades y servicios técnicos.</p>
-      <div class="hero-cta">
-        <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 28px" data-i18n="heroMain">Empezar 15 días gratis</a>
-        <a class="btn btn-outline" href="#precios" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-i18n="heroCta2">Ver precios</a>
+      <span class="eyebrow rv" data-i18n="heroEy">Para compañías de servicios</span>
+      <h1 class="rv d1" data-i18n="heroT" style="margin-top:12px">Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span></h1>
+      <p class="sub rv d2" data-i18n="heroS">Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale lista con las horas y los materiales. Todo en un solo lugar.</p>
+      <div class="hero-cta rv d3">
+        <a class="btn btn-green" href="/register/" style="font-size:17px;padding:16px 28px" data-i18n="heroMain">Empezar 15 días gratis</a>
+        <a class="btn btn-ghost" href="#flujo" data-i18n="heroCta2">Ver cómo funciona</a>
       </div>
-      <p class="hero-note" data-i18n="heroNote">Sin tarjeta de crédito · 15 días gratis al registrarte</p>
-      <div class="trust">
-        <div>📋 <span data-i18n="t1">Checklists por área</span></div>
-        <div>📸 <span data-i18n="t2">Fotos con ubicación</span></div>
-        <div>📲 <span data-i18n="t3">Reporte por WhatsApp</span></div>
+      <p class="hero-note rv d3" data-i18n="heroNote">Sin tarjeta de crédito · Cancela cuando quieras</p>
+      <div class="chips rv d3">
+        <span class="chip"><i></i><span data-i18n="c1">Trabajos</span></span>
+        <span class="chip"><i></i><span data-i18n="c2">Visitas</span></span>
+        <span class="chip"><i></i><span data-i18n="c3">Notas con fotos</span></span>
+        <span class="chip"><i></i><span data-i18n="c4">Facturas</span></span>
       </div>
     </div>
-    <div>
-      <div class="phone"><div class="screen">
-        <div class="scr-hd"><b>🏢 <span data-i18n="phT">Recorrido · Octubre</span></b><br><small data-i18n="phS">8000 Harding Ave · Piso 3</small></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph1">Pasillos — Sin objetos</span></div>
-          <div class="chk"><span class="dot bad">✕</span><span data-i18n="ph2">Estacionamientos — Con objetos</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph3">Lobby — Todo en orden</span></div>
-          <div class="chk"><span class="dot pend">·</span><span data-i18n="ph4">Cuarto de basura — Pendiente</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="ph5">Piscina — Todo en orden</span></div>
+
+    <div class="mock rv d2" aria-hidden="true">
+      <div class="float-tag t1"><em>📸</em><span data-i18n="ft1">3 fotos nuevas</span></div>
+      <div class="float-tag t2"><em>✅</em><span data-i18n="ft2">Factura enviada</span></div>
+      <div class="mock-card">
+        <div class="mock-top">
+          <div class="dot3"><span></span><span></span><span></span></div>
+          <b data-i18n="mkTitle">Trabajo #1048</b>
+          <span class="live" data-i18n="mkLive">En vivo</span>
         </div>
-        <div class="scr-ft"><div class="scr-btn" data-i18n="phBtn">📲 Enviar reporte por WhatsApp</div></div>
-      </div></div>
+        <div class="steps-bar"><div class="sb"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div></div>
+        <div class="steps-lbl"><span data-i18n="s1">Trabajo</span><span data-i18n="s2">Visita</span><span data-i18n="s3">Notas</span><span data-i18n="s4">Factura</span></div>
+        <div class="mock-body">
+          <!-- 1. Job -->
+          <div class="scene">
+            <div class="title-row">
+              <div><h4 data-i18n="j1t">Reparar fuga en baño, Unidad 4B</h4><p>Bayview Condominiums · 1200 Ocean Dr</p></div>
+              <span class="pill b" data-i18n="j1st">Nuevo</span>
+            </div>
+            <div class="grid2">
+              <div class="kv"><small data-i18n="kClient">Cliente</small>Bayview HOA</div>
+              <div class="kv"><small data-i18n="kType">Tipo</small><span data-i18n="j1type">Plomería</span></div>
+              <div class="kv"><small data-i18n="kPrio">Prioridad</small><span data-i18n="j1prio">Alta</span></div>
+              <div class="kv"><small data-i18n="kSrc">Pedido por</small><span data-i18n="j1src">Administración</span></div>
+            </div>
+            <div class="send" style="background:var(--navy);color:#fff" data-i18n="j1btn">＋ Asignar visita</div>
+          </div>
+          <!-- 2. Visit -->
+          <div class="scene">
+            <div class="title-row"><div><h4 data-i18n="v1t">Visita agendada</h4><p data-i18n="v1s">Jueves · 9:00 AM – 11:00 AM</p></div><span class="pill a" data-i18n="v1st">En camino</span></div>
+            <div class="cal">
+              <div><span data-i18n="dLu">Lu</span><b>19</b></div><div><span data-i18n="dMa">Ma</span><b>20</b></div><div><span data-i18n="dMi">Mi</span><b>21</b></div><div class="on"><span data-i18n="dJu">Ju</span><b>22</b></div><div><span data-i18n="dVi">Vi</span><b>23</b></div>
+            </div>
+            <div class="tech"><span class="av">LM</span><div style="flex:1"><b>Luis M.</b><br><small style="color:var(--mut)" data-i18n="v1tech">Técnico · llega en 12 min</small></div></div>
+            <div class="timer"><span data-i18n="v1clock">Reloj de la visita</span><b id="clock">00:00:00</b></div>
+          </div>
+          <!-- 3. Notes + photos -->
+          <div class="scene">
+            <div class="title-row"><div><h4 data-i18n="n1t">Notas del técnico</h4><p data-i18n="n1s">Desde el teléfono, en el sitio</p></div><span class="pill g" data-i18n="n1st">Guardado</span></div>
+            <div class="photos">
+              <div class="ph ph1"><span data-i18n="pA">Antes</span></div>
+              <div class="ph ph2"><span data-i18n="pB">Pieza</span></div>
+              <div class="ph ph3"><span data-i18n="pC">Después</span></div>
+            </div>
+            <div class="note"><b data-i18n="n1lbl">Nota</b><span data-i18n="n1txt">Se cambió la válvula del inodoro y el sello. Sin fugas al terminar. Recibo de materiales adjunto.</span></div>
+          </div>
+          <!-- 4. Invoice -->
+          <div class="scene">
+            <div class="title-row"><div><h4 data-i18n="i1t">Factura #2231</h4><p>Bayview HOA</p></div><span class="pill g" data-i18n="i1st">Lista</span></div>
+            <div style="margin-top:8px">
+              <div class="inv-line"><span data-i18n="i1a">Mano de obra · 1.5 h</span><b>$135.00</b></div>
+              <div class="inv-line"><span data-i18n="i1b">Válvula y sello</span><b>$42.80</b></div>
+              <div class="inv-line"><span data-i18n="i1c">Visita de servicio</span><b>$45.00</b></div>
+            </div>
+            <div class="inv-total"><span>Total</span><span>$222.80</span></div>
+            <div class="send" data-i18n="i1btn">Enviar al cliente →</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="who" id="para-quien">
+<section class="pain">
   <div class="wrap">
-    <h2 data-i18n="whoT">¿Para quién es?</h2>
-    <div class="who-grid">
+    <div class="pain-grid">
+      <div class="pain-item rv"><div class="x">✕</div><b data-i18n="pa1t">Trabajos en el WhatsApp</b><p data-i18n="pa1">Pedidos que se pierden entre mensajes, audios y hojas de papel.</p></div>
+      <div class="pain-item rv d1"><div class="x">✕</div><b data-i18n="pa2t">Fotos en el teléfono de cada técnico</b><p data-i18n="pa2">Cuando el cliente pregunta, nadie encuentra la foto del antes y el después.</p></div>
+      <div class="pain-item rv d2"><div class="x">✕</div><b data-i18n="pa3t">Facturas que salen tarde</b><p data-i18n="pa3">Horas y materiales que se olvidan, y dinero que se queda sin cobrar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="flujo">
+  <div class="wrap">
+    <div class="sec-hd rv">
+      <span class="eyebrow" data-i18n="flEy">Cómo funciona</span>
+      <h2 data-i18n="flT">Un solo flujo, de principio a fin</h2>
+      <p data-i18n="flS">Cada trabajo pasa por los mismos cuatro pasos. Todo tu equipo ve en qué va cada uno, sin preguntar.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-steps" role="tablist">
+        <button class="fstep on rv" type="button" data-step="0" role="tab">
+          <span class="n">1</span>
+          <span><h3 data-i18n="f1t">Crea el trabajo</h3><p data-i18n="f1s">Cliente, dirección, tipo de trabajo y prioridad en un minuto.</p>
+            <ul><li data-i18n="f1a">Lista de trabajos con filtros por estado y tipo</li><li data-i18n="f1b">Ves de un vistazo lo atrasado y lo que falta por facturar</li><li data-i18n="f1c">Plantillas por tipo de trabajo</li></ul></span>
+        </button>
+        <button class="fstep rv d1" type="button" data-step="1" role="tab">
+          <span class="n">2</span>
+          <span><h3 data-i18n="f2t">Agenda la visita</h3><p data-i18n="f2s">Asígnala a un técnico con día y hora de inicio y fin.</p>
+            <ul><li data-i18n="f2a">Horario del equipo por día, semana o lista</li><li data-i18n="f2b">Varias visitas por trabajo y varios trabajos por día</li><li data-i18n="f2c">El técnico ve solo lo suyo en su teléfono</li></ul></span>
+        </button>
+        <button class="fstep rv d2" type="button" data-step="2" role="tab">
+          <span class="n">3</span>
+          <span><h3 data-i18n="f3t">Notas con fotos en el sitio</h3><p data-i18n="f3s">El técnico documenta el antes, el después y los materiales.</p>
+            <ul><li data-i18n="f3a">Fotos y notas guardadas en el trabajo, no en un teléfono</li><li data-i18n="f3b">Recibos de materiales adjuntos</li><li data-i18n="f3c">Horas registradas con el reloj de la visita</li></ul></span>
+        </button>
+        <button class="fstep rv d3" type="button" data-step="3" role="tab">
+          <span class="n">4</span>
+          <span><h3 data-i18n="f4t">Factura lista para enviar</h3><p data-i18n="f4s">Horas, materiales y visitas pasan solos a la factura.</p>
+            <ul><li data-i18n="f4a">Borrador de factura al cerrar el trabajo</li><li data-i18n="f4b">Revisas, ajustas y la envías al cliente</li><li data-i18n="f4c">Sabes qué está cobrado y qué no</li></ul></span>
+        </button>
+      </div>
+
+      <div class="flow-view rv d1" aria-live="polite">
+        <!-- Panel 1: jobs list -->
+        <div class="panel on">
+          <div class="pcard">
+            <div class="stat-row">
+              <div class="stat"><small data-i18n="st1">Atrasados</small><b style="color:var(--red)">3</b></div>
+              <div class="stat"><small data-i18n="st2">Por facturar</small><b style="color:var(--amber)">7</b></div>
+              <div class="stat"><small data-i18n="st3">Esta semana</small><b>24</b></div>
+            </div>
+          </div>
+          <div class="pcard">
+            <h5 data-i18n="pl1">Trabajos</h5>
+            <div class="list-row"><span class="av">BH</span><div class="grow"><b data-i18n="r1">Fuga en baño · 4B</b><small>Bayview HOA · 1200 Ocean Dr</small></div><span class="pill b" data-i18n="j1st">Nuevo</span></div>
+            <div class="list-row"><span class="av" style="background:#6B4FD8">PT</span><div class="grow"><b data-i18n="r2">Pintura de pasillo · Piso 7</b><small>Palm Tower · 88 Bay Rd</small></div><span class="pill a" data-i18n="rs2">Agendado</span></div>
+            <div class="list-row"><span class="av" style="background:#1E8E6E">SG</span><div class="grow"><b data-i18n="r3">Cambio de luces · Lobby</b><small>Sunset Gardens · 410 Palm Ave</small></div><span class="pill g" data-i18n="rs3">Por facturar</span></div>
+          </div>
+        </div>
+        <!-- Panel 2: schedule -->
+        <div class="panel">
+          <div class="pcard">
+            <h5 data-i18n="pl2">Horario del equipo · Jueves</h5>
+            <div class="list-row"><span class="av">LM</span><div class="grow"><b>Luis M.</b><small data-i18n="sc1">9:00 – 11:00 · Fuga en baño · 4B</small></div><span class="pill a" data-i18n="v1st">En camino</span></div>
+            <div class="list-row"><span class="av" style="background:#6B4FD8">AR</span><div class="grow"><b>Ana R.</b><small data-i18n="sc2">10:00 – 2:00 · Pintura de pasillo</small></div><span class="pill b" data-i18n="sc2s">En sitio</span></div>
+            <div class="list-row"><span class="av" style="background:#1E8E6E">JP</span><div class="grow"><b>Jorge P.</b><small data-i18n="sc3">1:00 – 3:00 · Cambio de luces</small></div><span class="pill" style="background:#EEF2F6;color:var(--mut)" data-i18n="sc3s">Pendiente</span></div>
+          </div>
+          <div class="pcard">
+            <h5 data-i18n="pl2b">Lo que ve el técnico</h5>
+            <div class="list-row"><span class="check ok">✓</span><div class="grow"><b data-i18n="tk1">Llegar y marcar inicio</b></div></div>
+            <div class="list-row"><span class="check ok">✓</span><div class="grow"><b data-i18n="tk2">Fotos de antes</b></div></div>
+            <div class="list-row"><span class="check"></span><div class="grow"><b data-i18n="tk3">Notas y fotos de después</b></div></div>
+          </div>
+        </div>
+        <!-- Panel 3: notes & photos -->
+        <div class="panel">
+          <div class="pcard">
+            <h5 data-i18n="pl3">Notas del trabajo #1048</h5>
+            <div class="big-photos">
+              <div class="ph ph1"><span data-i18n="pA">Antes</span></div>
+              <div class="ph ph2"><span data-i18n="pB">Pieza</span></div>
+              <div class="ph ph3"><span data-i18n="pC">Después</span></div>
+            </div>
+            <div class="note" style="margin-top:14px"><b>Luis M. · 10:42 AM</b><span data-i18n="n1txt">Se cambió la válvula del inodoro y el sello. Sin fugas al terminar. Recibo de materiales adjunto.</span></div>
+          </div>
+          <div class="pcard">
+            <div class="list-row"><span class="check ok">✓</span><div class="grow"><b data-i18n="nt1">Recibo de materiales</b><small data-i18n="nt1s">Ferretería · $42.80</small></div></div>
+            <div class="list-row"><span class="check ok">✓</span><div class="grow"><b data-i18n="nt2">Horas registradas</b><small data-i18n="nt2s">9:05 AM – 10:35 AM · 1.5 h</small></div></div>
+          </div>
+        </div>
+        <!-- Panel 4: invoice -->
+        <div class="panel">
+          <div class="pcard">
+            <div class="title-row"><div><h4 data-i18n="i1t">Factura #2231</h4><p>Bayview HOA · 1200 Ocean Dr</p></div><span class="pill g" data-i18n="i1st">Lista</span></div>
+            <div style="margin-top:12px">
+              <div class="inv-line"><span data-i18n="i1a">Mano de obra · 1.5 h</span><b>$135.00</b></div>
+              <div class="inv-line"><span data-i18n="i1b">Válvula y sello</span><b>$42.80</b></div>
+              <div class="inv-line"><span data-i18n="i1c">Visita de servicio</span><b>$45.00</b></div>
+            </div>
+            <div class="inv-total"><span>Total</span><span>$222.80</span></div>
+            <div class="send" data-i18n="i1btn">Enviar al cliente →</div>
+          </div>
+          <div class="pcard">
+            <div class="stat-row">
+              <div class="stat"><small data-i18n="st4">Cobrado este mes</small><b>$18.4k</b></div>
+              <div class="stat"><small data-i18n="st5">Por cobrar</small><b style="color:var(--amber)">$3.1k</b></div>
+              <div class="stat"><small data-i18n="st6">Borradores</small><b>5</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec wt-sec" id="walkthrough">
+  <div class="wrap">
+    <div class="sec-hd rv">
+      <span class="eyebrow" data-i18n="wtEy">Walkthrough mensual</span>
+      <h2 data-i18n="wtT">Cada edificio revisado igual, todos los meses</h2>
+      <p data-i18n="wtS">Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.</p>
+    </div>
+    <div class="wt-grid">
+      <div class="wt-copy rv">
+        <h3 data-i18n="wtH">Las mismas 8 áreas, el mismo estándar, sin importar quién vaya</h3>
+        <p data-i18n="wtP">Pasillos, lobby, luces, paredes y concreto, equipos de seguridad, estacionamientos, cuartos de basura y áreas comunes. En cada una, el técnico sabe exactamente qué buscar.</p>
+        <ul class="ticks">
+          <li data-i18n="wt1">"Todo bien" o "Problema" en cada área, con un toque</li>
+          <li data-i18n="wt2">Si hay un problema: dónde está, qué se vio y fotos de cerca</li>
+          <li data-i18n="wt3">Objetos personales en pasillos, documentados con su ubicación exacta</li>
+          <li data-i18n="wt4">Botón de peligro inmediato que avisa a la oficina sin esperar el reporte</li>
+          <li data-i18n="wt5">Las instrucciones de tu compañía dentro de cada walkthrough</li>
+        </ul>
+      </div>
+      <div class="wtm rv d1" aria-hidden="true">
+        <div class="wtm-hd"><b data-i18n="wtmT">🚶 Walkthrough · Bayview Condominiums</b><small data-i18n="wtmS">Octubre · 5 de 8 áreas · 2 problemas</small><div class="wtm-bar"><i></i></div></div>
+        <div class="wtm-body">
+          <div class="wa"><span class="em">🏢</span><span class="nm" data-i18n="wa1">Entradas y lobby</span><span class="pill g" data-i18n="waOk">Todo bien</span></div>
+          <div class="wa"><span class="em">💡</span><span class="nm" data-i18n="wa2">Luces</span><span class="pill g" data-i18n="waOk">Todo bien</span></div>
+          <div class="wa-open">
+            <div class="wa"><span class="em">🚪</span><span class="nm" data-i18n="wa3">Pasillos y escaleras</span><span class="pill o" data-i18n="waIss">Problema</span></div>
+            <p><b data-i18n="waWhere">Dónde:</b> <span data-i18n="wa3w">Piso 4, pasillo sur, frente a la 412</span><br><b data-i18n="waWhat">Qué:</b> <span data-i18n="wa3q">Zapatos y una bicicleta en el pasillo</span></p>
+          </div>
+          <div class="wa"><span class="em">🧱</span><span class="nm" data-i18n="wa4">Paredes, techos y concreto</span><span class="pill r" data-i18n="waDng">Peligro</span></div>
+          <div class="wa"><span class="em">🅿️</span><span class="nm" data-i18n="wa5">Estacionamientos</span><span class="pill g" data-i18n="waOk">Todo bien</span></div>
+          <div class="wa"><span class="em">🧯</span><span class="nm" data-i18n="wa6">Equipos de seguridad</span><span class="pill" style="background:#EEF2F6;color:var(--mut)" data-i18n="waPend">Pendiente</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="extras">
+      <div class="xcard rv">
+        <div class="months" aria-hidden="true"><div class="m1"><span data-i18n="mo1">Ago</span></div><div class="m2"><span data-i18n="mo2">Sep</span></div><div class="m3"><span data-i18n="mo3">Oct</span></div></div>
+        <h4 data-i18n="x1t">Historial fotográfico mes a mes</h4>
+        <p data-i18n="x1p">Las mismas fotos de los mismos lugares cada mes. Compara cómo estaba y cómo está, y tienes pruebas ante la junta, el seguro o un residente.</p>
+      </div>
+      <div class="xcard rv d1">
+        <div class="doc" aria-hidden="true">
+          <b data-i18n="x2d">Reporte mensual · Bayview HOA</b>
+          <div><span data-i18n="x2a">Áreas revisadas</span><span>8/8</span></div>
+          <div><span data-i18n="x2b">Problemas encontrados</span><span>3</span></div>
+          <div><span data-i18n="x2c">Fotos</span><span>24</span></div>
+        </div>
+        <h4 data-i18n="x2t">Un reporte para tu cliente</h4>
+        <p data-i18n="x2p">Lo que se encontró, dónde y con fotos, listo para la junta del condominio o el dueño del edificio.</p>
+      </div>
+      <div class="xcard rv d2">
+        <div aria-hidden="true">
+          <div class="clock"><span data-i18n="x3c">Reloj de la visita</span><b>01:28:40</b></div>
+          <div class="exp"><span data-i18n="x3e">Ferretería · recibo adjunto</span><b>$42.80</b></div>
+        </div>
+        <h4 data-i18n="x3t">Horas y gastos que no se pierden</h4>
+        <p data-i18n="x3p">El técnico registra sus horas y sus compras con recibo, y pasan a la factura sin que nadie las copie a mano.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec roles" id="roles">
+  <div class="wrap">
+    <div class="sec-hd rv">
+      <span class="eyebrow" data-i18n="roEy">Para tu equipo</span>
+      <h2 data-i18n="roT">Cada quien ve lo que le toca</h2>
+      <p data-i18n="roS">La oficina, los técnicos y el dueño trabajan en el mismo sistema, cada uno con su propia pantalla.</p>
+    </div>
+    <div class="role-grid">
+      <div class="role rv">
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7AC142" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+        <h3 data-i18n="ro1t">Dueño de la compañía</h3>
+        <p data-i18n="ro1s">Controla trabajos, equipo y dinero desde la computadora.</p>
+        <ul><li data-i18n="ro1a">Edificios y clientes</li><li data-i18n="ro1b">Facturación y reportes</li><li data-i18n="ro1c">Permisos del equipo</li></ul>
+      </div>
+      <div class="role rv d1">
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7AC142" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 data-i18n="ro2t">Oficina y supervisores</h3>
+        <p data-i18n="ro2s">Agendan, mueven visitas y revisan lo que se hizo.</p>
+        <ul><li data-i18n="ro2a">Horario de todo el equipo</li><li data-i18n="ro2b">Notas y fotos en tiempo real</li><li data-i18n="ro2c">Borradores de factura</li></ul>
+      </div>
+      <div class="role rv d2">
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7AC142" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
+        <h3 data-i18n="ro3t">Técnicos</h3>
+        <p data-i18n="ro3s">Ven solo su agenda del día y documentan desde el teléfono.</p>
+        <ul><li data-i18n="ro3a">Su agenda y direcciones</li><li data-i18n="ro3b">Checklist, notas y fotos</li><li data-i18n="ro3c">Reloj de horas por visita</li></ul>
+      </div>
+    </div>
+    <div class="priv rv">
+      <div class="lock"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7AC142" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <div>
+        <h3 data-i18n="pvT">Tus datos, protegidos por rol</h3>
+        <ul>
+          <li data-i18n="pv1">Tus técnicos no ven facturación, precios ni reportes</li>
+          <li data-i18n="pv2">No pueden cambiar el cliente, la dirección ni el precio</li>
+          <li data-i18n="pv3">Cada compañía ve solo sus propios datos</li>
+          <li data-i18n="pv4">El panel de WalkCheck solo administra tu cuenta, no tus trabajos ni clientes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="idiomas" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="bili rv">
+      <div>
+        <span class="eyebrow" data-i18n="biEy">Español e inglés</span>
+        <h2 data-i18n="biT">Tu oficina en inglés, tus técnicos en español</h2>
+        <p data-i18n="biS">Cada persona elige su idioma con un toque. El mismo trabajo, las mismas fotos y las mismas notas, sin traducir nada.</p>
+      </div>
+      <div class="phones" aria-hidden="true">
+        <div class="mini">
+          <div class="top" style="background:var(--navy)"><span>Office</span><em>EN</em></div>
+          <div class="row"><b>Bathroom leak · 4B</b><small>Scheduled · Luis M.</small></div>
+          <div class="row"><b>Hallway paint · Floor 7</b><small>On site · Ana R.</small></div>
+          <div class="row"><b>Walkthrough · Bayview</b><small>2 problems</small></div>
+        </div>
+        <div class="mini">
+          <div class="top" style="background:#0E7C66"><span>Técnico</span><em>ES</em></div>
+          <div class="row"><b>Fuga en baño · 4B</b><small>9:00 – 11:00</small></div>
+          <div class="row"><b>Walkthrough · Bayview</b><small>5/8 áreas</small></div>
+          <div class="row"><b>Notas y fotos</b><small>3 fotos nuevas</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="para-quien" style="padding-bottom:40px">
+  <div class="wrap">
+    <div class="sec-hd rv" style="margin-bottom:28px">
+      <h2 data-i18n="whoT">Hecho para compañías de servicios</h2>
+    </div>
+    <div class="who-grid rv d1">
       <span class="who-chip" data-i18n="who1">Administración de propiedades</span>
       <span class="who-chip" data-i18n="who2">Mantenimiento y reparaciones</span>
-      <span class="who-chip" data-i18n="who3">Limpieza</span>
-      <span class="who-chip" data-i18n="who4">Inspecciones</span>
-      <span class="who-chip" data-i18n="who5">Jardinería y exteriores</span>
-      <span class="who-chip" data-i18n="who6">Servicios técnicos</span>
-    </div>
-    <p class="lede" data-i18n="whoS">El caso principal sigue siendo el recorrido de condominios; las demás compañías usan el mismo horario, fotos y reportes.</p>
-  </div>
-</section>
-
-<section class="sec" id="pilares">
-  <div class="wrap">
-    <h2 data-i18n="pilT">Todo lo que necesitas, en 4 pilares</h2>
-    <p class="lede" data-i18n="pilS">Del recorrido al reporte final, WalkCheck cubre el proceso completo.</p>
-    <div class="tabs">
-      <button class="tab on" onclick="tab(0)" data-i18n="tab1">📋 Documenta</button>
-      <button class="tab" onclick="tab(1)" data-i18n="tab2">📲 Reporta</button>
-      <button class="tab" onclick="tab(2)" data-i18n="tab3">👥 Organiza</button>
-      <button class="tab" onclick="tab(3)" data-i18n="tab4">📅 Revisa</button>
-    </div>
-
-    <div class="pillar on" id="p0">
-      <div>
-        <h3 data-i18n="p1t">Documenta cada recorrido como un profesional</h3>
-        <ul class="feat">
-          <li data-i18n="p1a">Checklist por áreas: pasillos, lobby, estacionamientos, piscina y más</li>
-          <li data-i18n="p1b">Hasta 6 fotos por hallazgo, con ubicación y piso exactos</li>
-          <li data-i18n="p1c">Botón de emergencia que avisa por WhatsApp al instante</li>
-          <li data-i18n="p1d">Funciona en Android y panel web para la oficina</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📋 <span data-i18n="m1t">Checklist · Estacionamientos</span></b></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1a">Objetos personales — Sin objetos</span></div>
-          <div class="chk"><span class="dot bad">✕</span><span data-i18n="m1b">Basura — Con objetos</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1c">Iluminación — Todo bien</span></div>
-          <div class="chk"><span class="dot ok">✓</span><span data-i18n="m1d">Señalización — Todo bien</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--green)" data-i18n="m1btn">＋ Agregar hallazgo con foto</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p1">
-      <div>
-        <h3 data-i18n="p2t">Reportes listos para mandar por WhatsApp</h3>
-        <ul class="feat">
-          <li data-i18n="p2a">Un toque genera el reporte del mes, agrupado por piso</li>
-          <li data-i18n="p2b">Formato profesional con negritas, listo para el cliente</li>
-          <li data-i18n="p2c">Corrector automático de errores de escritura</li>
-          <li data-i18n="p2d">Las fotos quedan guardadas en la app y el panel</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📲 <span data-i18n="m2t">Reporte · Octubre 2026</span></b></div>
-        <div class="scr-bd" style="font-size:13px">
-          <div class="chk" style="display:block"><b>REPORTE WALKCHECK</b><br><span data-i18n="m2a">Fecha: 16 Oct 2026</span></div>
-          <div class="chk" style="display:block"><b>PLANTA BAJA:</b><br>✅ <span data-i18n="m2b">Estacionamientos: todo en buen orden</span></div>
-          <div class="chk" style="display:block"><b>PISO 1:</b><br>✅ <span data-i18n="m2c">Lobby: todo bien</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" data-i18n="m2btn">💬 Enviar por WhatsApp</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p2">
-      <div>
-        <h3 data-i18n="p3t">Organiza a tu compañía y tu equipo</h3>
-        <ul class="feat">
-          <li data-i18n="p3a">Múltiples compañías, cada una con sus sitios y datos separados</li>
-          <li data-i18n="p3b">Crea usuarios para tus trabajadores con contraseña temporal</li>
-          <li data-i18n="p3c">Activa o suspende compañías desde el panel de administrador</li>
-          <li data-i18n="p3d">Panel web para que la oficina revise hallazgos y reportes</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>👥 <span data-i18n="m3t">Equipo</span></b></div>
-        <div class="scr-bd">
-          <div class="chk"><span class="dot ok">✓</span><span>Juan P. — <span data-i18n="m3a">activo</span></span></div>
-          <div class="chk"><span class="dot ok">✓</span><span>María G. — <span data-i18n="m3a2">activa</span></span></div>
-          <div class="chk"><span class="dot pend">·</span><span>Carlos R. — <span data-i18n="m3b">pendiente</span></span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--green)" data-i18n="m3btn">＋ Crear trabajador</div></div>
-      </div></div></div>
-    </div>
-
-    <div class="pillar" id="p3">
-      <div>
-        <h3 data-i18n="p4t">Revisa tu historial mes a mes</h3>
-        <ul class="feat">
-          <li data-i18n="p4a">Calendario con todas tus inspecciones por mes y año</li>
-          <li data-i18n="p4b">Compara fotos del mes anterior contra el actual</li>
-          <li data-i18n="p4c">Abre cualquier inspección pasada en segundos</li>
-          <li data-i18n="p4d">Tus datos guardados en la nube, siempre disponibles</li>
-        </ul>
-      </div>
-      <div><div class="phone"><div class="screen">
-        <div class="scr-hd"><b>📅 <span data-i18n="m4t">2026</span></b></div>
-        <div class="scr-bd" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Jul</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Ago</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px"><b>Sep</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;background:var(--navy);color:#fff"><b>Oct</b><span>✓</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;opacity:.4"><b>Nov</b><span>–</span></div>
-          <div class="chk" style="justify-content:center;flex-direction:column;font-size:12px;opacity:.4"><b>Dic</b><span>–</span></div>
-        </div>
-        <div class="scr-ft"><div class="scr-btn" style="background:var(--navy)" data-i18n="m4btn">Abrir inspección de octubre</div></div>
-      </div></div></div>
+      <span class="who-chip" data-i18n="who3">Handyman</span>
+      <span class="who-chip" data-i18n="who4">Limpieza</span>
+      <span class="who-chip" data-i18n="who5">Inspecciones y recorridos</span>
+      <span class="who-chip" data-i18n="who6">Plomería y electricidad</span>
+      <span class="who-chip" data-i18n="who7">Pintura</span>
+      <span class="who-chip" data-i18n="who8">Jardinería y exteriores</span>
     </div>
   </div>
 </section>
 
 <section class="sec" id="precios">
   <div class="wrap">
-    <h2 data-i18n="prT">Elige tu plan WALKCHECK — 15 DÍAS GRATIS</h2>
-    <p class="lede" data-i18n="prS">CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Empiezas 15 días gratis, sin tarjeta.</p>
+    <div class="sec-hd rv">
+      <span class="eyebrow" data-i18n="prEy">Precios</span>
+      <h2 data-i18n="prT">Un plan según el tamaño de tu equipo</h2>
+      <p data-i18n="prS">Todos los planes empiezan con 15 días gratis, sin tarjeta.</p>
+    </div>
+    <div class="founder rv">
+      <span class="fx">★</span>
+      <div><b data-i18n="fdT">Precio de fundador: tu precio queda congelado para siempre</b><span data-i18n="fdS">Si te registras ahora, mantienes este precio mientras sigas con nosotros, aunque WalkCheck suba sus planes más adelante.</span></div>
+    </div>
     <div class="plans">
-      <div class="plan">
+      <div class="plan rv">
         <h3 data-i18n="planCrew5">CREW 5</h3>
         <div class="price">$99.99<small data-i18n="perMo">/mes</small></div>
         <p class="desc" data-i18n="coreD">Hasta 5 trabajadores</p>
         <ul>
-          <li data-i18n="core1">Hasta 5 trabajadores</li>
-          <li data-i18n="core2">Checklists de recorrido</li>
-          <li data-i18n="core3">Soporte por email</li>
-          <li data-i18n="core4">Analítica e informes básicos</li>
+          <li data-i18n="core1">Trabajos, visitas y horario</li>
+          <li data-i18n="core2">Notas con fotos</li>
+          <li data-i18n="core3">Facturas</li>
+          <li data-i18n="core4">Soporte por email</li>
         </ul>
-        <a class="btn btn-outline" id="planBtnCrew5" href="/register/?plan=crew5" data-i18n="planCta">Empezar 15 días gratis</a>
+        <a class="btn btn-line" id="planBtnCrew5" href="/register/?plan=crew5" data-i18n="planCta">Empezar 15 días gratis</a>
       </div>
-      <div class="plan pop">
+      <div class="plan pop rv d1">
         <span class="pop-tag" data-i18n="popTag">Más popular</span>
         <h3 data-i18n="planCrew10">CREW 10</h3>
-        <div class="price">$149.99<small data-i18n="perMo2">/mes</small></div>
+        <div class="price">$149.99<small data-i18n="perMo">/mes</small></div>
         <p class="desc" data-i18n="connD">Hasta 10 trabajadores</p>
         <ul>
-          <li data-i18n="conn1">Hasta 10 trabajadores</li>
-          <li data-i18n="conn2">Checklists y plantillas</li>
-          <li data-i18n="conn3">Soporte prioritario</li>
-          <li data-i18n="conn4">Historial mensual y reportes</li>
-          <li data-i18n="conn5">Panel web para la oficina</li>
+          <li data-i18n="conn1">Todo lo de CREW 5</li>
+          <li data-i18n="conn2">Plantillas por tipo de trabajo</li>
+          <li data-i18n="conn3">Reportes mensuales para tus clientes</li>
+          <li data-i18n="conn4">Soporte prioritario</li>
         </ul>
-        <a class="btn btn-blue" id="planBtnCrew10" href="/register/?plan=crew10" data-i18n="planCta2">Empezar 15 días gratis</a>
+        <a class="btn btn-blue" id="planBtnCrew10" href="/register/?plan=crew10" data-i18n="planCta">Empezar 15 días gratis</a>
       </div>
-      <div class="plan">
+      <div class="plan rv d2">
         <h3 data-i18n="planUnlim">UNLIMITED</h3>
-        <div class="price">$299.99<small data-i18n="perMo3">/mes</small></div>
+        <div class="price">$299.99<small data-i18n="perMo">/mes</small></div>
         <p class="desc" data-i18n="growD">Trabajadores ilimitados</p>
         <ul>
-          <li data-i18n="grow1">Trabajadores ilimitados</li>
-          <li data-i18n="grow2">Todas las funciones de CREW 10</li>
+          <li data-i18n="grow1">Todo lo de CREW 10</li>
+          <li data-i18n="grow2">Trabajadores ilimitados</li>
           <li data-i18n="grow3">Soporte prioritario</li>
-          <li data-i18n="grow4">Acompañamiento en la activación de tu compañía</li>
+          <li data-i18n="grow4">Te ayudamos a activar tu compañía</li>
         </ul>
-        <a class="btn btn-outline" id="planBtnUnlimited" href="/register/?plan=unlimited" data-i18n="planCta3">Empezar 15 días gratis</a>
+        <a class="btn btn-line" id="planBtnUnlimited" href="/register/?plan=unlimited" data-i18n="planCta">Empezar 15 días gratis</a>
       </div>
     </div>
-    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Empiezas al registrarte en esta página; la app funciona en Android y el panel web en cualquier dispositivo.</p>
+    <div class="flat">
+      <span data-i18n="fl1">Precio por equipo, no por usuario</span>
+      <span data-i18n="fl2">Sin subida después del primer año</span>
+      <span data-i18n="fl3">Walkthrough, facturas y fotos incluidos</span>
+      <span data-i18n="fl4">Sin contratos</span>
+    </div>
+    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. La app funciona en Android y el panel web en cualquier dispositivo.</p>
   </div>
 </section>
 
-<section class="sec" id="faq" style="background:var(--bg)">
+<section class="sec" id="faq">
   <div class="wrap">
-    <h2 data-i18n="faqT">Preguntas frecuentes</h2>
-    <div class="faq">
-      <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Crea tu cuenta en esta página: eliges tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app y te acompañamos en tu primer recorrido.</div></details>
-      <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.</div></details>
-      <details><summary data-i18n="fq3">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa3">La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.</div></details>
-      <details><summary data-i18n="fq4">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa4">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
-      <details><summary data-i18n="fq5">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa5">Tus trabajos, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.</div></details>
+    <div class="sec-hd rv"><h2 data-i18n="faqT">Preguntas frecuentes</h2></div>
+    <div class="faq rv d1">
+      <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Crea tu cuenta en esta página, elige tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.</div></details>
+      <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">No para empezar. Tienes 15 días gratis y decides después.</div></details>
+      <details><summary data-i18n="fq3">¿Mis técnicos necesitan computadora?</summary><div class="a" data-i18n="fa3">No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.</div></details>
+      <details><summary data-i18n="fq4">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa4">El panel web funciona en cualquier teléfono o computadora. La app está en Android y la versión para iPhone está en desarrollo.</div></details>
+      <details><summary data-i18n="fq5">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa5">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
+      <details><summary data-i18n="fq6">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa6">Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.</div></details>
+      <details><summary data-i18n="fq7">¿El precio va a subir?</summary><div class="a" data-i18n="fa7">No para ti. Con el precio de fundador, lo que pagas al registrarte es lo que sigues pagando mientras te quedes con nosotros, sin cobro extra por usuario y sin subida después del primer año.</div></details>
     </div>
   </div>
 </section>
 
 <div class="wrap">
-  <div class="cta-final">
-    <h2 data-i18n="ctaT">Empieza tu primer recorrido hoy</h2>
-    <p data-i18n="ctaS">Crea tu cuenta y empieza tus 15 días gratis.</p>
-    <a class="btn btn-green" href="/register/" style="font-size:18px;padding:16px 40px" data-i18n="ctaB">Empezar 15 días gratis</a>
+  <div class="cta-final rv">
+    <h2 data-i18n="ctaT">Tu próximo trabajo, de principio a fin en WalkCheck</h2>
+    <p data-i18n="ctaS">Crea tu cuenta hoy y prueba el flujo completo con tu equipo durante 15 días.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a class="btn btn-green" href="/register/" style="font-size:17px;padding:16px 40px" data-i18n="ctaB">Empezar 15 días gratis</a>
+      <a class="btn btn-ghost" href="tel:+13052052128" style="font-size:17px;padding:16px 28px">📞 <span data-i18n="ctaCall">Llámanos</span> 305-205-2128</a>
+    </div>
+    <p style="margin:18px 0 0;font-size:15px"><span data-i18n="ctaMail">¿Prefieres escribir?</span> <a href="mailto:info@walkcheck.app" style="color:#fff;font-weight:700">info@walkcheck.app</a></p>
   </div>
 </div>
 
@@ -456,18 +857,20 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   <div class="wrap">
     <div class="fcols">
       <div>
-        <a class="logo" href="#" style="margin-bottom:14px"><span class="lg">🏢</span>WalkCheck</a>
-        <p style="font-size:14.5px;max-width:280px" data-i18n="ftD">La plataforma para organizar tu compañía de servicios. Hecho en Miami.</p>
+        <a class="logo" href="#top" style="margin-bottom:14px" aria-label="WalkCheck Holdings LLC"><span class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0A1F36" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span><span class="lgtxt">WalkCheck<small>HOLDINGS LLC</small></span></a>
+        <p style="font-size:14.5px;max-width:280px" data-i18n="ftD">Del trabajo a la factura para compañías de servicios. Hecho en Miami.</p>
       </div>
       <div>
         <h4 data-i18n="ftP">Producto</h4>
-        <a href="#pilares">WalkCheck</a>
+        <a href="#flujo" data-i18n="navFlow">Cómo funciona</a>
+        <a href="#precios" data-i18n="navPrecios">Precios</a>
         <a href="/app/" data-i18n="navEnter">Entrar</a>
-        <a href="#precios" data-i18n="ftPr">Precios</a>
       </div>
       <div>
         <h4 data-i18n="ftC">Contacto</h4>
-        <a href="mailto:info@walkcheck.app">Contacto:  info@walkcheck.app</a>
+        <a href="tel:+13052052128">📞 305-205-2128</a>
+        <a href="mailto:info@walkcheck.app">info@walkcheck.app</a>
+        <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a>
       </div>
       <div>
         <h4 data-i18n="ftL">Legal</h4>
@@ -476,7 +879,7 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
       </div>
     </div>
     <div class="fbot">
-      <span>© 2026 WalkCheck</span>
+      <span>© 2026 WalkCheck Holdings LLC · Miami, FL · <a href="tel:+13052052128" style="color:inherit">305-205-2128</a></span>
       <span data-i18n="ftM">Hecho en Miami 🌴</span>
     </div>
   </div>
@@ -494,154 +897,206 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
     <button type="submit" data-i18n="aiSend">Enviar</button>
   </form>
 </div>
+
 <script>
-const PAYMENT_LINKS = {
-  crew5:     "https://buy.stripe.com/00w8wP5Lo5qt3Ul3iO63K00",
-  crew10:    "https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01",
-  unlimited: "https://buy.stripe.com/3cI00jgq22eh1Md7z463K02"
-};
-function planHref(id){ return '/register/?plan=' + id; }
-function bindPlanButtons(){
-  var map = { planBtnCrew5: 'crew5', planBtnCrew10: 'crew10', planBtnUnlimited: 'unlimited' };
-  Object.keys(map).forEach(function(id){
-    var a = document.getElementById(id);
-    if (a) a.href = planHref(map[id]);
-  });
-}
 var lang = "es";
 var I18N = {
 es:{
-navProd:"Producto ▾",ddWc:"WalkCheck",ddWcS:"Compañías de servicios · ejemplo: condominios",ddMtgS:"Gestión para handymen",navPrecios:"Precios",navFaq:"Preguntas",navEnter:"Entrar",
+navWt:"Walkthrough",ctaCall:"Llámanos",ctaMail:"¿Prefieres escribir?",
+fdT:"Precio de fundador: tu precio queda congelado para siempre",fdS:"Si te registras ahora, mantienes este precio mientras sigas con nosotros, aunque WalkCheck suba sus planes más adelante.",
+fl1:"Precio por equipo, no por usuario",fl2:"Sin subida después del primer año",fl3:"Walkthrough, facturas y fotos incluidos",fl4:"Sin contratos",
+fq7:"¿El precio va a subir?",fa7:"No para ti. Con el precio de fundador, lo que pagas al registrarte es lo que sigues pagando mientras te quedes con nosotros, sin cobro extra por usuario y sin subida después del primer año.",
+wtEy:"Walkthrough mensual",wtT:"Cada edificio revisado igual, todos los meses",wtS:"Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.",
+wtH:"Las mismas 8 áreas, el mismo estándar, sin importar quién vaya",wtP:"Pasillos, lobby, luces, paredes y concreto, equipos de seguridad, estacionamientos, cuartos de basura y áreas comunes. En cada una, el técnico sabe exactamente qué buscar.",
+wt1:'"Todo bien" o "Problema" en cada área, con un toque',wt2:"Si hay un problema: dónde está, qué se vio y fotos de cerca",wt3:"Objetos personales en pasillos, documentados con su ubicación exacta",wt4:"Botón de peligro inmediato que avisa a la oficina sin esperar el reporte",wt5:"Las instrucciones de tu compañía dentro de cada walkthrough",
+wtmT:"🚶 Walkthrough · Bayview Condominiums",wtmS:"Octubre · 5 de 8 áreas · 2 problemas",
+wa1:"Entradas y lobby",wa2:"Luces",wa3:"Pasillos y escaleras",wa4:"Paredes, techos y concreto",wa5:"Estacionamientos",wa6:"Equipos de seguridad",
+waOk:"Todo bien",waIss:"Problema",waDng:"Peligro",waPend:"Pendiente",waWhere:"Dónde:",waWhat:"Qué:",wa3w:"Piso 4, pasillo sur, frente a la 412",wa3q:"Zapatos y una bicicleta en el pasillo",
+mo1:"Ago",mo2:"Sep",mo3:"Oct",
+x1t:"Historial fotográfico mes a mes",x1p:"Las mismas fotos de los mismos lugares cada mes. Compara cómo estaba y cómo está, y tienes pruebas ante la junta, el seguro o un residente.",
+x2d:"Reporte mensual · Bayview HOA",x2a:"Áreas revisadas",x2b:"Problemas encontrados",x2c:"Fotos",x2t:"Un reporte para tu cliente",x2p:"Lo que se encontró, dónde y con fotos, listo para la junta del condominio o el dueño del edificio.",
+x3c:"Reloj de la visita",x3e:"Ferretería · recibo adjunto",x3t:"Horas y gastos que no se pierden",x3p:"El técnico registra sus horas y sus compras con recibo, y pasan a la factura sin que nadie las copie a mano.",
+pvT:"Tus datos, protegidos por rol",pv1:"Tus técnicos no ven facturación, precios ni reportes",pv2:"No pueden cambiar el cliente, la dirección ni el precio",pv3:"Cada compañía ve solo sus propios datos",pv4:"El panel de WalkCheck solo administra tu cuenta, no tus trabajos ni clientes",
+biEy:"Español e inglés",biT:"Tu oficina en inglés, tus técnicos en español",biS:"Cada persona elige su idioma con un toque. El mismo trabajo, las mismas fotos y las mismas notas, sin traducir nada.",
+navFlow:"Cómo funciona",navRoles:"Para tu equipo",navPrecios:"Precios",navFaq:"Preguntas",navTrial:"15 días gratis",navEnter:"Entrar",
 aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck. Para empezar, crea tu cuenta en /register/. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
-heroT:'La plataforma para organizar tu <span class="hl">compañía de servicios</span>',
-heroS:"Horario de tu equipo, trabajos con fotos, reportes mensuales listos para tu cliente y facturación, en un solo lugar. Para compañías de mantenimiento, limpieza, inspecciones, administración de propiedades y servicios técnicos.",
-whoT:"¿Para quién es?",who1:"Administración de propiedades",who2:"Mantenimiento y reparaciones",who3:"Limpieza",who4:"Inspecciones",who5:"Jardinería y exteriores",who6:"Servicios técnicos",
-whoS:"El caso principal sigue siendo el recorrido de condominios; las demás compañías usan el mismo horario, fotos y reportes.",
-heroMain:"Empezar 15 días gratis",heroCta2:"Ver precios",heroNote:"Sin tarjeta de crédito · 15 días gratis al registrarte",
-t1:"Checklists por área",t2:"Fotos con ubicación",t3:"Reporte por WhatsApp",
-phT:"Recorrido · Octubre",phS:"8000 Harding Ave · Piso 3",
-ph1:"Pasillos — Sin objetos",ph2:"Estacionamientos — Con objetos",ph3:"Lobby — Todo en orden",ph4:"Cuarto de basura — Pendiente",ph5:"Piscina — Todo en orden",
-phBtn:"📲 Enviar reporte por WhatsApp",
-pilT:"Todo lo que necesitas, en 4 pilares",pilS:"Del recorrido al reporte final, WalkCheck cubre el proceso completo.",
-tab1:"📋 Documenta",tab2:"📲 Reporta",tab3:"👥 Organiza",tab4:"📅 Revisa",
-p1t:"Documenta cada recorrido como un profesional",
-p1a:"Checklist por áreas: pasillos, lobby, estacionamientos, piscina y más",
-p1b:"Hasta 6 fotos por hallazgo, con ubicación y piso exactos",
-p1c:"Botón de emergencia que avisa por WhatsApp al instante",
-p1d:"Funciona en Android y panel web para la oficina",
-m1t:"Checklist · Estacionamientos",m1a:"Objetos personales — Sin objetos",m1b:"Basura — Con objetos",m1c:"Iluminación — Todo bien",m1d:"Señalización — Todo bien",m1btn:"＋ Agregar hallazgo con foto",
-p2t:"Reportes listos para mandar por WhatsApp",
-p2a:"Un toque genera el reporte del mes, agrupado por piso",
-p2b:"Formato profesional con negritas, listo para el cliente",
-p2c:"Corrector automático de errores de escritura",
-p2d:"Las fotos quedan guardadas en la app y el panel",
-m2t:"Reporte · Octubre 2026",m2a:"Fecha: 16 Oct 2026",m2b:"Estacionamientos: todo en buen orden",m2c:"Lobby: todo bien",m2btn:"💬 Enviar por WhatsApp",
-p3t:"Organiza a tu compañía y tu equipo",
-p3a:"Múltiples compañías, cada una con sus sitios y datos separados",
-p3b:"Crea usuarios para tus trabajadores con contraseña temporal",
-p3c:"Activa o suspende compañías desde el panel de administrador",
-p3d:"Panel web para que la oficina revise hallazgos y reportes",
-m3t:"Equipo",m3a:"activo",m3a2:"activa",m3b:"pendiente",m3btn:"＋ Crear trabajador",
-p4t:"Revisa tu historial mes a mes",
-p4a:"Calendario con todas tus inspecciones por mes y año",
-p4b:"Compara fotos del mes anterior contra el actual",
-p4c:"Abre cualquier inspección pasada en segundos",
-p4d:"Tus datos guardados en la nube, siempre disponibles",
-m4t:"2026",m4btn:"Abrir inspección de octubre",
-prT:"Elige tu plan WALKCHECK — 15 DÍAS GRATIS",prS:"CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Empiezas 15 días gratis, sin tarjeta.",
-perMo:"/mes",perMo2:"/mes",perMo3:"/mes",
-popTag:"Más popular",
+heroEy:"Para compañías de servicios",
+heroT:'Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span>',
+heroS:"Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale lista con las horas y los materiales. Todo en un solo lugar.",
+heroMain:"Empezar 15 días gratis",heroCta2:"Ver cómo funciona",heroNote:"Sin tarjeta de crédito · Cancela cuando quieras",
+c1:"Trabajos",c2:"Visitas",c3:"Notas con fotos",c4:"Facturas",
+ft1:"3 fotos nuevas",ft2:"Factura enviada",
+mkTitle:"Trabajo #1048",mkLive:"En vivo",s1:"Trabajo",s2:"Visita",s3:"Notas",s4:"Factura",
+j1t:"Reparar fuga en baño, Unidad 4B",j1st:"Nuevo",kClient:"Cliente",kType:"Tipo",kPrio:"Prioridad",kSrc:"Pedido por",j1type:"Plomería",j1prio:"Alta",j1src:"Administración",j1btn:"＋ Asignar visita",
+v1t:"Visita agendada",v1s:"Jueves · 9:00 AM – 11:00 AM",v1st:"En camino",dLu:"Lu",dMa:"Ma",dMi:"Mi",dJu:"Ju",dVi:"Vi",v1tech:"Técnico · llega en 12 min",v1clock:"Reloj de la visita",
+n1t:"Notas del técnico",n1s:"Desde el teléfono, en el sitio",n1st:"Guardado",pA:"Antes",pB:"Pieza",pC:"Después",n1lbl:"Nota",n1txt:"Se cambió la válvula del inodoro y el sello. Sin fugas al terminar. Recibo de materiales adjunto.",
+i1t:"Factura #2231",i1st:"Lista",i1a:"Mano de obra · 1.5 h",i1b:"Válvula y sello",i1c:"Visita de servicio",i1btn:"Enviar al cliente →",
+pa1t:"Trabajos en el WhatsApp",pa1:"Pedidos que se pierden entre mensajes, audios y hojas de papel.",
+pa2t:"Fotos en el teléfono de cada técnico",pa2:"Cuando el cliente pregunta, nadie encuentra la foto del antes y el después.",
+pa3t:"Facturas que salen tarde",pa3:"Horas y materiales que se olvidan, y dinero que se queda sin cobrar.",
+flEy:"Cómo funciona",flT:"Un solo flujo, de principio a fin",flS:"Cada trabajo pasa por los mismos cuatro pasos. Todo tu equipo ve en qué va cada uno, sin preguntar.",
+f1t:"Crea el trabajo",f1s:"Cliente, dirección, tipo de trabajo y prioridad en un minuto.",f1a:"Lista de trabajos con filtros por estado y tipo",f1b:"Ves de un vistazo lo atrasado y lo que falta por facturar",f1c:"Plantillas por tipo de trabajo",
+f2t:"Agenda la visita",f2s:"Asígnala a un técnico con día y hora de inicio y fin.",f2a:"Horario del equipo por día, semana o lista",f2b:"Varias visitas por trabajo y varios trabajos por día",f2c:"El técnico ve solo lo suyo en su teléfono",
+f3t:"Notas con fotos en el sitio",f3s:"El técnico documenta el antes, el después y los materiales.",f3a:"Fotos y notas guardadas en el trabajo, no en un teléfono",f3b:"Recibos de materiales adjuntos",f3c:"Horas registradas con el reloj de la visita",
+f4t:"Factura lista para enviar",f4s:"Horas, materiales y visitas pasan solos a la factura.",f4a:"Borrador de factura al cerrar el trabajo",f4b:"Revisas, ajustas y la envías al cliente",f4c:"Sabes qué está cobrado y qué no",
+st1:"Atrasados",st2:"Por facturar",st3:"Esta semana",pl1:"Trabajos",r1:"Fuga en baño · 4B",r2:"Pintura de pasillo · Piso 7",rs2:"Agendado",r3:"Cambio de luces · Lobby",rs3:"Por facturar",
+pl2:"Horario del equipo · Jueves",sc1:"9:00 – 11:00 · Fuga en baño · 4B",sc2:"10:00 – 2:00 · Pintura de pasillo",sc2s:"En sitio",sc3:"1:00 – 3:00 · Cambio de luces",sc3s:"Pendiente",
+pl2b:"Lo que ve el técnico",tk1:"Llegar y marcar inicio",tk2:"Fotos de antes",tk3:"Notas y fotos de después",
+pl3:"Notas del trabajo #1048",nt1:"Recibo de materiales",nt1s:"Ferretería · $42.80",nt2:"Horas registradas",nt2s:"9:05 AM – 10:35 AM · 1.5 h",
+st4:"Cobrado este mes",st5:"Por cobrar",st6:"Borradores",
+roEy:"Para tu equipo",roT:"Cada quien ve lo que le toca",roS:"La oficina, los técnicos y el dueño trabajan en el mismo sistema, cada uno con su propia pantalla.",
+ro1t:"Dueño de la compañía",ro1s:"Controla trabajos, equipo y dinero desde la computadora.",ro1a:"Edificios y clientes",ro1b:"Facturación y reportes",ro1c:"Permisos del equipo",
+ro2t:"Oficina y supervisores",ro2s:"Agendan, mueven visitas y revisan lo que se hizo.",ro2a:"Horario de todo el equipo",ro2b:"Notas y fotos en tiempo real",ro2c:"Borradores de factura",
+ro3t:"Técnicos",ro3s:"Ven solo su agenda del día y documentan desde el teléfono.",ro3a:"Su agenda y direcciones",ro3b:"Checklist, notas y fotos",ro3c:"Reloj de horas por visita",
+whoT:"Hecho para compañías de servicios",who1:"Administración de propiedades",who2:"Mantenimiento y reparaciones",who3:"Handyman",who4:"Limpieza",who5:"Inspecciones y recorridos",who6:"Plomería y electricidad",who7:"Pintura",who8:"Jardinería y exteriores",
+prEy:"Precios",prT:"Un plan según el tamaño de tu equipo",prS:"Todos los planes empiezan con 15 días gratis, sin tarjeta.",perMo:"/mes",popTag:"Más popular",
 planCrew5:"CREW 5",planCrew10:"CREW 10",planUnlim:"UNLIMITED",
-coreD:"Hasta 5 trabajadores",core1:"Hasta 5 trabajadores",core2:"Checklists de recorrido",core3:"Soporte por email",core4:"Analítica e informes básicos",
-connD:"Hasta 10 trabajadores",conn1:"Hasta 10 trabajadores",conn2:"Checklists y plantillas",conn3:"Soporte prioritario",conn4:"Historial mensual y reportes",conn5:"Panel web para la oficina",
-growD:"Trabajadores ilimitados",grow1:"Trabajadores ilimitados",grow2:"Todas las funciones de CREW 10",grow3:"Soporte prioritario",grow4:"Acompañamiento en la activación de tu compañía",
-planCta:"Empezar 15 días gratis",planCta2:"Empezar 15 días gratis",planCta3:"Empezar 15 días gratis",
-prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Empiezas al registrarte en esta página; la app funciona en Android y el panel web en cualquier dispositivo.",
+coreD:"Hasta 5 trabajadores",core1:"Trabajos, visitas y horario",core2:"Notas con fotos",core3:"Facturas",core4:"Soporte por email",
+connD:"Hasta 10 trabajadores",conn1:"Todo lo de CREW 5",conn2:"Plantillas por tipo de trabajo",conn3:"Reportes mensuales para tus clientes",conn4:"Soporte prioritario",
+growD:"Trabajadores ilimitados",grow1:"Todo lo de CREW 10",grow2:"Trabajadores ilimitados",grow3:"Soporte prioritario",grow4:"Te ayudamos a activar tu compañía",
+planCta:"Empezar 15 días gratis",
+prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. La app funciona en Android y el panel web en cualquier dispositivo.",
 faqT:"Preguntas frecuentes",
-fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página: eliges tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app y te acompañamos en tu primer recorrido.",
-fq2:"¿Necesito tarjeta de crédito?",fa2:"No para empezar. Tienes 15 días gratis. Cuando decidas quedarte, activamos tu plan y coordinamos el pago contigo.",
-fq3:"¿Funciona en iPhone?",fa3:"La app funciona en Android y el panel web en cualquier dispositivo. La versión para iPhone está en desarrollo.",
-fq4:"¿Puedo cambiar de plan o cancelar?",fa4:"Sí, cuando quieras. Sin contratos ni penalidades.",
-fq5:"¿Mis datos están seguros?",fa5:"Tus trabajos, fotos y reportes se guardan en la nube y solo tu compañía puede verlos.",
-ctaT:"Empieza tu primer recorrido hoy",ctaS:"Crea tu cuenta y empieza tus 15 días gratis.",ctaB:"Empezar 15 días gratis",
-ftD:"La plataforma para organizar tu compañía de servicios. Hecho en Miami.",ftP:"Producto",ftPr:"Precios",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
+fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página, elige tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",
+fq2:"¿Necesito tarjeta de crédito?",fa2:"No para empezar. Tienes 15 días gratis y decides después.",
+fq3:"¿Mis técnicos necesitan computadora?",fa3:"No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.",
+fq4:"¿Funciona en iPhone?",fa4:"El panel web funciona en cualquier teléfono o computadora. La app está en Android y la versión para iPhone está en desarrollo.",
+fq5:"¿Puedo cambiar de plan o cancelar?",fa5:"Sí, cuando quieras. Sin contratos ni penalidades.",
+fq6:"¿Mis datos están seguros?",fa6:"Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.",
+ctaT:"Tu próximo trabajo, de principio a fin en WalkCheck",ctaS:"Crea tu cuenta hoy y prueba el flujo completo con tu equipo durante 15 días.",ctaB:"Empezar 15 días gratis",
+ftD:"Del trabajo a la factura para compañías de servicios. Hecho en Miami.",ftP:"Producto",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
 },
 en:{
-navProd:"Product ▾",ddWc:"WalkCheck",ddWcS:"Service companies · lead example: condos",ddMtgS:"Handyman management",navPrecios:"Pricing",navFaq:"FAQ",navEnter:"Sign in",
-aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck. To start, create your account at /register/. If you need help, email  soporte@walkcheck.app.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
-heroT:'The platform to run your <span class="hl">service company</span>',
-heroS:"Team schedule, jobs with photos, monthly reports ready for your client, and billing, in one place. For maintenance, cleaning, inspections, property management, and technical service companies.",
-whoT:"Who is it for?",who1:"Property management",who2:"Maintenance and repairs",who3:"Cleaning",who4:"Inspections",who5:"Landscaping and exteriors",who6:"Technical services",
-whoS:"Condo walkthroughs remain the lead example; other service companies use the same schedule, photos, and reports.",
-heroMain:"Start 15-day free trial",heroCta2:"See pricing",heroNote:"No credit card · 15 days free when you sign up",
-t1:"Checklists by area",t2:"Photos with location",t3:"WhatsApp report",
-phT:"Walkthrough · October",phS:"8000 Harding Ave · Floor 3",
-ph1:"Hallways — No items",ph2:"Parking — With items",ph3:"Lobby — All good",ph4:"Trash room — Pending",ph5:"Pool — All good",
-phBtn:"📲 Send report via WhatsApp",
-pilT:"Everything you need, in 4 pillars",pilS:"From walkthrough to final report, WalkCheck covers the whole process.",
-tab1:"📋 Document",tab2:"📲 Report",tab3:"👥 Organize",tab4:"📅 Review",
-p1t:"Document every walkthrough like a pro",
-p1a:"Checklists by area: hallways, lobby, parking, pool and more",
-p1b:"Up to 6 photos per finding, with exact location and floor",
-p1c:"Emergency button that alerts via WhatsApp instantly",
-p1d:"Works on Android plus a web panel for the office",
-m1t:"Checklist · Parking",m1a:"Personal items — No items",m1b:"Trash — With items",m1c:"Lighting — All good",m1d:"Signage — All good",m1btn:"＋ Add finding with photo",
-p2t:"Reports ready to send via WhatsApp",
-p2a:"One tap generates the monthly report, grouped by floor",
-p2b:"Professional format with bold text, client-ready",
-p2c:"Automatic typo correction",
-p2d:"Photos stay saved in the app and the panel",
-m2t:"Report · October 2026",m2a:"Date: Oct 16, 2026",m2b:"Parking: all in good order",m2c:"Lobby: all good",m2btn:"💬 Send via WhatsApp",
-p3t:"Organize your company and team",
-p3a:"Multiple companies, each with separate sites and data",
-p3b:"Create logins for your workers with temporary passwords",
-p3c:"Activate or suspend companies from the admin panel",
-p3d:"Web panel for the office to review findings and reports",
-m3t:"Team",m3a:"active",m3a2:"active",m3b:"pending",m3btn:"＋ Create worker",
-p4t:"Review your history month by month",
-p4a:"Calendar with all your inspections by month and year",
-p4b:"Compare last month's photos against the current one",
-p4c:"Open any past inspection in seconds",
-p4d:"Your data saved in the cloud, always available",
-m4t:"2026",m4btn:"Open October inspection",
-prT:"Choose your WALKCHECK plan — 15 DAYS FREE",prS:"CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Start with 15 days free, no card.",
-perMo:"/mo",perMo2:"/mo",perMo3:"/mo",
-popTag:"Most Popular",
+navWt:"Walkthrough",ctaCall:"Call us",ctaMail:"Prefer to write?",
+fdT:"Founder pricing: your price is locked in for good",fdS:"Sign up now and keep this price for as long as you stay with us, even if WalkCheck raises its plans later.",
+fl1:"Priced per team, not per user",fl2:"No increase after the first year",fl3:"Walkthrough, invoices and photos included",fl4:"No contracts",
+fq7:"Will the price go up?",fa7:"Not for you. With founder pricing, what you pay when you sign up is what you keep paying for as long as you stay, with no per-user fees and no increase after the first year.",
+wtEy:"Monthly walkthrough",wtT:"Every building checked the same way, every month",wtS:"Your tech walks the common areas with a guided checklist. Your office sees the result without calling anyone.",
+wtH:"The same 8 areas, the same standard, no matter who goes",wtP:"Hallways, lobby, lighting, walls and concrete, safety equipment, parking, trash rooms and common areas. In each one, the tech knows exactly what to look for.",
+wt1:'"All good" or "Problem" for each area, in one tap',wt2:"If there's a problem: where it is, what was seen and close-up photos",wt3:"Personal items in hallways, documented with their exact location",wt4:"Immediate-danger button that alerts the office without waiting for the report",wt5:"Your company's instructions inside every walkthrough",
+wtmT:"🚶 Walkthrough · Bayview Condominiums",wtmS:"October · 5 of 8 areas · 2 problems",
+wa1:"Entrances & lobby",wa2:"Lighting",wa3:"Hallways & stairs",wa4:"Walls, ceilings & concrete",wa5:"Parking",wa6:"Safety equipment",
+waOk:"All good",waIss:"Problem",waDng:"Danger",waPend:"Pending",waWhere:"Where:",waWhat:"What:",wa3w:"Floor 4, south hallway, by unit 412",wa3q:"Shoes and a bike in the hallway",
+mo1:"Aug",mo2:"Sep",mo3:"Oct",
+x1t:"Month-by-month photo history",x1p:"The same photos of the same spots every month. Compare before and now, and have proof for the board, the insurer or a resident.",
+x2d:"Monthly report · Bayview HOA",x2a:"Areas checked",x2b:"Problems found",x2c:"Photos",x2t:"A report for your client",x2p:"What was found, where, with photos, ready for the condo board or the building owner.",
+x3c:"Visit clock",x3e:"Hardware store · receipt attached",x3t:"Hours and expenses that don't get lost",x3p:"Techs log their hours and purchases with receipts, and they flow into the invoice without anyone retyping them.",
+pvT:"Your data, protected by role",pv1:"Your techs don't see billing, prices or reports",pv2:"They can't change the client, address or price",pv3:"Each company sees only its own data",pv4:"The WalkCheck admin panel only manages your account, not your jobs or clients",
+biEy:"Spanish and English",biT:"Your office in English, your techs in Spanish",biS:"Everyone picks their language in one tap. Same job, same photos, same notes, nothing to translate.",
+navFlow:"How it works",navRoles:"For your team",navPrecios:"Pricing",navFaq:"FAQ",navTrial:"15 days free",navEnter:"Sign in",
+aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck. To start, create your account at /register/. If you need help, email soporte@walkcheck.app.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
+heroEy:"For service companies",
+heroT:'From job to invoice, <span class="hl">no paper, no phone tag</span>',
+heroS:"Create the job, schedule it, your tech leaves notes and photos from their phone, and the invoice comes out ready with hours and materials. All in one place.",
+heroMain:"Start 15-day free trial",heroCta2:"See how it works",heroNote:"No credit card · Cancel anytime",
+c1:"Jobs",c2:"Visits",c3:"Notes with photos",c4:"Invoices",
+ft1:"3 new photos",ft2:"Invoice sent",
+mkTitle:"Job #1048",mkLive:"Live",s1:"Job",s2:"Visit",s3:"Notes",s4:"Invoice",
+j1t:"Fix bathroom leak, Unit 4B",j1st:"New",kClient:"Client",kType:"Type",kPrio:"Priority",kSrc:"Requested by",j1type:"Plumbing",j1prio:"High",j1src:"Management",j1btn:"＋ Assign visit",
+v1t:"Visit scheduled",v1s:"Thursday · 9:00 AM – 11:00 AM",v1st:"On the way",dLu:"Mo",dMa:"Tu",dMi:"We",dJu:"Th",dVi:"Fr",v1tech:"Technician · arrives in 12 min",v1clock:"Visit clock",
+n1t:"Technician notes",n1s:"From the phone, on site",n1st:"Saved",pA:"Before",pB:"Part",pC:"After",n1lbl:"Note",n1txt:"Replaced the toilet valve and seal. No leaks when finished. Materials receipt attached.",
+i1t:"Invoice #2231",i1st:"Ready",i1a:"Labor · 1.5 h",i1b:"Valve and seal",i1c:"Service call",i1btn:"Send to client →",
+pa1t:"Jobs buried in WhatsApp",pa1:"Requests lost between texts, voice notes and paper.",
+pa2t:"Photos on every tech's phone",pa2:"When the client asks, nobody can find the before and after.",
+pa3t:"Invoices that go out late",pa3:"Forgotten hours and materials, and money left uncollected.",
+flEy:"How it works",flT:"One flow, start to finish",flS:"Every job goes through the same four steps. Your whole team sees where each one stands, without asking.",
+f1t:"Create the job",f1s:"Client, address, job type and priority in a minute.",f1a:"Job list with filters by status and type",f1b:"See what's late and what's left to invoice at a glance",f1c:"Templates by job type",
+f2t:"Schedule the visit",f2s:"Assign it to a tech with a day plus start and end time.",f2a:"Team schedule by day, week or list",f2b:"Several visits per job and several jobs per day",f2c:"Techs only see their own work on their phone",
+f3t:"Notes with photos on site",f3s:"The tech documents the before, the after and the materials.",f3a:"Photos and notes saved on the job, not on a phone",f3b:"Materials receipts attached",f3c:"Hours tracked with the visit clock",
+f4t:"Invoice ready to send",f4s:"Hours, materials and visits flow into the invoice.",f4a:"Draft invoice when the job closes",f4b:"Review, adjust and send it to the client",f4c:"Know what's paid and what isn't",
+st1:"Late",st2:"To invoice",st3:"This week",pl1:"Jobs",r1:"Bathroom leak · 4B",r2:"Hallway paint · Floor 7",rs2:"Scheduled",r3:"Light replacement · Lobby",rs3:"To invoice",
+pl2:"Team schedule · Thursday",sc1:"9:00 – 11:00 · Bathroom leak · 4B",sc2:"10:00 – 2:00 · Hallway paint",sc2s:"On site",sc3:"1:00 – 3:00 · Light replacement",sc3s:"Pending",
+pl2b:"What the tech sees",tk1:"Arrive and clock in",tk2:"Before photos",tk3:"After notes and photos",
+pl3:"Notes for job #1048",nt1:"Materials receipt",nt1s:"Hardware store · $42.80",nt2:"Hours tracked",nt2s:"9:05 AM – 10:35 AM · 1.5 h",
+st4:"Collected this month",st5:"Outstanding",st6:"Drafts",
+roEy:"For your team",roT:"Everyone sees what's theirs",roS:"Office, techs and owner work in the same system, each with their own screen.",
+ro1t:"Company owner",ro1s:"Runs jobs, team and money from the computer.",ro1a:"Buildings and clients",ro1b:"Billing and reports",ro1c:"Team permissions",
+ro2t:"Office and supervisors",ro2s:"Schedule, move visits and review the work done.",ro2a:"Whole-team schedule",ro2b:"Notes and photos in real time",ro2c:"Draft invoices",
+ro3t:"Technicians",ro3s:"See only today's schedule and document from their phone.",ro3a:"Their schedule and addresses",ro3b:"Checklist, notes and photos",ro3c:"Hours clock per visit",
+whoT:"Built for service companies",who1:"Property management",who2:"Maintenance and repairs",who3:"Handyman",who4:"Cleaning",who5:"Inspections and walkthroughs",who6:"Plumbing and electrical",who7:"Painting",who8:"Landscaping and exteriors",
+prEy:"Pricing",prT:"A plan for the size of your team",prS:"Every plan starts with 15 days free, no card.",perMo:"/mo",popTag:"Most popular",
 planCrew5:"CREW 5",planCrew10:"CREW 10",planUnlim:"UNLIMITED",
-coreD:"Up to 5 workers",core1:"Up to 5 workers",core2:"Walkthrough checklists",core3:"Email support",core4:"Basic analytics &amp; reporting",
-connD:"Up to 10 workers",conn1:"Up to 10 workers",conn2:"Checklists and templates",conn3:"Priority support",conn4:"Monthly history and reports",conn5:"Web panel for the office",
-growD:"Unlimited workers",grow1:"Unlimited workers",grow2:"All CREW 10 features",grow3:"Priority support",grow4:"Help activating your company",
-planCta:"Start 15-day free trial",planCta2:"Start 15-day free trial",planCta3:"Start 15-day free trial",
-prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. You start when you sign up on this page; the app runs on Android and the web panel on any device.",
+coreD:"Up to 5 workers",core1:"Jobs, visits and schedule",core2:"Notes with photos",core3:"Invoices",core4:"Email support",
+connD:"Up to 10 workers",conn1:"Everything in CREW 5",conn2:"Templates by job type",conn3:"Monthly reports for your clients",conn4:"Priority support",
+growD:"Unlimited workers",grow1:"Everything in CREW 10",grow2:"Unlimited workers",grow3:"Priority support",grow4:"Help activating your company",
+planCta:"Start 15-day free trial",
+prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. The app runs on Android and the web panel on any device.",
 faqT:"Frequently asked questions",
-fq1:"How do I start?",fa1:"Create your account on this page: choose your plan and start your 15 free days. If you need help, email  soporte@walkcheck.app and we walk you through your first inspection.",
-fq2:"Do I need a credit card?",fa2:"Not to start. You get 15 days free. When you decide to stay, we activate your plan and arrange payment with you.",
-fq3:"Does it work on iPhone?",fa3:"The app runs on Android and the web panel on any device. The iPhone version is in development.",
-fq4:"Can I change plans or cancel?",fa4:"Yes, anytime. No contracts or penalties.",
-fq5:"Is my data safe?",fa5:"Your jobs, photos and reports are stored in the cloud and only your company can see them.",
-ctaT:"Start your first walkthrough today",ctaS:"Create your account and start your 15 free days.",ctaB:"Start 15-day free trial",
-ftD:"The platform to run your service company. Made in Miami.",ftP:"Product",ftPr:"Pricing",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
+fq1:"How do I start?",fa1:"Create your account on this page, choose your plan and start your 15 free days. If you need help, email soporte@walkcheck.app.",
+fq2:"Do I need a credit card?",fa2:"Not to start. You get 15 days free and decide afterwards.",
+fq3:"Do my techs need a computer?",fa3:"No. They see their schedule, take photos and leave notes from their phone. The office uses the web panel.",
+fq4:"Does it work on iPhone?",fa4:"The web panel works on any phone or computer. The app is on Android and the iPhone version is in development.",
+fq5:"Can I change plans or cancel?",fa5:"Yes, anytime. No contracts or penalties.",
+fq6:"Is my data safe?",fa6:"Your jobs, photos and invoices are stored in the cloud and only your company can see them.",
+ctaT:"Your next job, start to finish in WalkCheck",ctaS:"Create your account today and try the full flow with your team for 15 days.",ctaB:"Start 15-day free trial",
+ftD:"From job to invoice for service companies. Made in Miami.",ftP:"Product",ftC:"Contact",ftL:"Legal",ftT:"Terms",ftPv:"Privacy",ftM:"Made in Miami 🌴"
 }};
-function tab(n){
-  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('on', i===n); });
-  document.querySelectorAll('.pillar').forEach(function(p,i){ p.classList.toggle('on', i===n); });
-}
+
 function applyLang(){
   var d = I18N[lang];
   document.querySelectorAll("[data-i18n]").forEach(function(el){
     var k = el.getAttribute("data-i18n");
-    if(d[k] !== undefined) el.innerHTML = d[k];
+    if (d[k] !== undefined) el.innerHTML = d[k];
   });
   document.querySelectorAll("[data-i18n-ph]").forEach(function(el){
     var k = el.getAttribute("data-i18n-ph");
-    if(d[k] !== undefined) el.placeholder = d[k];
+    if (d[k] !== undefined) el.placeholder = d[k];
   });
   document.documentElement.lang = lang;
-  document.querySelector(".lang-toggle").textContent = (lang==="es") ? "EN" : "ES";
+  document.querySelector(".lang-toggle").textContent = (lang === "es") ? "EN" : "ES";
+  try { localStorage.setItem("wkLang", lang); } catch (e) {}
 }
-function toggleLang(){ lang = (lang==="es") ? "en" : "es"; applyLang(); }
+function toggleLang(){ lang = (lang === "es") ? "en" : "es"; applyLang(); }
+try { var saved = localStorage.getItem("wkLang"); if (saved === "en" || saved === "es") lang = saved; } catch (e) {}
 applyLang();
-bindPlanButtons();
+
+var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Hero mock: cycle Job -> Visit -> Notes -> Invoice */
+(function(){
+  var scenes = document.querySelectorAll(".mock .scene");
+  var bars = document.querySelectorAll(".mock .sb");
+  var lbls = document.querySelectorAll(".mock .steps-lbl span");
+  var i = 0;
+  function show(n){
+    scenes.forEach(function(s, k){ s.classList.toggle("on", k === n); });
+    bars.forEach(function(b, k){
+      b.classList.remove("now"); b.classList.toggle("done", k < n);
+      if (k === n) { void b.offsetWidth; b.classList.add(reduceMotion ? "done" : "now"); }
+    });
+    lbls.forEach(function(l, k){ l.classList.toggle("on", k === n); });
+  }
+  show(0);
+  if (!reduceMotion) setInterval(function(){ i = (i + 1) % scenes.length; show(i); }, 3200);
+  var start = Date.now() - 37 * 60 * 1000;
+  var clock = document.getElementById("clock");
+  function tick(){
+    var s = Math.floor((Date.now() - start) / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    clock.textContent = [h, m, x].map(function(v){ return String(v).padStart(2, "0"); }).join(":");
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+/* Flow stepper: click a step, or let it follow scroll on desktop */
+(function(){
+  var steps = document.querySelectorAll(".fstep");
+  var panels = document.querySelectorAll(".flow-view .panel");
+  function pick(n){
+    steps.forEach(function(s, k){ s.classList.toggle("on", k === n); s.setAttribute("aria-selected", k === n); });
+    panels.forEach(function(p, k){ p.classList.toggle("on", k === n); });
+  }
+  steps.forEach(function(s){ s.addEventListener("click", function(){ pick(+s.getAttribute("data-step")); }); });
+})();
+
+/* Scroll reveal */
+(function(){
+  var els = document.querySelectorAll(".rv");
+  if (reduceMotion || !("IntersectionObserver" in window)) { els.forEach(function(e){ e.classList.add("in"); }); return; }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
+  }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+  els.forEach(function(e){ io.observe(e); });
+})();
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -657,12 +1112,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: plataforma para compañías de servicios (horario, trabajos con fotos, reportes mensuales, facturación). El ejemplo principal es el recorrido de condominios. Precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis sin tarjeta en walkcheck.app/register. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. No inventes funciones. Para cerrar, apunta a /register/ y a  soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a  soporte@walkcheck.app. Sé breve."
+    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: plataforma para compañías de servicios con este flujo: crear el trabajo, agendar la visita al técnico, notas con fotos en el sitio y factura lista con horas y materiales. Precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis sin tarjeta en walkcheck.app/register. Precio de fundador: quien se registra ahora mantiene su precio para siempre mientras siga activo; precio por equipo, sin cobro por usuario extra. No hay plan anual todavía. Contacto de ventas: 305-205-2128 o info@walkcheck.app. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. No inventes funciones. Para cerrar, apunta a /register/ y a soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a soporte@walkcheck.app. Sé breve."
 });
 const chat = model.startChat();
 let sent = 0;
@@ -676,12 +1130,10 @@ function bubble(text, who) {
   el.scrollIntoView({ behavior: "smooth", block: "end" });
   return el;
 }
-
 function hello() {
   const box = document.getElementById("aiMsgs");
   if (box.childElementCount === 0) bubble(I18N[lang].aiHello, "bot");
 }
-
 document.getElementById("aiOpen").addEventListener("click", () => {
   document.getElementById("aiBox").classList.add("on");
   hello();
@@ -707,6 +1159,4 @@ document.getElementById("aiForm").addEventListener("submit", async (e) => {
   }
 });
 </script>
-
-
 </body></html>
