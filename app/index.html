@@ -800,7 +800,11 @@ function applyCompanyPanel(){
 
 function isSuper(){
   const e = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-  return e === 'pegoa.app@gmail.com' || e === 'maikelramirez55@gmail.com';
+  return e === 'pegoa.app@gmail.com'
+    || e === 'maikelramirez55@gmail.com'
+    || e === 'maikel@walkcheck.app'
+    || e === 'info@walkcheck.app'
+    || e === 'soporte@walkcheck.app';
 }
 function normRole(){
   const r = String((profile && profile.role) || '').toLowerCase();
