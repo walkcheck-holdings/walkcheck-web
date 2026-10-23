@@ -24,14 +24,15 @@
   body { overflow-x: hidden; }
   body.ready { overflow-x: hidden; overflow-y: hidden; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
-  header { background: #1B7A36; color: #fff; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header { background: #1B7A36; color: #fff; padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top)); display: grid; grid-template-columns: minmax(140px,auto) 1fr minmax(280px,auto); align-items: center; gap: 16px; }
   header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; }
   header h1 a { color: #fff; text-decoration: none; display: block; }
   .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
   #coSwitch { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.28); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; max-width: 180px; min-height: 40px; }
-  #coName { font-size: 13px; font-weight: 700; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .95; }
-  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 44px; font-size: 14px; }
-  .hdr-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 1; }
+  #coName { font-size: 15px; font-weight: 800; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .98; min-width: 0; }
+  #coName:empty { visibility: hidden; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 40px; font-size: 13px; }
+  .hdr-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
   .hdr-actions a { color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 44px; display: inline-flex; align-items: center; }
   #roleChip { font-size: 13px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #sitesToggle { display: none; }
@@ -75,13 +76,29 @@
   #sidebar { width: 240px; min-width: 240px; max-width: 240px; flex: 0 0 240px; background: #fff; border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; }
   #sidebar h2 { margin: 0; padding: 12px 10px 6px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #6B7280; }
   #bList { overflow: auto; flex: 1; min-height: 80px; -webkit-overflow-scrolling: touch; }
-  .types-box { margin: 8px 10px 12px; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 8px; background: #fff; display: flex; flex-direction: column; min-height: 0; flex: 0 0 auto; }
-  .types-box .ttl { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #6B7280; margin: 0 0 6px; }
-  .types-box select { margin: 0 0 8px; }
-  #typeList { border: 1px solid #E5E5EA; border-radius: 10px; overflow: auto; max-height: 160px; min-height: 96px; flex: 1 1 auto; }
-  .type-row { display: flex; align-items: center; gap: 8px; width: 100%; border: none; background: #fff; padding: 8px 10px; text-align: left; cursor: pointer; font-size: 13px; font-weight: 600; min-height: 36px; }
-  .type-row:hover, .type-row.on { background: #E8F8EC; }
-  .types-box .btn { margin-top: 8px; }
+  .types-box { margin: 8px 10px 12px; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 10px; background: #fff; flex: 0 0 auto; }
+  .types-box .ttl { font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #6B7280; margin: 0 0 8px; }
+  .type-bar { display: flex; gap: 8px; align-items: stretch; }
+  .type-dd-wrap { position: relative; flex: 1; min-width: 0; }
+  .type-dd-btn {
+    width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px;
+    border: 1px solid #D1D1D6; border-radius: 10px; background: #fff; padding: 8px 10px;
+    cursor: pointer; text-align: left; font-weight: 700; font-size: 13px;
+  }
+  .type-dd-btn .caret { margin-left: auto; color: #8E8E93; }
+  .type-dd {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+    background: #fff; border: 1px solid #E5E5EA; border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.14); max-height: 240px; overflow: auto; display: none;
+  }
+  .type-dd.open { display: block; }
+  .type-opt {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+    border: none; background: #fff; cursor: pointer; font-size: 14px; text-align: left; min-height: 44px;
+  }
+  .type-opt:hover, .type-opt.on { background: #E8F8EC; }
+  .type-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .types-box .btn.type-new { width: auto; flex: 0 0 auto; margin: 0; padding: 8px 12px; min-height: 44px; font-size: 13px; }
   .b-item { padding: 14px; cursor: pointer; font-size: 15px; font-weight: 500; border-bottom: 1px solid #F2F2F7; min-height: 48px; }
   .b-item:hover, .b-item.on { background: #E8F8EC; }
   .co-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 12px 10px; cursor: pointer; min-height: 48px; font-weight: 800; font-size: 14px; border-bottom: 1px solid #E5E5EA; }
@@ -122,14 +139,14 @@
   #hoursPane th, #hoursPane td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; }
   #hoursPane h3 { margin: 4px 0 8px; }
   .daygrid { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; background: #fff; }
-  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 48px; align-items: center; justify-content: flex-start; }
+  .daygrid-head { display: flex; width: 100%; position: sticky; top: 0; z-index: 3; background: #F8FAF8; border-bottom: 1px solid #E5E5EA; min-height: 48px; align-items: stretch; justify-content: stretch; }
   .gutter { width: 56px; min-width: 56px; flex: 0 0 56px; }
-  .col-head { flex: 1 1 160px; min-width: 160px; max-width: 200px; padding: 8px 6px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .col-head { flex: 1 1 0; min-width: 0; max-width: none; padding: 8px 6px; text-align: center; font-weight: 800; font-size: 13px; border-left: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; background: none; color: inherit; width: auto; }
   .col-head .cnt { display: inline-block; margin-left: 0; background: #E8F8EC; color: #1B7A36; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; }
-  .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; justify-content: flex-start; }
+  .daygrid-body { display: flex; width: 100%; flex: 1; min-height: 0; overflow: auto; position: relative; justify-content: stretch; align-items: stretch; }
   .time-axis { width: 56px; min-width: 56px; flex: 0 0 56px; position: relative; background: #fff; }
   .tmark { position: absolute; left: 0; right: 0; font-size: 10px; font-weight: 800; color: #8E8E93; padding-left: 4px; transform: translateY(-6px); }
-  .wcol { flex: 1 1 160px; min-width: 160px; max-width: 200px; position: relative; border-left: 1px solid #E5E5EA; background: #fff; }
+  .wcol { flex: 1 1 0; min-width: 0; max-width: none; position: relative; border-left: 1px solid #E5E5EA; background: #fff; }
   .qslot { position: absolute; left: 0; right: 0; border-top: 1px solid #F4F4F5; cursor: pointer; }
   .qslot.hour { border-top: 1px solid #E5E5EA; }
   .qslot.over { background: #E8F8EC; }
@@ -214,9 +231,28 @@
   #phoneTabs button { flex: 1; min-height: 44px; border: none; background: none; font-size: 15px; font-weight: 700; color: #8E8E93; padding: 10px; }
   #phoneTabs button.on { color: #34C759; border-bottom: 3px solid #34C759; }
   #deskToggle { display: none; position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 8px; z-index: 30; width: auto; min-height: 36px; font-size: 12px; padding: 6px 10px; }
-  #bottomNav { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E5E5EA; padding-bottom: env(safe-area-inset-bottom); z-index: 25; }
-  #bottomNav button { flex: 1; border: none; background: none; min-height: 52px; font-size: 12px; font-weight: 700; color: #111; }
-  #bottomNav button.plus { color: #34C759; font-size: 13px; }
+  #bottomNav, #empNav {
+    display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #fff;
+    border-top: 1px solid #E5E5EA; padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    z-index: 80;
+  }
+  #bottomNav button, #empNav button {
+    flex: 1; border: none; background: none; min-height: 56px; font-size: 11px; font-weight: 700; color: #6B7280;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  #bottomNav button .nav-ic, #empNav button .nav-ic { width: 22px; height: 22px; display: block; }
+  #bottomNav button.on, #empNav button.on { color: #1B7A36; }
+  #bottomNav button.plus { color: #34C759; }
+  #moreSheet {
+    display: none; position: fixed; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom));
+    background: #fff; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.22); z-index: 81; padding: 8px;
+  }
+  #moreSheet.open { display: block; }
+  #moreSheet button { display: block; width: 100%; text-align: left; border: none; background: #fff; padding: 14px 16px; font-weight: 700; font-size: 15px; min-height: 48px; border-radius: 10px; cursor: pointer; }
+  #moreSheet button:hover { background: #F2F2F7; }
+  body.view-worker #staffMain, body.view-worker #hoursPane, body.view-worker #reportsPane { display: none; }
+  #workerPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+  body.view-worker #workerPane { display: block; }
   .mtech { background: #fff; margin-bottom: 10px; }
   .mtech-h { padding: 12px 14px; font-weight: 800; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
   .mrow { display: flex; min-height: 64px; border-bottom: 1px solid #F2F2F7; }
@@ -276,9 +312,10 @@
   @media (max-width: 767px) {
     html, body { overflow-x: hidden; }
     header {
-      flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;
+      grid-template-columns: 1fr auto;
       padding: 10px 12px 12px; padding-top: max(10px, env(safe-area-inset-top));
     }
+    #coName { grid-column: 1 / -1; text-align: left; }
     header h1 { flex: 1 0 100%; width: 100%; font-size: 18px; }
     .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
     header button, .hdr-actions a {
@@ -363,9 +400,7 @@
   body.ready[data-portal="owner"] #bottomNav,
   body.ready[data-portal="owner"] #phoneTabs { display: none !important; }
   body.ready[data-portal="employee"] #bottomNav { display: none !important; }
-  body.ready[data-portal="employee"] #empNav { display: flex; }
-  #empNav { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E5E5EA; padding-bottom: env(safe-area-inset-bottom); z-index: 25; }
-  #empNav button { flex: 1; border: none; background: none; min-height: 52px; font-size: 12px; font-weight: 700; }
+  body.ready[data-portal="employee"] #empNav { display: flex !important; }
   .owner-body { padding: 16px; max-width: 980px; margin: 0 auto; width: 100%; }
   .owner-table { width: 100%; background: #fff; border-radius: 12px; border-collapse: collapse; overflow: hidden; }
   .owner-table th, .owner-table td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E5EA; font-size: 14px; vertical-align: top; }
@@ -385,7 +420,7 @@
     body.ready[data-portal="employee"] #empBoard { padding-bottom: 72px; }
   }
   @media (min-width: 768px) {
-    #empNav { display: none !important; }
+    body.ready[data-portal="employee"] #empNav { display: flex !important; }
   }
 </style>
 </head>
@@ -487,10 +522,11 @@
     <div id="empRows"></div>
   </div>
   <nav id="empNav">
-    <button type="button" onclick="setSchedView('day')" data-i18n="home">Inicio</button>
-    <button type="button" onclick="setSchedView('day')" data-i18n="horario">Horario</button>
-    <button type="button" onclick="setSchedView('list')" data-i18n="tabList">Lista</button>
-    <button type="button" onclick="setSchedView('map')" data-i18n="tabMap">Mapa</button>
+    <button type="button" id="empNavHome" onclick="navHome()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg><span data-i18n="home">Inicio</span></button>
+    <button type="button" id="empNavHorario" onclick="navHorario()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span data-i18n="horario">Horario</span></button>
+    <button type="button" id="empNavList" onclick="setSchedView('list')"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01"/></svg><span data-i18n="tabList">Lista</span></button>
+    <button type="button" id="empNavMap" onclick="setSchedView('map')"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 4 6v14l6-2 4 2 6-2V4l-6 2-4-2z"/><path d="M10 4v14M14 6v14"/></svg><span data-i18n="tabMap">Mapa</span></button>
+    <button type="button" id="empNavMore" onclick="navMore()"><svg class="nav-ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg><span data-i18n="more">Más</span></button>
   </nav>
 </div>
 
@@ -500,8 +536,8 @@
     <a href="/">Walkcheck</a>
     <span class="holdings">HOLDINGS LLC</span>
   </h1>
+  <span id="coName"></span>
   <div class="hdr-actions">
-    <span id="coName"></span>
     <div class="lang-switch" role="group" aria-label="Language">
       <button type="button" data-set-lang="es" onclick="setLoginLang('es')">ES</button>
       <button type="button" data-set-lang="en" onclick="setLoginLang('en')">EN</button>
@@ -520,11 +556,6 @@
     <div style="padding:0 10px">
       <input type="text" id="bSearch" placeholder="Buscar edificios…" data-i18n-ph="searchBuildings">
     </div>
-    <div class="chips">
-      <button class="chip on" data-f="All" data-i18n="all">Todos</button>
-      <button class="chip pm-only" data-f="Inspections" data-i18n="inspections">Inspecciones</button>
-      <button class="chip pm-only" data-f="Maintenance" data-i18n="maintenance">Mantenimiento</button>
-    </div>
     <div id="bList"></div>
     <div class="addbox" id="addbox">
       <div class="muted" id="addboxLbl" style="font-weight:800;margin-bottom:6px">＋ Nuevo edificio</div>
@@ -534,9 +565,18 @@
     </div>
     <div class="types-box" id="typesBox">
       <div class="ttl" data-i18n="jobTypes">Tipos de trabajo</div>
-      <select id="typeSelect" onchange="preKind=this.value;renderTypesBox()"></select>
-      <div id="typeList"></div>
-      <button type="button" class="btn" onclick="addTypeFromBox()" data-i18n="newType">＋ Nuevo</button>
+      <div class="type-bar">
+        <div class="type-dd-wrap">
+          <button type="button" class="type-dd-btn" id="typeDdBtn" onclick="toggleTypeDd(event)">
+            <span class="type-dot" id="typeDdDot"></span>
+            <span id="typeDdLabel"></span>
+            <span class="caret">▾</span>
+          </button>
+          <div class="type-dd" id="typeDd"></div>
+        </div>
+        <button type="button" class="btn type-new" onclick="addTypeFromBox()" data-i18n="newType">＋ Nuevo</button>
+      </div>
+      <select id="typeSelect" class="hidden" aria-hidden="true"></select>
     </div>
   </aside>
   <section id="main">
@@ -567,6 +607,7 @@
     <div id="hoursPane"></div>
     <div id="reportsPane"></div>
     <div id="rolesPane"></div>
+    <div id="workerPane"></div>
     <div id="workerMain" class="hidden" style="overflow:auto;flex:1"></div>
   </section>
   <div id="mapPane"></div>
@@ -574,12 +615,13 @@
 </div>
 </div>
 <nav id="bottomNav">
-  <button onclick="goToday();setTab('agenda');setSchedView('day')" data-i18n="home">Inicio</button>
-  <button onclick="setTab('agenda');setSchedView('day')" data-i18n="horario">Horario</button>
-  <button onclick="openTimesheet(1)" data-i18n="hoursShort">Horas</button>
-  <button onclick="toggleSites()" data-i18n="search">Buscar</button>
-  <button onclick="setTab('equipo')" data-i18n="more">Más</button>
+  <button type="button" id="navHome" onclick="navHome()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg><span data-i18n="home">Inicio</span></button>
+  <button type="button" id="navHorario" onclick="navHorario()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span data-i18n="horario">Horario</span></button>
+  <button type="button" id="navHours" onclick="navHours()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg><span data-i18n="hoursShort">Horas</span></button>
+  <button type="button" id="navSearch" onclick="navSearch()"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span data-i18n="search">Buscar</span></button>
+  <button type="button" id="navMore" onclick="navMore()"><svg class="nav-ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg><span data-i18n="more">Más</span></button>
 </nav>
+<div id="moreSheet" role="menu"></div>
 
 <div id="viewJobs" class="hidden"></div>
 <div id="viewMonths" class="hidden" style="padding:16px"></div>
@@ -625,10 +667,8 @@ function slotCount(){ return (DAY_END_MIN - DAY_START_MIN) / STEP; }
 function liveSlotH(){
   const rows = (typeof schedEl === 'function' && schedEl('rows')) || $('rows');
   if (!rows) return 16;
-  const usable = Math.max(0, rows.clientHeight - 44);
-  const n = slotCount();
-  if (usable < n * 12) return 16;
-  return Math.max(12, usable / n);
+  const usable = Math.max(240, rows.clientHeight - 48);
+  return Math.max(12, usable / slotCount());
 }
 function gridTotalH(){ return slotCount() * SLOT_H; }
 
@@ -722,9 +762,9 @@ function currentPortal(){
   return document.body.getAttribute('data-portal') || '';
 }
 function portalForRole(){
-  if (isSuper()) return 'company';
+  if (isSuper()) return 'owner';
   if (['owner','admin','manager','supervisor'].includes(normRole())) return 'company';
-  return 'company';
+  return 'employee';
 }
 function pathPortal(){
   const p = location.pathname || '';
@@ -851,6 +891,7 @@ const UI_I18N = {
     workersCount:'trabajadores', statusLbl:'Estado', actions:'Acciones',
     statusActive:'Activa', statusSuspended:'Suspendida',
     horario:'Horario', hoursTeam:'Horas del equipo', hoursShort:'Horas', home:'Inicio', search:'Buscar', more:'Más',
+    moreMenu:'Más', workerJobs:'Trabajos', editWorker:'Editar trabajador', closeMenu:'Cerrar',
     month1:'1 mes', month2:'2 meses', month3:'3 meses', timesheet:'Horas del equipo', hoursWorked:'Horas trabajadas',
     noJobsDay:'Sin trabajos este día',
     buildings:'Edificios', agenda:'Agenda', map:'Mapa',
@@ -901,6 +942,7 @@ const UI_I18N = {
     workersCount:'workers', statusLbl:'Status', actions:'Actions',
     statusActive:'Active', statusSuspended:'Suspended',
     horario:'Schedule', hoursTeam:'Team hours', hoursShort:'Hours', home:'Home', search:'Search', more:'More',
+    moreMenu:'More', workerJobs:'Jobs', editWorker:'Edit worker', closeMenu:'Close',
     month1:'1 month', month2:'2 months', month3:'3 months', timesheet:'Team hours', hoursWorked:'Hours worked',
     noJobsDay:'No jobs this day',
     buildings:'Buildings', agenda:'Schedule', map:'Map',
@@ -1092,15 +1134,6 @@ function renderTeam(){
 }
 
 $('bSearch').oninput = e => { bQuery = e.target.value; if (isSuper()) renderCompanies(); else renderBuildings(); };
-document.querySelectorAll('.chip').forEach(ch => {
-  ch.onclick = () => {
-    document.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
-    ch.classList.add('on');
-    bFilter = ch.dataset.f;
-    renderBuildings();
-    renderSchedule();
-  };
-});
 
 function weekStart(d){
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -1454,30 +1487,44 @@ function renderTypeBar(){ renderTypesBox(); }
 function renderTypesBox(){
   const types = allTypes(true);
   const sel = $('typeSelect');
-  const list = $('typeList');
   const cur = preKind || (sel && sel.value) || (types[0] && types[0].name) || '';
+  preKind = cur;
+  const tp = typeOf(cur);
   if (sel) {
     sel.innerHTML = types.map(t => `<option value="${esc(t.name)}" ${t.name===cur?'selected':''}>${esc(t.name)}</option>`).join('');
   }
-  if (list) {
-    const chosen = (sel && sel.value) || cur;
-    list.innerHTML = types.map(t =>
-      `<button type="button" class="type-row ${t.name===chosen?'on':''}" onclick="pickSidebarType('${encodeURIComponent(t.name)}')">
+  const lab = $('typeDdLabel');
+  const dot = $('typeDdDot');
+  if (lab) lab.textContent = cur || uiT('chooseType');
+  if (dot) dot.style.background = tp.color || '#34C759';
+  const dd = $('typeDd');
+  if (dd) {
+    dd.innerHTML = types.map(t =>
+      `<button type="button" class="type-opt ${t.name===cur?'on':''}" onclick="pickSidebarType('${encodeURIComponent(t.name)}')">
         <span class="type-dot" style="background:${esc(t.color||'#34C759')}"></span>
         <span>${esc(t.name)}</span>
       </button>`
     ).join('') || `<div class="muted" style="padding:10px">${esc(uiT('noTypes'))}</div>`;
   }
+  const addBtn = document.querySelector('.types-box .type-new');
+  if (addBtn) addBtn.style.display = '';
+}
+function toggleTypeDd(ev){
+  if (ev) ev.stopPropagation();
+  const dd = $('typeDd');
+  if (!dd) return;
+  dd.classList.toggle('open');
 }
 function pickSidebarType(enc){
   const name = decodeURIComponent(enc);
   preKind = name;
   const sel = $('typeSelect');
   if (sel) sel.value = name;
+  const dd = $('typeDd');
+  if (dd) dd.classList.remove('open');
   renderTypesBox();
 }
 async function addTypeFromBox(){
-  if (!canManageTypes()) { location.href = '/app/settings/job-types/'; return; }
   const name = prompt(uiT('jobType'));
   if (!name || !name.trim()) return;
   const payload = {
@@ -1506,6 +1553,7 @@ function fillCompanyHeader(){
 async function openOwnerPortal(){
   await loadCompaniesSidebar();
   renderOwnerList();
+  syncChrome();
 }
 async function openCompanyPortal(){
   if (isSuper() && !viewCid && profile.companyId) viewCid = profile.companyId;
@@ -1517,14 +1565,16 @@ async function openCompanyPortal(){
   if ($('typesLink')) $('typesLink').classList.toggle('hidden', !canManageTypes());
   if ($('rolesBtn')) $('rolesBtn').classList.add('hidden');
   if ($('typesBox')) {
-    const addBtn = $('typesBox').querySelector('.btn');
-    if (addBtn) addBtn.style.display = canManageTypes() ? '' : 'none';
+    const addBtn = $('typesBox').querySelector('.type-new');
+    if (addBtn) addBtn.style.display = '';
   }
   applyLayout();
+  syncChrome();
   await loadBoard();
 }
 async function openEmployeePortal(){
   applyLayout();
+  syncChrome();
   await loadBoard();
   renderRows();
 }
@@ -1605,6 +1655,36 @@ async function setMemberRole(uid, role){
     if (currentPortal() === 'company') openRolesPane();
   } catch(e){ alert(e.message||e); }
 }
+function openWorker(uid){
+  const t = techs.find(x => x.uid === uid);
+  if (!t) return;
+  closeMore();
+  document.body.classList.add('view-worker');
+  document.body.classList.remove('view-hours', 'view-reports', 'view-roles');
+  const pane = $('workerPane');
+  if (!pane) return;
+  const list = jobs.filter(j => accountUidOf(j) === t.uid).sort((a,b) => jobTime(a)-jobTime(b));
+  const canEd = canManageRoles();
+  const role = String(t.role||'worker').toLowerCase();
+  const locked = role === 'owner' || role === 'admin';
+  pane.innerHTML = `<button type="button" class="back" onclick="document.body.classList.remove('view-worker');setSchedView('day')">← ${esc(uiT('horario'))}</button>
+    <div class="card">
+      <h2 style="margin:0 0 8px">${esc(t.name)}</h2>
+      <p class="muted">${esc(t.email||'')} · ${esc(roleWord(role))}</p>
+      ${canEd && !locked ? `<p>${esc(uiT('editWorker'))}</p>${roleSelectHtml(t.uid, role)}` : ''}
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 8px">${esc(uiT('workerJobs'))}</h3>
+      ${list.map(j => {
+        const st = jobTime(j), en = jobEnd(j, st);
+        return `<button type="button" class="daycard" onclick="openJobView('${j.id}')">
+          <div class="daycard-k">${esc(j.kind||'Job')}</div>
+          <div class="daycard-t">${fmt(st)} – ${fmt(en)}</div>
+          <div class="daycard-a">${esc(j.address||j.title||'')}</div>
+        </button>`;
+      }).join('') || `<p class="muted">${esc(uiT('noJobsDay'))}</p>`}
+    </div>`;
+}
 function openRolesPane(){
   if (!canManageRoles()) return;
   document.body.classList.add('view-roles');
@@ -1622,13 +1702,99 @@ function openRolesPane(){
 }
 function setSchedView(v){
   schedView = v;
-  document.body.classList.remove('view-hours', 'view-roles', 'view-reports');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker');
+  closeMore();
   document.querySelectorAll('[data-view]').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-view') === v);
   });
   if (currentPortal()!=='employee') setTab('agenda');
   renderSchedule();
+  markNav();
 }
+function closeMore(){
+  const sh = $('moreSheet');
+  if (sh) sh.classList.remove('open');
+}
+function closeExtraViews(){
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'sites-open');
+  closeMore();
+}
+function navHome(){
+  closeExtraViews();
+  goToday();
+  setSchedView('day');
+  markNav('home');
+}
+function navHorario(){
+  closeExtraViews();
+  setSchedView('day');
+  markNav('horario');
+}
+function navHours(){
+  if (!canSeeTimesheet()) return;
+  closeMore();
+  document.body.classList.remove('view-roles', 'view-reports', 'view-worker');
+  openTimesheet(1);
+  markNav('hours');
+}
+function navSearch(){
+  if (currentPortal() !== 'company') return;
+  closeMore();
+  document.body.classList.add('sites-open');
+  setTab('agenda');
+  const inp = $('bSearch');
+  if (inp) { inp.focus(); inp.select(); }
+  markNav('search');
+}
+function navAssign(){
+  if (!canAssign()) return;
+  closeMore();
+  openAssign();
+  markNav('assign');
+}
+function navMore(){
+  const sh = $('moreSheet');
+  if (!sh) return;
+  if (sh.classList.contains('open')) { closeMore(); return; }
+  const items = [];
+  if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
+  if (currentPortal()==='company' && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openMoney()">${esc(uiT('money'))}</button>`);
+  if (currentPortal()!=='employee') items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
+  if (canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
+  if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
+  items.push(`<button type="button" onclick="auth.signOut()">${esc(uiT('logout'))}</button>`);
+  items.push(`<button type="button" onclick="closeMore()">${esc(uiT('closeMenu'))}</button>`);
+  sh.innerHTML = items.join('');
+  sh.classList.add('open');
+  markNav('more');
+}
+function markNav(which){
+  const map = { home:'navHome', horario:'navHorario', hours:'navHours', search:'navSearch', assign:'navAssign', more:'navMore' };
+  Object.keys(map).forEach(k => {
+    const el = $(map[k]);
+    if (el) el.classList.toggle('on', k === which);
+  });
+}
+function syncChrome(){
+  const p = currentPortal();
+  const hoursOk = canSeeTimesheet();
+  const assignOk = canAssign();
+  if ($('navHours')) $('navHours').classList.toggle('hidden', !hoursOk);
+  if ($('navSearch')) $('navSearch').classList.toggle('hidden', p !== 'company');
+  if ($('moneyBtn')) $('moneyBtn').classList.toggle('hidden', !canSeeMoney());
+  if ($('reportsBtn')) $('reportsBtn').classList.toggle('hidden', p === 'employee');
+  if ($('typesLink')) $('typesLink').classList.toggle('hidden', !canManageTypes());
+  if ($('addbox')) $('addbox').classList.toggle('hidden', !canAssign());
+  fillCompanyHeader();
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#moreSheet') || e.target.closest('#navMore') || e.target.closest('#empNavMore')) return;
+  closeMore();
+  if (!e.target.closest('.type-dd-wrap')) {
+    const dd = $('typeDd');
+    if (dd) dd.classList.remove('open');
+  }
+});
 function openTimesheet(months){
   if (!canSeeTimesheet()) return;
   timesheetMonths = months || timesheetMonths || 1;
@@ -1965,15 +2131,10 @@ function quickAssign(kind){
 
 function renderBuildings(){
   const q = bQuery.toLowerCase();
-  const list = buildings.filter(b => {
-    const kind = String(b.kind||b.type||'Inspections');
-    if (bFilter==='Inspections' && /maint/i.test(kind)) return false;
-    if (bFilter==='Maintenance' && !/maint/i.test(kind)) return false;
-    return !q || String(b.name||'').toLowerCase().includes(q);
-  });
+  const list = buildings.filter(b => !q || String(b.name||'').toLowerCase().includes(q));
   $('bList').innerHTML = list.map(b =>
     `<div class="b-item ${b.id===selectedBuilding?'on':''}" onclick="selectBuilding('${b.id}')">${esc(b.name||b.id)}</div>`
-  ).join('') || `<div class="muted" style="padding:14px">${esc(siteT('none'))}</div>`;
+  ).join('');
 }
 function selectBuilding(id){
   selectedBuilding = id;
@@ -1981,14 +2142,8 @@ function selectBuilding(id){
   document.body.classList.remove('sites-open');
   const st = $('sitesToggle');
   if (st) st.textContent = siteT('title');
-  if (isPhone()) {
-    setTab('agenda');
-    if (isBoss()) renderRows();
-    else renderMySchedule();
-    return;
-  }
-  if (isBoss()) loadMonths(id);
-  else renderMySchedule();
+  setTab('agenda');
+  renderSchedule();
 }
 
 function clockToDate(clock, day){
@@ -2001,6 +2156,24 @@ function clockToDate(clock, day){
 }
 function toClock(d){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function snapClock(v){
+  const p = String(v||'09:00').split(':');
+  let h = parseInt(p[0],10); if (isNaN(h)) h = 9;
+  let m = parseInt(p[1],10); if (isNaN(m)) m = 0;
+  m = Math.round(m / STEP) * STEP;
+  if (m === 60) { h += 1; m = 0; }
+  h = Math.max(0, Math.min(23, h));
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function clockChoices(selected){
+  selected = snapClock(selected || '09:00');
+  let html = '';
+  for (let min = 0; min < 24 * 60; min += STEP) {
+    const v = String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+    html += `<option value="${v}" ${v===selected?'selected':''}>${clockLabel(min)}</option>`;
+  }
+  return html;
 }
 function parseLooseTime(raw, day){
   const d = day || selectedDay;
@@ -2191,7 +2364,7 @@ function renderDayGrid(cols){
   }
   const head = `<div class="gutter" style="font-size:10px;font-weight:800;color:#8E8E93;padding:8px 4px">${loginLang()==='es'?'Hora':'Time'}</div>` + listCols.map(t => {
     const list = jobsForTech(t);
-    return `<div class="col-head">${esc(t.name||'')}<span class="cnt">${list.filter(jobDone).length}/${list.length}</span></div>`;
+    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')">${esc(t.name||'')}<span class="cnt">${list.filter(jobDone).length}/${list.length}</span></button>`;
   }).join('');
   const bodies = listCols.map(t => {
     const list = jobsForTech(t);
@@ -2425,11 +2598,12 @@ function openAssign(kindPref){
     startVal = toClock(st);
     endVal = toClock(en);
   }
-  if (!startVal) startVal = String(preHour||9).padStart(2,'0')+':00';
+  startVal = snapClock(startVal || String(preHour||9).padStart(2,'0')+':00');
   if (!endVal) {
     const p = startVal.split(':');
-    endVal = String(Math.min(23, (parseInt(p[0],10)||9)+1)).padStart(2,'0')+':'+(p[1]||'00');
-  }
+    const em = (parseInt(p[0],10)||9)*60 + (parseInt(p[1],10)||0) + 60;
+    endVal = snapClock(String(Math.min(23, Math.floor(em/60))).padStart(2,'0')+':'+String(em%60).padStart(2,'0'));
+  } else endVal = snapClock(endVal);
   preKind = '';
   const bopts = `<option value="">${esc(uiT('siteOrAddr'))}</option>` + buildings.map(b=>`<option value="${b.id}" ${b.id===selectedBuilding?'selected':''}>${esc(b.name)}</option>`).join('');
   const topts = techs.map(t=>`<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}</option>`).join('');
@@ -2440,8 +2614,8 @@ function openAssign(kindPref){
     <label class="muted">${esc(siteT('title'))}</label><select id="ajB">${bopts}</select>
     <label class="muted">${esc(uiT('address'))}</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
     <label class="muted">${esc(uiT('worker'))}</label><select id="ajT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
-    <label class="muted">${esc(uiT('start'))}</label><input id="ajStart" type="time" step="900" value="${startVal}">
-    <label class="muted">${esc(uiT('end'))}</label><input id="ajEnd" type="time" step="900" value="${endVal}">
+    <label class="muted">${esc(uiT('start'))}</label><select id="ajStart">${clockChoices(startVal)}</select>
+    <label class="muted">${esc(uiT('end'))}</label><select id="ajEnd">${clockChoices(endVal)}</select>
     ${typePickerHtml('aj', chosen)}
     <label class="muted">${esc(uiT('unit'))}</label><input id="ajUnit" type="text" value="${esc(existing&&existing.unit||'')}">
     <label class="muted">${esc(uiT('contact'))}</label><input id="ajContact" type="text" value="${esc(existing&&existing.contactName||'')}">
@@ -2475,8 +2649,8 @@ async function saveAssign(){
   const bid = $('ajB').value;
   const uid = $('ajT').value;
   const kind = $('ajK').value;
-  const start = clockToDate($('ajStart').value, selectedDay);
-  const end = clockToDate($('ajEnd').value, selectedDay);
+  const start = clockToDate(snapClock($('ajStart').value), selectedDay);
+  const end = clockToDate(snapClock($('ajEnd').value), selectedDay);
   const addrIn = ($('ajAddr')&&$('ajAddr').value.trim()) || '';
   if (!uid || !techs.some(t => t.uid === uid)) { if (err) err.textContent = 'Elige un trabajador de esta compañía (su cuenta, no solo el nombre).'; return; }
   if (!cid()) { if (err) err.textContent = 'No hay compañía activa.'; return; }
