@@ -21,7 +21,11 @@
 </head>
 <body>
 <script>
-const PAYMENT_LINKS = { crew5: "", crew10: "", unlimited: "" };
+const PAYMENT_LINKS = {
+  crew5:     "https://buy.stripe.com/00w8wP5Lo5qt3Ul3iO63K00",
+  crew10:    "https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01",
+  unlimited: "https://buy.stripe.com/3cI00jgq22eh1Md7z463K02"
+};
 function planHref(id){ return PAYMENT_LINKS[id] || ('/register/?plan=' + id); }
 </script>
 <header><a href="/">Walkcheck</a></header>

@@ -472,8 +472,12 @@ footer{background:var(--navy2);color:#BFD6F2;padding:64px 0 30px}
   </form>
 </div>
 <script>
-const PAYMENT_LINKS = { crew5: "", crew10: "", unlimited: "" };
-function planHref(id){ return PAYMENT_LINKS[id] || ('/register/?plan=' + id); }
+const PAYMENT_LINKS = {
+  crew5:     "https://buy.stripe.com/00w8wP5Lo5qt3Ul3iO63K00",
+  crew10:    "https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01",
+  unlimited: "https://buy.stripe.com/3cI00jgq22eh1Md7z463K02"
+};
+function planHref(id){ return '/register/?plan=' + id; }
 function bindPlanButtons(){
   var map = { planBtnCrew5: 'crew5', planBtnCrew10: 'crew10', planBtnUnlimited: 'unlimited' };
   Object.keys(map).forEach(function(id){

@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
+<script src="/js/paymentLinks.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; }
@@ -63,14 +64,8 @@ const firebaseConfig = {
   appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
 };
 firebase.initializeApp(firebaseConfig);
-function normalizePlan(raw){
-  const p = String(raw||'').toLowerCase().replace(/[_-\s]/g,'');
-  if (p === 'crew5' || p === 'crew05') return 'crew5';
-  if (p === 'crew10') return 'crew10';
-  if (p === 'unlimited' || p === 'unlimit') return 'unlimited';
-  return '';
-}
 const planSel = document.getElementById('plan');
+fillPlanSelect(planSel);
 const fromUrl = normalizePlan(new URLSearchParams(location.search).get('plan'));
 if (fromUrl) planSel.value = fromUrl;
 const sel = document.getElementById('companyType');
@@ -122,7 +117,8 @@ document.getElementById('go').onclick = async () => {
         }
       });
     } catch(_){}
-    location.href = '/app/';
+    const pay = paymentHref(plan, { email: email, clientRef: ref.id });
+    location.href = pay || '/app/';
   } catch (e) {
     err.textContent = e.message || 'No se pudo registrar.';
   }
