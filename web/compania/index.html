@@ -459,12 +459,8 @@ function applyCompanyPanel(){
 
 function isSuper(){
   const e = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-  return e === 'pegao.app@gmail.com'
-    || e === 'pegoa.app@gmail.com'
-    || e === 'maikelramirez55@gmail.com'
-    || e === 'maikel@walkcheck.app'
-    || e === 'info@walkcheck.app'
-    || e === 'soporte@walkcheck.app';
+  // Owner list lives only in /web/entrar.js.
+  return typeof WK_isSuperEmail === 'function' && WK_isSuperEmail(e);
 }
 function normRole(){
   const r = String((profile && profile.role) || '').toLowerCase();
