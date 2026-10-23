@@ -24,16 +24,16 @@
   body { overflow-x: hidden; }
   body.ready { overflow-x: hidden; overflow-y: hidden; }
   body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #F2F2F7; color: #111; font-size: 16px; }
-  header { background: #1B7A36; color: #fff; padding: 10px 20px; padding-top: max(10px, env(safe-area-inset-top)); display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 24px; }
-  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; }
+  header { background: #1B7A36; color: #fff; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: auto minmax(0,1fr) minmax(0,1.4fr); align-items: center; gap: 12px 20px; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.15; justify-self: start; }
   header h1 a { color: #fff; text-decoration: none; display: block; }
   .holdings { display: block; font-size: 9px; letter-spacing: .18em; font-weight: 700; opacity: .92; margin-top: 2px; }
   #coSwitch { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.28); border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 13px; max-width: 180px; min-height: 40px; }
   #coName { font-size: 16px; font-weight: 800; text-align: center; justify-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .98; min-width: 0; max-width: 100%; }
   #coName:empty { visibility: hidden; }
-  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-height: 40px; font-size: 13px; }
-  .hdr-actions { display: flex; align-items: center; gap: 14px; justify-content: flex-end; flex-wrap: nowrap; min-width: 0; }
-  .hdr-actions a { color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 44px; display: inline-flex; align-items: center; }
+  header button { background: rgba(255,255,255,.2); color: #fff; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; min-height: 36px; font-size: 13px; }
+  .hdr-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
+  .hdr-actions a { color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 8px; font-weight: 800; font-size: 13px; background: rgba(0,0,0,.18); min-height: 36px; display: inline-flex; align-items: center; }
   #roleChip { font-size: 13px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #sitesToggle { display: none; }
   .sites-close { display: none; }
@@ -85,9 +85,11 @@
     border: 1px solid #D1D1D6; border-radius: 10px; background: #fff; padding: 8px 10px;
     cursor: pointer; text-align: left; font-weight: 700; font-size: 13px;
   }
-  .type-dd-btn .caret { margin-left: auto; color: #8E8E93; }
+  .type-dd-btn #typeDdLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .type-dd-btn .caret { margin-left: auto; color: #8E8E93; flex-shrink: 0; }
   .type-dd {
-    position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); top: auto; z-index: 90;
+    position: absolute; left: 0; right: auto; min-width: 220px; width: max(100%, 220px); max-width: 280px;
+    bottom: calc(100% + 4px); top: auto; z-index: 90;
     background: #fff; border: 1px solid #E5E5EA; border-radius: 12px;
     box-shadow: 0 10px 28px rgba(0,0,0,.14); max-height: 240px; overflow: auto; display: none;
   }
@@ -95,6 +97,7 @@
   .type-opt {
     display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
     border: none; background: #fff; cursor: pointer; font-size: 14px; text-align: left; min-height: 44px;
+    white-space: nowrap;
   }
   .type-opt:hover, .type-opt.on { background: #E8F8EC; }
   .type-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
@@ -237,9 +240,10 @@
     z-index: 80; align-items: stretch; justify-content: space-around;
   }
   #bottomNav button, #empNav button {
-    flex: 1; border: none; background: none; min-height: 56px; font-size: 11px; font-weight: 700; color: #6B7280;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    flex: 1; border: none; background: none; min-height: 58px; font-size: 11px; font-weight: 700; color: #6B7280;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   }
+  #bottomNav button span, #empNav button span { line-height: 1.1; display: block; color: inherit; }
   #bottomNav button .nav-ic, #empNav button .nav-ic { width: 22px; height: 22px; display: block; }
   #bottomNav button.on, #empNav button.on { color: #1B7A36; }
   #bottomNav button.plus { color: #34C759; }
@@ -317,7 +321,7 @@
     }
     #coName { grid-column: 1 / -1; text-align: left; }
     header h1 { flex: 1 0 100%; width: 100%; font-size: 18px; }
-    .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; }
+    .hdr-actions { width: 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
     header button, .hdr-actions a {
       min-height: 44px; padding: 10px 14px; font-size: 14px; flex: 0 0 auto;
     }
@@ -1962,35 +1966,40 @@ function siteInspectedInMonth(b, ym){
   return inspectionsFor(b, ym).length > 0 || jobs.some(j => matchSite(j, b) && String(j.scheduledDate||j.date||'').slice(0,7) === ym);
 }
 async function openReports(){
+  closeMore();
   document.body.classList.add('view-reports');
-  document.body.classList.remove('view-hours','view-roles','sites-open');
-  if (!buildings.length) await loadBoard();
-  await loadReportWalks();
+  document.body.classList.remove('view-hours','view-roles','view-worker','sites-open');
   const pane = $('reportsPane');
   if (!pane) return;
-  const ym = ($('rptMonth') && $('rptMonth').value) || ymd(selectedDay).slice(0,7);
-  const blds = reportBuildings();
-  const inspected = blds.filter(b => siteInspectedInMonth(b, ym));
-  let openN = 0;
-  blds.forEach(b => findingsFor(b, ym).forEach(f => { if (!findingIsResolved(f)) openN++; }));
-  const prefer = ($('rptBld') && $('rptBld').value) || (blds.find(b => /8000/.test(String(b.name||''))) || blds[0] || {}).id;
-  const bopts = blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('');
-  pane.innerHTML = `<div class="rpt-kpis">
-      <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${uiLang==='en'?'of':'de'} ${blds.length}</b></div>
-      <div class="rpt-kpi"><span>${esc(uiT('pendingBld'))}</span><b>${Math.max(0, blds.length - inspected.length)}</b></div>
-      <div class="rpt-kpi"><span>${esc(uiT('openFindings'))}</span><b>${openN}</b></div>
-    </div>
-    <div class="rpt-form">
-      <h3 style="margin:0 0 10px">${esc(uiT('reports'))}</h3>
-      <p class="muted">${esc(uiT('pickBuildingMonth'))}</p>
-      <label class="muted">${esc(siteT('title'))}</label>
-      <select id="rptBld">${bopts}</select>
-      <label class="muted">${esc(uiT('reportMonth'))}</label>
-      <input id="rptMonth" type="month" value="${esc(ym)}" onchange="openReports()">
-      <button class="btn" style="margin-top:12px" onclick="generateClientReport()">${esc(uiT('genReport'))}</button>
-    </div>
-    <div id="rptOut"></div>`;
-  applyUiLang();
+  const paint = () => {
+    const ym = ($('rptMonth') && $('rptMonth').value) || ymd(selectedDay).slice(0,7);
+    const blds = reportBuildings();
+    const inspected = blds.filter(b => siteInspectedInMonth(b, ym));
+    let openN = 0;
+    blds.forEach(b => findingsFor(b, ym).forEach(f => { if (!findingIsResolved(f)) openN++; }));
+    const prefer = ($('rptBld') && $('rptBld').value) || (blds.find(b => /8000/.test(String(b.name||''))) || blds[0] || {}).id;
+    const bopts = blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('')
+      || `<option value="">${esc(uiT('noSites'))}</option>`;
+    pane.innerHTML = `<div class="rpt-kpis">
+        <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${uiLang==='en'?'of':'de'} ${blds.length}</b></div>
+        <div class="rpt-kpi"><span>${esc(uiT('pendingBld'))}</span><b>${Math.max(0, blds.length - inspected.length)}</b></div>
+        <div class="rpt-kpi"><span>${esc(uiT('openFindings'))}</span><b>${openN}</b></div>
+      </div>
+      <div class="rpt-form">
+        <h3 style="margin:0 0 10px">${esc(uiT('reports'))}</h3>
+        <p class="muted">${esc(uiT('pickBuildingMonth'))}</p>
+        <label class="muted">${esc(siteT('title'))}</label>
+        <select id="rptBld">${bopts}</select>
+        <label class="muted">${esc(uiT('reportMonth'))}</label>
+        <input id="rptMonth" type="month" value="${esc(ym)}" onchange="openReports()">
+        <button class="btn" style="margin-top:12px" onclick="generateClientReport()">${esc(uiT('genReport'))}</button>
+      </div>
+      <div id="rptOut"></div>`;
+    applyUiLang();
+  };
+  paint();
+  try { await loadReportWalks(); } catch(_){}
+  paint();
 }
 function findingStatusHtml(f){
   if (findingIsResolved(f)) return `<span class="st-ok">${esc(uiT('resolved'))}</span>`;
