@@ -20,6 +20,7 @@ auth.onAuthStateChanged(async function (user) {
     return;
   }
   var doc = await db.collection('users').doc(user.uid).get();
+  if (!WK_hasAccess(user.email, doc)) { WK_denyAccess(); return; }
   var profile = doc.exists ? doc.data() : { role: 'worker' };
   location.replace(WK_folderFor(user.email, profile.role));
 });

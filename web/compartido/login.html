@@ -37,6 +37,9 @@
   <p class="muted" style="margin-top:16px;text-align:center"><a href="mailto:soporte@walkcheck.app">Soporte: soporte@walkcheck.app</a></p>
 </div>
 <script>
+if (new URLSearchParams(location.search).get('e') === 'noaccess') {
+  $('loginErr').textContent = 'Esa cuenta no pertenece a ninguna compañía de Walkcheck. Pide acceso al dueño de tu compañía o regístrate.';
+}
 $('pwEye').onclick = function () {
   var el = $('password');
   el.type = el.type === 'password' ? 'text' : 'password';

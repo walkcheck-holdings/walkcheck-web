@@ -1169,9 +1169,10 @@ auth.onAuthStateChanged(async user => {
   if ($('viewJobs')) $('viewJobs').classList.add('hidden');
   if (!user) { location.replace('/web/compartido/login.html'); return; }
   const doc = await db.collection('users').doc(user.uid).get();
+  if (!WK_hasAccess(user.email, doc)) { WK_denyAccess(); return; }
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
   try {
-    await db.collection('users').doc(user.uid).set({
+    if (doc.exists) await db.collection('users').doc(user.uid).set({
       uid: user.uid,
       email: (user.email || '').toLowerCase()
     }, {merge:true});

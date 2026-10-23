@@ -21,4 +21,18 @@
   window.WK_isSuperEmail = function (email) {
     return !!SUPER[String(email || '').toLowerCase()];
   };
+  // A signed-in account may enter only if it is the app owner, or it has a
+  // profile in /users that belongs to a company. Accounts created outside our
+  // sign-up flows (no profile, no company) are signed out.
+  window.WK_hasAccess = function (email, profileDoc) {
+    if (SUPER[String(email || '').toLowerCase()]) return true;
+    if (!profileDoc || !profileDoc.exists) return false;
+    var p = profileDoc.data() || {};
+    return !!String(p.companyId || '').trim();
+  };
+  window.WK_denyAccess = function () {
+    return auth.signOut().catch(function () {}).then(function () {
+      location.replace('/web/compartido/login.html?e=noaccess');
+    });
+  };
 })();
