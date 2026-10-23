@@ -459,8 +459,9 @@ function applyCompanyPanel(){
 
 function isSuper(){
   const e = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-  // Owner list lives only in /web/entrar.js.
-  return typeof WK_isSuperEmail === 'function' && WK_isSuperEmail(e);
+  // The app owner never uses this folder (entrar.js sends them to
+  // /web/plataforma/), so no "super" powers exist inside a company panel.
+  return false && e;
 }
 function normRole(){
   const r = String((profile && profile.role) || '').toLowerCase();
@@ -554,9 +555,7 @@ function typeOf(kind){
   return allTypes(false).find(t => String(t.name).toLowerCase()===k || t.slug===k) || { color:'#34C759', icon:'🔧', name: kind||'Job' };
 }
 function cid(){
-  var q = new URLSearchParams(location.search).get('cid');
-  if (q) return q;
-  if (viewCid) return viewCid;
+  // A company panel only ever shows the signed-in user's own company.
   return profile.companyId || '';
 }
 function ymd(d){
@@ -835,8 +834,8 @@ auth.onAuthStateChanged(async user => {
   } catch(_){}
   var here = '/web/compania/';
   var want = (typeof WK_folderFor === 'function') ? WK_folderFor(user.email, profile.role) : here;
-  var peek = new URLSearchParams(location.search).get('cid');
-  if (want !== here && !peek) { location.replace(want); return; }
+  // No "peek" into other companies: the app owner only manages the company list.
+  if (want !== here) { location.replace(want); return; }
   await resolveTypeAdmin(user.uid);
   await ensureCompanyOwnerRole(user.uid);
   if (!isSuper() && !await enforceTrial()) return;

@@ -52,7 +52,7 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 </header>
 <div class="wrap">
   <h2 style="margin:0 0 6px">Compañías</h2>
-  <p class="muted">Activa, suspende y abre la agenda de cada compañía. Los planes son crew5, crew10 y unlimited.</p>
+  <p class="muted">Activa o suspende compañías. Por privacidad no se ven sus trabajos, clientes ni facturación.</p>
   <input class="q" type="text" id="q" placeholder="Buscar compañía">
   <div class="table-card">
     <table>
@@ -116,7 +116,6 @@ function render() {
       '<td class="hide-sm"><span class="st-pill ' + (paid(c) ? 'pay' : 'off') + '">' + (paid(c) ? 'Pagó' : 'Sin pago') + '</span></td>' +
       '<td><span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span></td>' +
       '<td><div class="row-actions">' +
-        '<a class="btn" href="/web/compania/?cid=' + encodeURIComponent(c.id) + '">Ver agenda</a>' +
         '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '">' +
           (on ? 'Suspender' : 'Activar') +
         '</button>' +

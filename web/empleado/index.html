@@ -831,11 +831,10 @@ function applyCompanyPanel(){
   if (tog && !document.body.classList.contains('sites-open')) tog.textContent = siteT('title');
 }
 
-function isSuper(){
-  const e = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
-  // Owner list lives only in /web/entrar.js.
-  return typeof WK_isSuperEmail === 'function' && WK_isSuperEmail(e);
-}
+// /web/empleado/ is ONLY for field workers (see README roles). The app owner is
+// sent to /web/plataforma/ and office roles to /web/compania/ by entrar.js, so
+// every "boss" check in this folder is hard-wired to false.
+function isSuper(){ return false; }
 function normRole(){
   const r = String((profile && profile.role) || '').toLowerCase();
   if (r === 'employee' || r === 'tech' || r === 'worker') return 'worker';
@@ -858,28 +857,13 @@ function pathPortal(){
   if (/\/app\/company/.test(p)) return 'company';
   return '';
 }
-function isBoss(){
-  return isSuper() || ['owner','admin','manager','supervisor'].includes(normRole());
-}
-function canAssign(){
-  return isSuper() || ['owner','admin','manager'].includes(normRole());
-}
-function canVerifyJobs(){
-  return ['owner','admin','manager','supervisor'].includes(normRole());
-}
-function canManageRoles(){
-  return isSuper() || ['owner','admin'].includes(normRole()) || isCompanyCreatorLike();
-}
-function canSeeTimesheet(){
-  if (isWorker()) return false;
-  return isSuper() || ['owner','admin','manager'].includes(normRole());
-}
+function isBoss(){ return false; }
+function canAssign(){ return false; }        // workers cannot create or assign jobs
+function canVerifyJobs(){ return false; }
+function canManageRoles(){ return false; }
+function canSeeTimesheet(){ return false; }  // no team timesheets
 let companyAdminUid = '';
-function canManageTypes(){
-  const r = String(profile.role||'').toLowerCase();
-  const uid = auth.currentUser && auth.currentUser.uid;
-  return isSuper() || r === 'owner' || r === 'admin' || (uid && companyAdminUid === uid);
-}
+function canManageTypes(){ return false; }
 async function ensureCompanyOwnerRole(uid){
   if (!uid || !cid()) return;
   try {
@@ -2178,6 +2162,7 @@ function siteInspectedInMonth(b, ym){
 }
 async function openReports(){
   closeMore();
+  return; // workers do not see Reports (README roles)
   document.body.classList.add('view-reports');
   document.body.classList.remove('view-hours','view-roles','view-worker','view-companies','sites-open');
   const pane = $('reportsPane');
