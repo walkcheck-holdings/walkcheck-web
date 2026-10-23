@@ -1,0 +1,26 @@
+#billingPane, #archivedPane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+body.view-billing #staffMain, body.view-billing #hoursPane, body.view-billing #reportsPane, body.view-billing #homePane, body.view-billing #searchPane, body.view-billing #jobsPane, body.view-billing #jobPane { display: none; }
+body.view-billing .weekbar { display: none; }
+body.view-billing #billingPane { display: block; }
+body.view-archived #staffMain, body.view-archived #hoursPane, body.view-archived #reportsPane, body.view-archived #billingPane, body.view-archived #jobsPane, body.view-archived #jobPane { display: none; }
+body.view-archived .weekbar { display: none; }
+body.view-archived #archivedPane { display: block; }
+.inv-kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.inv-kpi { background: #fff; border-radius: 12px; padding: 12px 14px; flex: 1; min-width: 120px; }
+.inv-kpi b { display: block; font-size: 20px; color: #1B7A36; }
+.inv-row { background: #fff; border-radius: 12px; padding: 12px 14px; margin: 0 0 8px; display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.inv-row button { width: auto; min-height: 36px; padding: 8px 12px; }
+.inv-paper {
+  background: #fff; max-width: 720px; margin: 0 auto 16px; padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.inv-paper table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.inv-paper th, .inv-paper td { text-align: left; padding: 8px 0; border-bottom: 1px solid #E5E5EA; font-size: 14px; }
+.inv-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.inv-actions .btn { width: auto; flex: 1; min-width: 140px; }
+.price-row { display: flex; gap: 8px; align-items: center; }
+.price-row input { margin: 0; flex: 1; }
+@media (max-width: 1023px) {
+  .inv-paper { padding: 16px 12px; box-shadow: none; }
+  .inv-actions .btn { min-width: 0; }
+}

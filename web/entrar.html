@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="/web/compartido/firebase.js"></script>
+<script src="/web/entrar.js"></script>
+</head>
+<body style="font-family:-apple-system,'Segoe UI',sans-serif;margin:48px;color:#111">
+<p>Entrando…</p>
+<script>
+auth.onAuthStateChanged(async function (user) {
+  if (!user) {
+    location.replace('/web/compartido/login.html');
+    return;
+  }
+  var doc = await db.collection('users').doc(user.uid).get();
+  var profile = doc.exists ? doc.data() : { role: 'worker' };
+  location.replace(WK_folderFor(user.email, profile.role));
+});
+</script>
+</body>
+</html>

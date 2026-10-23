@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · Plataforma</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<link rel="stylesheet" href="/web/compartido/base.css">
+<script src="/web/compartido/firebase.js"></script>
+<script src="/web/entrar.js"></script>
+<style>
+header.wk { display:flex; align-items:center; gap:16px; }
+header.wk .brand { font-weight:800; }
+header.wk .holdings { display:block; font-size:9px; letter-spacing:.18em; opacity:.92; }
+header.wk .spacer { flex:1; }
+header.wk button, header.wk .chip {
+  background:rgba(255,255,255,.2); color:#fff; border:none; padding:8px 12px;
+  border-radius:8px; cursor:pointer; font-weight:700; min-height:36px;
+}
+.wrap { max-width:1080px; margin:0 auto; padding:20px 16px 80px; }
+.table-card { background:#fff; border-radius:12px; overflow:auto; }
+table { width:100%; border-collapse:collapse; }
+th, td { padding:12px; text-align:left; border-bottom:1px solid #E5E5EA; font-size:14px; vertical-align:top; }
+th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04em; }
+.st-pill { display:inline-block; border-radius:10px; padding:2px 8px; font-size:12px; font-weight:800; }
+.st-pill.on { background:#E8F8EC; color:#1B7A36; }
+.st-pill.off { background:#FEECEC; color:#B3261E; }
+.st-pill.pay { background:#EEF4FF; color:#1D4ED8; }
+.row-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.row-actions .btn { width:auto; padding:8px 12px; min-height:36px; font-size:13px; }
+.q { max-width:320px; margin:0 0 16px; }
+@media (max-width: 767px) {
+  .hide-sm { display:none; }
+  /* Phone: name + status on one line, buttons on their own row below. */
+  thead th:last-child { display:none; }
+  tbody tr { display:grid; grid-template-columns:1fr auto; border-bottom:1px solid #E5E5EA; }
+  tbody td { border-bottom:none; min-width:0; overflow-wrap:anywhere; }
+  tbody td:last-child { grid-column:1 / -1; padding-top:0; }
+  tbody td[colspan] { grid-column:1 / -1; }
+}
+</style>
+</head>
+<body>
+<header class="wk">
+  <div class="brand">Walkcheck<span class="holdings">HOLDINGS LLC</span></div>
+  <div class="spacer"></div>
+  <span class="chip">Dueño de la app</span>
+  <button type="button" id="btnOut">Cerrar sesión</button>
+</header>
+<div class="wrap">
+  <h2 style="margin:0 0 6px">Compañías</h2>
+  <p class="muted">Activa, suspende y abre la agenda de cada compañía. Los planes son crew5, crew10 y unlimited.</p>
+  <input class="q" type="text" id="q" placeholder="Buscar compañía">
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Compañía</th>
+          <th class="hide-sm">Plan</th>
+          <th class="hide-sm">Pago</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script>
+$('btnOut').onclick = function () { auth.signOut(); };
+$('q').oninput = function () { render(); };
+
+var list = [];
+
+auth.onAuthStateChanged(async function (user) {
+  if (!user) { location.replace('/web/compartido/login.html'); return; }
+  var doc = await db.collection('users').doc(user.uid).get();
+  var role = doc.exists ? doc.data().role : '';
+  var want = WK_folderFor(user.email, role);
+  if (want !== '/web/plataforma/') { location.replace(want); return; }
+  await load();
+});
+
+async function load() {
+  var snap = await db.collection('companies').limit(200).get();
+  list = [];
+  snap.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
+  list.sort(function (a, b) {
+    return String(a.name || '').localeCompare(String(b.name || ''), 'es');
+  });
+  render();
+}
+
+function paid(c) {
+  return c.is_paid === true || String(c.subscriptionStatus || '').toLowerCase() === 'active';
+}
+
+function render() {
+  var q = ($('q').value || '').toLowerCase().trim();
+  var rows = list.filter(function (c) {
+    return !q || String(c.name || '').toLowerCase().indexOf(q) >= 0 || String(c.id).toLowerCase().indexOf(q) >= 0;
+  });
+  if (!rows.length) {
+    $('rows').innerHTML = '<tr><td colspan="5" class="muted">No hay compañías.</td></tr>';
+    return;
+  }
+  $('rows').innerHTML = rows.map(function (c) {
+    var on = String(c.status || 'active').toLowerCase() !== 'suspended';
+    var plan = c.plan || c.selectedPlan || '—';
+    return '<tr>' +
+      '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div></td>' +
+      '<td class="hide-sm">' + esc(plan) + '</td>' +
+      '<td class="hide-sm"><span class="st-pill ' + (paid(c) ? 'pay' : 'off') + '">' + (paid(c) ? 'Pagó' : 'Sin pago') + '</span></td>' +
+      '<td><span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span></td>' +
+      '<td><div class="row-actions">' +
+        '<a class="btn" href="/web/compania/?cid=' + encodeURIComponent(c.id) + '">Ver agenda</a>' +
+        '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '">' +
+          (on ? 'Suspender' : 'Activar') +
+        '</button>' +
+      '</div></td></tr>';
+  }).join('');
+  $('rows').querySelectorAll('button[data-id]').forEach(function (btn) {
+    btn.onclick = function () { setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-st')); };
+  });
+}
+
+async function setStatus(id, status) {
+  try {
+    await db.collection('companies').doc(id).set({ status: status }, { merge: true });
+    var c = list.filter(function (x) { return x.id === id; })[0];
+    if (c) c.status = status;
+    render();
+  } catch (e) {
+    alert(e.message || e);
+  }
+}
+</script>
+</body>
+</html>

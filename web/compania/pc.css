@@ -1,0 +1,80 @@
+/* PC clothes (min-width: 1024px). Phone rules are not in this file.
+   Same URL and data as the phone. Do not zoom/shrink this grid. */
+@media (min-width: 1024px) {
+  #portalCompany > header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 8px 16px;
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+  #portalCompany > header .holdings { display: block; }
+  #board { flex-direction: row; }
+  #appRail {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    min-width: 220px;
+    flex: 0 0 220px;
+    align-self: flex-start;
+    position: sticky;
+    top: 0;
+    height: calc(100dvh - 64px);
+    max-height: calc(100dvh - 64px);
+    overflow: hidden;
+    background: #fff;
+    border-right: 1px solid #E6E6E6;
+    padding: 10px 8px 8px;
+  }
+  #appRail .rail-scroll { flex: 1; min-height: 0; overflow: auto; }
+  #appRail .rail-item,
+  #appRail .rail-collapse {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 40px;
+    margin: 1px 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #3c4043;
+    font: 500 14.5px/1.2 -apple-system, 'Segoe UI', Roboto, sans-serif;
+    text-align: left;
+    cursor: pointer;
+  }
+  #appRail svg { width: 20px; height: 20px; flex-shrink: 0; }
+  #appRail .rail-item:hover,
+  #appRail .rail-collapse:hover { background: #f3f4f4; }
+  #appRail .rail-item.on { background: #e7f6eb; color: #146c2e; font-weight: 600; }
+  #appRail .rail-collapse {
+    width: 40px;
+    margin-top: auto;
+    padding: 8px;
+    color: #5f6368;
+  }
+  body.rail-mini #appRail {
+    width: 56px;
+    min-width: 56px;
+    flex-basis: 56px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  body.rail-mini #appRail .rail-label { display: none; }
+  body.rail-mini #appRail .rail-item { justify-content: center; padding-left: 0; padding-right: 0; }
+  body.rail-mini #appRail .rail-chev { transform: scaleX(-1); }
+  #sidebar {
+    display: flex;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    flex: 0 0 260px;
+  }
+  .phone-only { display: none !important; }
+  #sitesToggle { display: none !important; }
+  #bottomNav, #moreSheet { display: none !important; }
+  body.ready[data-portal="company"] #board { padding-bottom: 0; }
+  .jobs-table { display: table; }
+}

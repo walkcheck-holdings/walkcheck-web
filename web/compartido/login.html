@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkcheck · Entrar</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<link rel="stylesheet" href="/web/compartido/base.css">
+<script src="/web/compartido/firebase.js"></script>
+</head>
+<body>
+<header class="wk">
+  <a href="/">Walkcheck</a>
+  <a href="/register/">Registrar</a>
+</header>
+<div class="card">
+  <div class="login-head">
+    <h3>Entrar a Walkcheck</h3>
+  </div>
+  <p class="muted">El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.</p>
+  <input type="email" id="email" placeholder="Correo" autocomplete="username">
+  <div class="pw-wrap">
+    <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+    <button type="button" class="pw-eye" id="pwEye" aria-label="Mostrar contraseña">👁</button>
+  </div>
+  <label class="keep"><input type="checkbox" id="keepIn" checked> Mantener mi sesión iniciada</label>
+  <div class="login-links">
+    <a href="#" id="forgotLink">¿Olvidaste tu contraseña?</a>
+    <a href="/register/">Registrar</a>
+  </div>
+  <button class="btn" id="btnLogin">Entrar</button>
+  <div class="err" id="loginErr"></div>
+  <p class="okmsg" id="loginOk"></p>
+  <p class="muted" style="margin-top:16px;text-align:center"><a href="mailto:soporte@walkcheck.app">Soporte: soporte@walkcheck.app</a></p>
+</div>
+<script>
+$('pwEye').onclick = function () {
+  var el = $('password');
+  el.type = el.type === 'password' ? 'text' : 'password';
+};
+$('forgotLink').onclick = async function (e) {
+  e.preventDefault();
+  $('loginErr').textContent = '';
+  $('loginOk').textContent = '';
+  var email = $('email').value.trim();
+  if (!email) { $('loginErr').textContent = 'Escribe tu correo para enviarte el enlace.'; return; }
+  try { await auth.sendPasswordResetEmail(email); } catch (_) {}
+  $('loginOk').textContent = 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.';
+};
+$('btnLogin').onclick = async function () {
+  $('loginErr').textContent = '';
+  try {
+    var persist = $('keepIn').checked
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION;
+    await auth.setPersistence(persist);
+    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+    location.replace('/web/entrar.html');
+  } catch (e) {
+    $('loginErr').textContent = 'No se pudo entrar: ' + (e.message || e);
+  }
+};
+auth.onAuthStateChanged(function (user) {
+  if (user) location.replace('/web/entrar.html');
+});
+</script>
+</body>
+</html>
