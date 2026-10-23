@@ -799,7 +799,8 @@ function applyCompanyPanel(){
 }
 
 function isSuper(){
-  return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com';
+  const e = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
+  return e === 'pegoa.app@gmail.com' || e === 'maikelramirez55@gmail.com';
 }
 function normRole(){
   const r = String((profile && profile.role) || '').toLowerCase();
@@ -844,6 +845,20 @@ function canManageTypes(){
   const r = String(profile.role||'').toLowerCase();
   const uid = auth.currentUser && auth.currentUser.uid;
   return isSuper() || r === 'owner' || r === 'admin' || (uid && companyAdminUid === uid);
+}
+async function ensureCompanyOwnerRole(uid){
+  if (!uid || !cid()) return;
+  try {
+    const co = await db.collection('companies').doc(cid()).get();
+    const adminUid = (co.exists && co.data().adminUid) || '';
+    if (adminUid !== uid) return;
+    if (normRole() === 'owner') return;
+    profile.role = 'owner';
+    await db.collection('users').doc(uid).set({ role: 'owner' }, {merge:true});
+    await db.collection('companies').doc(cid()).collection('members').doc(uid).set({
+      uid, role: 'owner', email: (profile.email || '')
+    }, {merge:true});
+  } catch(_){}
 }
 async function resolveTypeAdmin(uid){
   try {
@@ -1129,6 +1144,7 @@ auth.onAuthStateChanged(async user => {
     if (user.email) profile.email = user.email.toLowerCase();
   } catch(_){}
   await resolveTypeAdmin(user.uid);
+  await ensureCompanyOwnerRole(user.uid);
   if (!isSuper() && !await enforceTrial()) return;
   const want = portalForRole();
   document.body.setAttribute('data-portal', want);

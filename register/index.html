@@ -104,9 +104,13 @@ document.getElementById('go').onclick = async () => {
     });
     await db.collection('users').doc(uid).set({
       uid, companyId: ref.id, displayName: fullName, role: 'owner',
+      email: email.toLowerCase(),
       companyType, username: email.split('@')[0],
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    await ref.collection('members').doc(uid).set({
+      uid, role: 'owner', email: email.toLowerCase(), displayName: fullName
+    }, { merge: true });
     try {
       await db.collection('mail').add({
         to: [email],
