@@ -618,6 +618,16 @@ async function openSubscription(){
     status = en ? 'Pending payment' : 'Pago pendiente';
     note = '';
   }
+  // Team size vs plan limit (everyone except the owner counts).
+  const limit = (window.PLAN_WORKER_LIMIT || {})[plan];
+  let used = null;
+  try {
+    const team = await db.collection('users').where('companyId', '==', cid()).get();
+    used = team.docs.filter(x => String(x.data().role || 'worker') !== 'owner').length;
+  } catch(_){}
+  const teamLine = used == null ? '' : (limit
+    ? (en ? `${used} of ${limit} workers` : `${used} de ${limit} trabajadores`) + (used >= limit ? (en ? ' — limit reached. Change plan to add more.' : ' — llegaste al límite. Cambia de plan para añadir más.') : '')
+    : (en ? `${used} workers (no limit)` : `${used} trabajadores (sin límite)`));
   const inApp = !!d.iap_product;
   const portal = (window.billingPortalHref && billingPortalHref((auth.currentUser && auth.currentUser.email) || '')) || '';
   const action = inApp
@@ -633,6 +643,7 @@ async function openSubscription(){
     <div class="card" style="margin:10px 0">
       <p><b>${esc(en ? 'Plan' : 'Plan')}:</b> ${esc(planTxt)}${plan ? (en ? ' /month' : ' /mes') : ''}</p>
       <p><b>${esc(en ? 'Status' : 'Estado')}:</b> ${esc(status)}</p>
+      ${teamLine ? `<p><b>${esc(en ? 'Team' : 'Equipo')}:</b> ${esc(teamLine)}</p>` : ''}
       ${note ? `<p class="muted">${esc(note)}</p>` : ''}
     </div>
     ${action}

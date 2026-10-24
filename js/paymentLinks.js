@@ -9,6 +9,8 @@ window.PAYMENT_LINKS = {
  * "Login link"). The owner cancels, changes card or sees receipts there.
  * Cancelling during the 15-day trial means no charge. Empty = button hidden.
  */
+/** Workers allowed per plan (owner not counted). Keep in sync with the app: walkthrough/lib/pro/plan_limits.dart */
+window.PLAN_WORKER_LIMIT = { crew5: 5, crew10: 10 };
 window.BILLING_PORTAL_URL = 'https://billing.stripe.com/p/login/00w8wP5Lo5qt3Ul3iO63K00';
 window.billingPortalHref = function (email) {
   var base = window.BILLING_PORTAL_URL || '';
