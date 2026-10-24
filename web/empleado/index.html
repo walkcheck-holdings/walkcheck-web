@@ -3010,6 +3010,76 @@ async function verifyJob(id){
     closeJobView();
   } catch(e){ alert(e.message||e); }
 }
+/* ===== Reschedule (worker) =====
+   A technician can move the date/time of their own job (not client, address
+   or price — firestore.rules blocks those). A reason is required and the
+   office sees an alert (company panel) with the old and new time. */
+function openReschedule(id){
+  const j = jobs.find(x => x.id === id);
+  if (!j) return;
+  const en = loginLang() === 'en';
+  const st = jobTime(j), en_ = jobEnd(j, st);
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box">
+    <h3>📅 ${esc(en ? 'Reschedule job' : 'Reprogramar trabajo')}</h3>
+    <p class="muted">${esc(j.title || j.kind || 'Job')} · ${esc(en ? 'now' : 'ahora')}: ${esc(j.scheduledDate || ymd(st))} ${fmt(st)} – ${fmt(en_)}</p>
+    <label class="muted">${esc(en ? 'New day' : 'Nuevo día')}</label><input id="rsDate" type="date" value="${esc(j.scheduledDate || ymd(st))}">
+    <label class="muted">${esc(en ? 'Start time' : 'Hora de inicio')}</label><select id="rsStart">${clockChoices(snapClock(toClock(st)))}</select>
+    <label class="muted">${esc(en ? 'End time' : 'Hora de fin')}</label><select id="rsEnd">${clockChoices(snapClock(toClock(en_)))}</select>
+    <label class="muted">${esc(en ? 'Why? (the office will see it)' : '¿Por qué? (lo verá la oficina)')}</label>
+    <textarea id="rsWhy" rows="2" placeholder="${esc(en ? 'e.g. Tenant was not home' : 'Ej. El inquilino no estaba')}"></textarea>
+    <div class="err" id="rsErr"></div>
+    <button class="btn" onclick="saveReschedule('${j.id}')">${esc(en ? 'Save new time' : 'Guardar nuevo horario')}</button>
+    <button class="btn ghost" onclick="$('modal').classList.add('hidden')">${esc(en ? 'Cancel' : 'Cancelar')}</button>
+  </div>`;
+}
+async function saveReschedule(id){
+  const en = loginLang() === 'en';
+  const err = $('rsErr');
+  const j = jobs.find(x => x.id === id);
+  if (!j) return;
+  const day = $('rsDate').value;
+  const why = ($('rsWhy').value || '').trim();
+  if (!day) { err.textContent = en ? 'Pick the new day.' : 'Elige el nuevo día.'; return; }
+  if (!why) { err.textContent = en ? 'Write why you reschedule.' : 'Escribe por qué lo reprogramas.'; return; }
+  const base = new Date(day + 'T12:00:00');
+  const start = clockToDate(snapClock($('rsStart').value), base);
+  const end = clockToDate(snapClock($('rsEnd').value), base);
+  if (!start || !end || !(end > start)) { err.textContent = en ? 'End time must be after start time.' : 'La hora de fin va después de la de inicio.'; return; }
+  const oldSt = jobTime(j), oldEn = jobEnd(j, oldSt);
+  const entry = {
+    from: { date: j.scheduledDate || ymd(oldSt), start: toClock(oldSt), end: toClock(oldEn) },
+    to: { date: day, start: toClock(start), end: toClock(end) },
+    reason: why,
+    byUid: (auth.currentUser && auth.currentUser.uid) || '',
+    byName: (profile && (profile.displayName || profile.email)) || '',
+    at: new Date().toISOString(),
+    seen: false
+  };
+  const times = {
+    scheduledDate: day,
+    hour: start.getHours(), minute: start.getMinutes(),
+    endHour: end.getHours(), endMinute: end.getMinutes(),
+    startClock: toClock(start), endClock: toClock(end)
+  };
+  const vs = jobVisits(j).map(v => Object.assign({}, v));
+  if (vs.length) vs[0] = Object.assign(vs[0], times);
+  const patch = Object.assign({}, times, {
+    startTime: fmt(start), time: fmt(start), endTime: fmt(end),
+    appointment_start: firebase.firestore.Timestamp.fromDate(start),
+    appointment_end: firebase.firestore.Timestamp.fromDate(end),
+    lastReschedule: entry,
+    rescheduleLog: firebase.firestore.FieldValue.arrayUnion(entry),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  if (vs.length) patch.visits = vs;
+  try {
+    await db.collection('jobs').doc(id).set(patch, { merge: true });
+  } catch (e) { err.textContent = e.message || e; return; }
+  $('modal').classList.add('hidden');
+  closeJobView();
+  if (typeof loadBoard === 'function') await loadBoard();
+}
 function closeJobView(){
   $('viewJobs').classList.add('hidden');
   $('viewJobs').innerHTML = '';
@@ -3148,6 +3218,8 @@ async function openJobView(id){
       <p>${esc(j.address || '')}</p>
       <p>${phoneHtml} · <a class="phone" target="_blank" rel="noopener" href="${maps}">Directions</a></p>
       <p class="muted">Arrival window: Arrive at start time</p>
+      ${completed ? '' : `<button type="button" class="btn ghost" onclick="openReschedule('${j.id}')">📅 ${esc(loginLang()==='en'?'Reschedule':'Reprogramar')}</button>`}
+      ${j.lastReschedule && j.lastReschedule.reason ? `<p class="muted">${esc(loginLang()==='en'?'Rescheduled':'Reprogramado')}: ${esc(j.lastReschedule.reason)}</p>` : ''}
       <h3>Instructions</h3>
       <p style="white-space:pre-wrap">${esc(j.instructions || j.description || '')}</p>
       ${completed ? '<p class="okmsg">✓ Completed</p>' : ''}`;
@@ -3168,7 +3240,11 @@ async function openJobView(id){
       <div class="thumbs">${afters.map(u=>`<img src="${esc(u)}">`).join('')}</div>
       <input id="rpAfter" type="file" accept="image/*" multiple>
       <label class="muted">Was it solved?</label>
-      <select id="rpSolved"><option value="">—</option><option value="yes" ${r.solved===true?'selected':''}>Yes</option><option value="no" ${r.solved===false?'selected':''}>No</option></select>
+      <select id="rpSolved" onchange="$('rpRetBox').classList.toggle('hidden', this.value!=='return')"><option value="">—</option><option value="yes" ${r.outcome==='yes'||(!r.outcome&&r.solved===true)?'selected':''}>Yes</option><option value="no" ${r.outcome==='no'||(!r.outcome&&r.solved===false)?'selected':''}>No</option><option value="return" ${r.outcome==='return'?'selected':''}>${esc(loginLang()==='en'?'Need to return':'Necesita volver')}</option></select>
+      <div id="rpRetBox" class="${r.outcome==='return'?'':'hidden'}">
+        <label class="muted">${esc(loginLang()==='en'?'What is missing to finish? (part, material, access…)':'¿Qué falta para terminar? (pieza, material, acceso…)')}</label>
+        <textarea id="rpRet" rows="2">${esc(r.returnReason||'')}</textarea>
+      </div>
       <label class="muted">Solution / what was done</label><textarea id="rpS" rows="3">${esc(r.solution||'')}</textarea>
       <label class="muted">Final Notes / Recommendations</label><textarea id="rpN" rows="3">${esc(r.finalNotes||'')}</textarea>
       <h3>${esc(loginLang()==='en'?'Field expense':'Gasto de campo')}</h3>
@@ -3264,6 +3340,7 @@ async function saveJobReport(id, complete){
     }
   } catch(e){ if (err) err.textContent = 'Foto: '+(e.message||e); return; }
   const solvedVal = $('rpSolved').value;
+  const returnReason = (($('rpRet') && $('rpRet').value) || '').trim();
   const report = {
     actualStart: $('rpAS').value || '',
     actualEnd: $('rpAE').value || '',
@@ -3271,6 +3348,8 @@ async function saveJobReport(id, complete){
     beforePhotos,
     afterPhotos,
     solved: solvedVal==='' ? null : solvedVal==='yes',
+    outcome: solvedVal || null,          // 'yes' | 'no' | 'return'
+    returnReason: solvedVal==='return' ? returnReason : '',
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
     draft: !complete,
@@ -3283,13 +3362,29 @@ async function saveJobReport(id, complete){
   report.requiredTotal = 6;
   if (complete) {
     if (n < 6) { if (err) err.textContent = n+'/6. Pon horas y fotos de ANTES y DESPUÉS.'; return; }
+    if (solvedVal === 'return' && !returnReason) {
+      if (err) err.textContent = loginLang()==='en' ? 'Write what is missing to finish, so the office can schedule the return.' : 'Escribe qué falta para terminar, para que la oficina pueda agendar el regreso.';
+      return;
+    }
     report.completed = true;
     report.draft = false;
   }
   try {
     const patch = { report, reportCompleted: !!report.completed, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
     if (report.completed) {
-      patch.status = 'completed';
+      const goBack = solvedVal === 'return';
+      // Visit is done; if the job needs a return visit it stays open for the
+      // office (company panel shows it in alerts with "Agendar regreso").
+      patch.status = goBack ? 'needs_return' : 'completed';
+      patch.needsReturn = goBack;
+      if (goBack) {
+        patch.returnRequest = {
+          reason: returnReason,
+          byUid: (auth.currentUser && auth.currentUser.uid) || '',
+          byName: (profile && (profile.displayName || profile.email)) || '',
+          at: new Date().toISOString()
+        };
+      }
       patch.visitStatus = 'completed';
       const day = j.scheduledDate || ymd(selectedDay);
       patch.visits = jobVisits(j).map(v => {

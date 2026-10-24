@@ -114,11 +114,13 @@
   }
   function statusWord(j) {
     if (jobArchived(j)) return loginLang() === 'en' ? 'Archived' : 'Archivado';
+    if (j.needsReturn === true) return loginLang() === 'en' ? 'Needs return visit' : 'Necesita volver';
     if (jobDone(j)) return loginLang() === 'en' ? 'Completed' : 'Completado';
     if (jobIsLate(j)) return 'Late';
     return loginLang() === 'en' ? 'Pending' : 'Pendiente';
   }
   function statusClass(j) {
+    if (j.needsReturn === true) return 'st-late';
     if (jobDone(j)) return 'st-done';
     if (jobIsLate(j)) return 'st-late';
     return 'st-pend';

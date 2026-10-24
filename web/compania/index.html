@@ -686,7 +686,7 @@ const UI_I18N = {
     needEmail: 'Escribe tu correo para enviarte el enlace.',
     sent: 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.',
     fail: 'No se pudo entrar: ',
-    mySub:'Mi suscripción',
+    mySub:'Mi suscripción', needsReturn:'Necesita volver', rescheduled:'Reprogramado por el técnico',
     money:'Facturación', types:'Tipos', logout:'Cerrar sesión', reports:'Reportes',
     genReport:'Generar reporte', downloadPdf:'Descargar PDF', sendWa:'Enviar por WhatsApp', sendMail:'Enviar por correo',
     pickBuildingMonth:'Elige edificio y mes', inspectedBld:'Edificios inspeccionados', pendingBld:'Edificios pendientes',
@@ -750,7 +750,7 @@ const UI_I18N = {
     needEmail: 'Enter your email so we can send the reset link.',
     sent: 'If that email has an account, we sent a link to reset the password.',
     fail: 'Could not sign in: ',
-    mySub:'My subscription',
+    mySub:'My subscription', needsReturn:'Needs return visit', rescheduled:'Rescheduled by technician',
     money:'Billing', types:'Types', logout:'Sign out', reports:'Reports',
     genReport:'Generate report', downloadPdf:'Download PDF', sendWa:'Send via WhatsApp', sendMail:'Send via email',
     pickBuildingMonth:'Pick building and month', inspectedBld:'Buildings inspected', pendingBld:'Buildings pending',
@@ -1540,6 +1540,29 @@ async function refreshAlerts(){
             go: 'openReports()'
           });
         }
+      });
+    });
+  } catch(_){}
+  // Jobs a technician rescheduled that the office has not opened yet.
+  try {
+    const rs = await db.collection('jobs').where('companyId','==',id).where('lastReschedule.seen','==',false).limit(40).get();
+    rs.forEach(d => {
+      const x = d.data() || {};
+      const r = x.lastReschedule || {};
+      panelAlerts.push({
+        text: '📅 ' + uiT('rescheduled') + ': ' + (x.title || x.kind || 'Job') + (r.to ? ' → ' + r.to.date + ' ' + (r.to.start || '') : ''),
+        go: `openJobView('${d.id}')`
+      });
+    });
+  } catch(_){}
+  // Jobs a technician marked "Necesita volver": the office schedules the return.
+  try {
+    const nr = await db.collection('jobs').where('companyId','==',id).where('needsReturn','==',true).limit(40).get();
+    nr.forEach(d => {
+      const x = d.data() || {};
+      panelAlerts.push({
+        text: '↩ ' + uiT('needsReturn') + ': ' + (x.title || x.kind || 'Job'),
+        go: `openJobView('${d.id}')`
       });
     });
   } catch(_){}
@@ -2482,6 +2505,8 @@ function assignmentPatch(uid){
   };
 }
 function jobDone(j){
+  // "Necesita volver": the visit happened but the job is not finished.
+  if (j && j.needsReturn === true) return false;
   const s = String((j._visit && j._visit.status) || j.status || j.visitStatus || '').toLowerCase();
   if (s === 'open' || s === 'reopened') return false;
   return !!(j.report && j.report.completed) || j.reportCompleted === true
@@ -2544,7 +2569,7 @@ function jobCardHtml(j, extraClass, posStyle){
   return `<div class="jcard ${done?'done':'pend'} ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="${pos}">
     <div class="jcard-top">
       <div class="jcard-kind">${esc(kind)}</div>
-      <span class="jcard-badge">${done ? '✓ '+esc(uiT('doneBadge')) : esc(uiT('pendBadge'))}</span>
+      <span class="jcard-badge" ${j.needsReturn===true?'style="background:#FFF1DE;color:#9A5B00"':''}>${j.needsReturn===true ? '↩ '+esc(uiT('needsReturn')) : done ? '✓ '+esc(uiT('doneBadge')) : esc(uiT('pendBadge'))}</span>
     </div>
     <div class="jcard-meta">${esc(meta)}</div>
   </div>`;
@@ -2943,6 +2968,20 @@ async function saveAssign(){
   if (vs.length) vs[0] = Object.assign({}, vs[0], vis);
   else vs.push(vis);
   payload.visits = vs;
+  // Scheduling the return of a "Necesita volver" job: reopen it for the new
+  // visit and keep the previous report in its history.
+  const prevJob = editJobId ? jobs.find(x => x.id === editJobId) : null;
+  if (prevJob && prevJob.needsReturn === true) {
+    payload.needsReturn = false;
+    payload.returnScheduledAt = firebase.firestore.FieldValue.serverTimestamp();
+    if (prevJob.report) {
+      payload.previousReports = firebase.firestore.FieldValue.arrayUnion(
+        Object.assign({}, prevJob.report, { archivedAt: new Date().toISOString() }));
+    }
+    payload.report = firebase.firestore.FieldValue.delete();
+    payload.reportCompleted = false;
+    payload.visitStatus = 'open';
+  }
   try {
     if (editJobId) {
       await db.collection('jobs').doc(editJobId).set(payload, {merge:true});
@@ -3000,6 +3039,44 @@ async function verifyJob(id){
 function closeJobView(){
   $('viewJobs').classList.add('hidden');
   $('viewJobs').innerHTML = '';
+}
+/* ===== Rescheduled by a technician (office): old → new time + reason ===== */
+function rescheduleOfficeHtml(j){
+  const r = j && j.lastReschedule;
+  if (!r || !r.to) return '';
+  const en = loginLang() === 'en';
+  if (r.seen === false && canAssign()) {
+    // Opening the job counts as "seen" for the alert.
+    db.collection('jobs').doc(j.id).set({ lastReschedule: { seen: true } }, { merge: true }).catch(() => {});
+  }
+  const fromTxt = r.from ? `${r.from.date} ${r.from.start || ''}–${r.from.end || ''}` : '—';
+  const toTxt = `${r.to.date} ${r.to.start || ''}–${r.to.end || ''}`;
+  let when = '';
+  if (r.at) { const d = new Date(r.at); if (!isNaN(d)) when = d.toLocaleString(en ? 'en-US' : 'es-ES', { day:'numeric', month:'short', hour:'numeric', minute:'2-digit' }); }
+  return `<div class="card" style="border:1.5px solid #9DC3F7;background:#F4F8FF">
+      <h3 style="color:#1D4ED8">📅 ${esc(uiT('rescheduled'))}</h3>
+      <p><b>${esc(en ? 'From' : 'De')}:</b> ${esc(fromTxt)}<br><b>${esc(en ? 'To' : 'A')}:</b> ${esc(toTxt)}</p>
+      <p><b>${esc(en ? 'Why' : 'Motivo')}:</b> ${esc(r.reason || '—')}</p>
+      <p class="muted">${esc([r.byName, when].filter(Boolean).join(' · '))}</p>
+    </div>`;
+}
+/* ===== "Necesita volver" (office): what is missing + schedule the return ===== */
+function returnOfficeHtml(j){
+  if (!j || j.needsReturn !== true) return '';
+  const en = loginLang() === 'en';
+  const r = j.returnRequest || {};
+  let when = '';
+  if (r.at) {
+    const d = new Date(r.at);
+    if (!isNaN(d)) when = d.toLocaleString(en ? 'en-US' : 'es-ES', { day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
+  }
+  return `<div class="card" style="border:1.5px solid #F5B971;background:#FFFAF2">
+      <h3 style="color:#9A5B00">↩ ${esc(uiT('needsReturn'))}</h3>
+      <p><b>${esc(en ? 'What is missing' : 'Qué falta')}:</b> ${esc(r.reason || '—')}</p>
+      <p class="muted">${esc([r.byName, when].filter(Boolean).join(' · '))}</p>
+      ${canAssign() ? `<button class="btn" onclick="closeJobView();openEdit('${j.id}')">${esc(en ? 'Schedule return visit' : 'Agendar regreso')}</button>
+        <p class="muted" style="margin-top:6px">${esc(en ? 'Pick the new day, time and technician. The previous report stays in the job history.' : 'Elige el nuevo día, hora y técnico. El reporte anterior queda en el historial del trabajo.')}</p>` : ''}
+    </div>`;
 }
 /* ===== Walkthrough results (office, read-only) — data in /js/walkthroughGuide.js ===== */
 function wtOfficeHtml(j){
@@ -3063,6 +3140,8 @@ async function openJobView(id){
       ${canAssign() && !jobArchived(j) ? `<button class="btn ghost" onclick="askArchiveJob('${j.id}')">Archivar</button>`:''}
       ${canAssign() && jobArchived(j) ? `<p class="muted">Archivado: ${esc(j.archiveReason||'')} ${esc(j.archiveNote||'')}</p><button class="btn ghost" onclick="unarchiveJob('${j.id}')">Desarchivar</button>`:''}
     </div>
+    ${rescheduleOfficeHtml(j)}
+    ${returnOfficeHtml(j)}
     ${wtOfficeHtml(j)}
     <div class="card">
       <h3>Notes</h3>
