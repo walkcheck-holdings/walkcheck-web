@@ -51,6 +51,9 @@
   <select id="companyType" required>
     <option value="">Selecciona…</option>
   </select>
+  <label>Código de referido (opcional)</label>
+  <input id="refCode" type="text" placeholder="WC-XXXX" autocapitalize="characters" spellcheck="false">
+  <p class="muted" id="refNote" style="margin:-4px 0 8px;display:none"></p>
   <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:#111;font-size:14px;margin:6px 0 12px">
     <input id="agree" type="checkbox" style="width:auto;margin:3px 0 0">
     <span>Acepto los <a href="/terminos/" target="_blank">Términos del servicio</a> y la <a href="/privacidad/" target="_blank">Política de privacidad</a>, y entiendo que al terminar los 15 días gratis se cobra el plan cada mes hasta que cancele.</span>
@@ -74,6 +77,15 @@ const planSel = document.getElementById('plan');
 if (typeof fillPlanSelect === 'function') fillPlanSelect(planSel);
 const fromUrl = (typeof normalizePlan === 'function' ? normalizePlan(new URLSearchParams(location.search).get('plan')) : '') || '';
 if (fromUrl) planSel.value = fromUrl;
+// Referral link: walkcheck.app/register/?ref=WC-XXXX fills the code.
+const refIn = document.getElementById('refCode');
+const refUrl = String(new URLSearchParams(location.search).get('ref') || '').trim().toUpperCase();
+if (/^WC-[A-Z0-9]{4,8}$/.test(refUrl)) {
+  refIn.value = refUrl;
+  const n = document.getElementById('refNote');
+  n.textContent = 'Te invitó otra compañía con el código ' + refUrl + '.';
+  n.style.display = 'block';
+}
 const sel = document.getElementById('companyType');
 // Trades grouped in sections; each one brings its own job types, steps,
 // photos and materials (js/jobTemplates.js).
@@ -104,6 +116,11 @@ document.getElementById('go').onclick = async () => {
     err.textContent = 'Para continuar, acepta los Términos y la Política de privacidad.';
     return;
   }
+  const referredBy = String(refIn.value || '').trim().toUpperCase();
+  if (referredBy && !/^WC-[A-Z0-9]{4,8}$/.test(referredBy)) {
+    err.textContent = 'El código de referido tiene la forma WC-XXXX. Déjalo vacío si no tienes uno.';
+    return;
+  }
   try {
     const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
@@ -118,6 +135,7 @@ document.getElementById('go').onclick = async () => {
       id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
       status: 'pending', adminUid: uid,
       termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-24',
+      referredBy: referredBy || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       is_paid: false
     });
