@@ -30,27 +30,28 @@ function planHref(id){ return PAYMENT_LINKS[id] || ('/register/?plan=' + id); }
 </script>
 <header><a href="/">Walkcheck <small style="font-size:10px;letter-spacing:.18em;opacity:.85">HOLDINGS LLC</small></a></header>
 <div class="wrap">
-  <h1>Tu prueba de 15 días terminó</h1>
-  <p class="muted">Elige un plan para seguir usando Team Schedule, buildings y el equipo.</p>
+  <h1>Elige tu plan</h1>
+  <p class="muted">Elige un plan para seguir usando WalkCheck con tu equipo. Se cobra cada mes y cancelas cuando quieras desde Mi suscripción.</p>
   <div class="card">
     <h3>WALKCHECK CREW 5</h3>
     <p class="muted">Hasta 5 trabajadores</p>
     <div class="price">$99.99/mes</div>
-    <a class="btn" id="planBtnCrew5" href="/register/?plan=crew5">Empezar 15 días gratis</a>
+    <a class="btn" id="planBtnCrew5" href="/register/?plan=crew5">Elegir este plan</a>
   </div>
   <div class="card pop">
     <h3>WALKCHECK CREW 10 — MÁS POPULAR</h3>
     <p class="muted">Hasta 10 trabajadores</p>
     <div class="price">$149.99/mes</div>
-    <a class="btn" id="planBtnCrew10" href="/register/?plan=crew10">Empezar 15 días gratis</a>
+    <a class="btn" id="planBtnCrew10" href="/register/?plan=crew10">Elegir este plan</a>
   </div>
   <div class="card">
     <h3>WALKCHECK UNLIMITED</h3>
     <p class="muted">Trabajadores ilimitados</p>
     <div class="price">$299.99/mes</div>
-    <a class="btn" id="planBtnUnlimited" href="/register/?plan=unlimited">Empezar 15 días gratis</a>
+    <a class="btn" id="planBtnUnlimited" href="/register/?plan=unlimited">Elegir este plan</a>
   </div>
   <a class="btn ghost" href="/app/">Volver al login</a>
+  <p class="muted" style="text-align:center;margin-top:16px"><a href="/terminos/">Términos</a> · <a href="/privacidad/">Privacidad</a></p>
 </div>
 <script>
 document.getElementById('planBtnCrew5').href = planHref('crew5');

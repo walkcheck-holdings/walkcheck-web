@@ -119,6 +119,18 @@ nav.main a:hover{background:rgba(255,255,255,.08);color:#fff}
 .float-tag{position:absolute;background:#fff;color:var(--txt);border-radius:14px;box-shadow:var(--shadow);padding:10px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;animation:bob 5s ease-in-out infinite}
 .float-tag.t1{left:-40px;top:-22px;z-index:2}
 .float-tag.t2{right:-22px;bottom:-18px;animation-delay:-2.5s}
+/* Hero phone with the promo video + sharp captions on top */
+.hphone{position:relative;width:270px;margin-left:auto;margin-right:60px}
+.hphone-frame{position:relative;background:#0B1626;border-radius:42px;padding:11px;box-shadow:0 40px 80px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.08)}
+.hphone-frame video{display:block;width:100%;aspect-ratio:576/1024;object-fit:cover;border-radius:32px;background:#0E2440}
+.hphone-notch{position:absolute;top:19px;left:50%;transform:translateX(-50%);width:76px;height:20px;border-radius:12px;background:#0B1626;z-index:2}
+.hcap{position:absolute;left:11px;right:11px;bottom:calc(11px + 18%);display:flex;justify-content:center;padding:0 6px;z-index:2}
+.hcap span{display:none;background:rgba(10,31,54,.94);color:#fff;font-weight:800;font-size:17px;line-height:1.25;text-align:center;border-radius:14px;padding:12px 14px;min-height:72px;width:100%;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.hcap span.on{display:flex;animation:rise .35s ease}
+.hcap span:last-child{background:var(--green);color:#0A1F36}
+.hphone .float-tag.t1{left:-90px;top:60px}
+.hphone .float-tag.t2{right:-70px;bottom:120px}
+.hphone .float-tag{z-index:3}
 .float-tag em{font-style:normal;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--green-bg)}
 
 /* ===== Sections ===== */
@@ -345,6 +357,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
 @media(max-width:1000px){
   .hero .wrap{grid-template-columns:1fr;gap:48px}
   .mock{margin:0 auto}
+  .hphone{margin:0 auto}
   .flow{grid-template-columns:1fr;gap:28px}
   .flow-view{position:relative;top:0;min-height:0}
   .role-grid{grid-template-columns:1fr}
@@ -370,6 +383,8 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
   .chip{font-size:12.5px;padding:6px 10px}
   .float-tag{display:none}
   .mock-body{height:320px}
+  .hphone{width:250px}
+  .hcap span{font-size:16px;min-height:66px}
   .sec{padding:60px 0}
   .sec-hd{margin-bottom:32px}
   .sec-hd h2{font-size:28px;letter-spacing:-.4px}
@@ -427,7 +442,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
     <div>
       <span class="eyebrow rv" data-i18n="heroEy">Para compañías de servicios</span>
       <h1 class="rv d1" data-i18n="heroT" style="margin-top:12px">Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span></h1>
-      <p class="sub rv d2" data-i18n="heroS">Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale lista con las horas y los materiales. Todo en un solo lugar.</p>
+      <p class="sub rv d2" data-i18n="heroS">Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale con los materiales que registró el técnico. Todo en un solo lugar.</p>
       <div class="hero-cta rv d3">
         <a class="btn btn-green" href="/register/" style="font-size:17px;padding:16px 28px" data-i18n="heroMain">Empezar 15 días gratis</a>
         <a class="btn btn-ghost" href="#flujo" data-i18n="heroCta2">Ver cómo funciona</a>
@@ -441,62 +456,19 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       </div>
     </div>
 
-    <div class="mock rv d2" aria-hidden="true">
+    <div class="hphone rv d2" aria-hidden="true">
       <div class="float-tag t1"><em>📸</em><span data-i18n="ft1">3 fotos nuevas</span></div>
       <div class="float-tag t2"><em>✅</em><span data-i18n="ft2">Factura enviada</span></div>
-      <div class="mock-card">
-        <div class="mock-top">
-          <div class="dot3"><span></span><span></span><span></span></div>
-          <b data-i18n="mkTitle">Trabajo #1048</b>
-          <span class="live" data-i18n="mkLive">En vivo</span>
-        </div>
-        <div class="steps-bar"><div class="sb"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div></div>
-        <div class="steps-lbl"><span data-i18n="s1">Trabajo</span><span data-i18n="s2">Visita</span><span data-i18n="s3">Notas</span><span data-i18n="s4">Factura</span></div>
-        <div class="mock-body">
-          <!-- 1. Job -->
-          <div class="scene">
-            <div class="title-row">
-              <div><h4 data-i18n="j1t">Reparar fuga en baño, Unidad 4B</h4><p>Bayview Condominiums · 1200 Ocean Dr</p></div>
-              <span class="pill b" data-i18n="j1st">Nuevo</span>
-            </div>
-            <div class="grid2">
-              <div class="kv"><small data-i18n="kClient">Cliente</small>Bayview HOA</div>
-              <div class="kv"><small data-i18n="kType">Tipo</small><span data-i18n="j1type">Plomería</span></div>
-              <div class="kv"><small data-i18n="kPrio">Prioridad</small><span data-i18n="j1prio">Alta</span></div>
-              <div class="kv"><small data-i18n="kSrc">Pedido por</small><span data-i18n="j1src">Administración</span></div>
-            </div>
-            <div class="send" style="background:var(--navy);color:#fff" data-i18n="j1btn">＋ Asignar visita</div>
-          </div>
-          <!-- 2. Visit -->
-          <div class="scene">
-            <div class="title-row"><div><h4 data-i18n="v1t">Visita agendada</h4><p data-i18n="v1s">Jueves · 9:00 AM – 11:00 AM</p></div><span class="pill a" data-i18n="v1st">En camino</span></div>
-            <div class="cal">
-              <div><span data-i18n="dLu">Lu</span><b>19</b></div><div><span data-i18n="dMa">Ma</span><b>20</b></div><div><span data-i18n="dMi">Mi</span><b>21</b></div><div class="on"><span data-i18n="dJu">Ju</span><b>22</b></div><div><span data-i18n="dVi">Vi</span><b>23</b></div>
-            </div>
-            <div class="tech"><span class="av">LM</span><div style="flex:1"><b>Luis M.</b><br><small style="color:var(--mut)" data-i18n="v1tech">Técnico · llega en 12 min</small></div></div>
-            <div class="timer"><span data-i18n="v1clock">Reloj de la visita</span><b id="clock">00:00:00</b></div>
-          </div>
-          <!-- 3. Notes + photos -->
-          <div class="scene">
-            <div class="title-row"><div><h4 data-i18n="n1t">Notas del técnico</h4><p data-i18n="n1s">Desde el teléfono, en el sitio</p></div><span class="pill g" data-i18n="n1st">Guardado</span></div>
-            <div class="photos">
-              <div class="ph ph1"><span data-i18n="pA">Antes</span></div>
-              <div class="ph ph2"><span data-i18n="pB">Pieza</span></div>
-              <div class="ph ph3"><span data-i18n="pC">Después</span></div>
-            </div>
-            <div class="note"><b data-i18n="n1lbl">Nota</b><span data-i18n="n1txt">Se cambió la válvula del inodoro y el sello. Sin fugas al terminar. Recibo de materiales adjunto.</span></div>
-          </div>
-          <!-- 4. Invoice -->
-          <div class="scene">
-            <div class="title-row"><div><h4 data-i18n="i1t">Factura #2231</h4><p>Bayview HOA</p></div><span class="pill g" data-i18n="i1st">Lista</span></div>
-            <div style="margin-top:8px">
-              <div class="inv-line"><span data-i18n="i1a">Mano de obra · 1.5 h</span><b>$135.00</b></div>
-              <div class="inv-line"><span data-i18n="i1b">Válvula y sello</span><b>$42.80</b></div>
-              <div class="inv-line"><span data-i18n="i1c">Visita de servicio</span><b>$45.00</b></div>
-            </div>
-            <div class="inv-total"><span>Total</span><span>$222.80</span></div>
-            <div class="send" data-i18n="i1btn">Enviar al cliente →</div>
-          </div>
+      <div class="hphone-frame">
+        <span class="hphone-notch"></span>
+        <video id="heroVid" src="/assets/hero.mp4" autoplay muted loop playsinline preload="auto"></video>
+        <!-- Sharp captions over the video (the video's own text is too small). -->
+        <div class="hcap" id="heroCap">
+          <span data-i18n="hv1">¿Papeles por todos lados?</span>
+          <span data-i18n="hv2">Trabajo terminado → creas la factura en un toque</span>
+          <span data-i18n="hv3">✓ Factura enviada al cliente</span>
+          <span data-i18n="hv4">Todo sin salir de WalkCheck</span>
+          <span data-i18n="hv5">Prueba 15 días gratis</span>
         </div>
       </div>
     </div>
@@ -524,7 +496,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <div class="flow-steps" role="tablist">
         <button class="fstep on rv" type="button" data-step="0" role="tab">
           <span class="n">1</span>
-          <span><h3 data-i18n="f1t">Crea el trabajo</h3><p data-i18n="f1s">Cliente, dirección, tipo de trabajo y prioridad en un minuto.</p>
+          <span><h3 data-i18n="f1t">Crea el trabajo</h3><p data-i18n="f1s">Cliente, dirección, tipo de trabajo e instrucciones en un minuto.</p>
             <ul><li data-i18n="f1a">Lista de trabajos con filtros por estado y tipo</li><li data-i18n="f1b">Ves de un vistazo lo atrasado y lo que falta por facturar</li><li data-i18n="f1c">Plantillas por tipo de trabajo</li></ul></span>
         </button>
         <button class="fstep rv d1" type="button" data-step="1" role="tab">
@@ -535,12 +507,12 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
         <button class="fstep rv d2" type="button" data-step="2" role="tab">
           <span class="n">3</span>
           <span><h3 data-i18n="f3t">Notas con fotos en el sitio</h3><p data-i18n="f3s">El técnico documenta el antes, el después y los materiales.</p>
-            <ul><li data-i18n="f3a">Fotos y notas guardadas en el trabajo, no en un teléfono</li><li data-i18n="f3b">Recibos de materiales adjuntos</li><li data-i18n="f3c">Horas registradas con el reloj de la visita</li></ul></span>
+            <ul><li data-i18n="f3a">Fotos y notas guardadas en el trabajo, no en un teléfono</li><li data-i18n="f3b">Recibos de materiales adjuntos</li><li data-i18n="f3c">Horas de cada visita en el reporte de horas</li></ul></span>
         </button>
         <button class="fstep rv d3" type="button" data-step="3" role="tab">
           <span class="n">4</span>
-          <span><h3 data-i18n="f4t">Factura lista para enviar</h3><p data-i18n="f4s">Horas, materiales y visitas pasan solos a la factura.</p>
-            <ul><li data-i18n="f4a">Borrador de factura al cerrar el trabajo</li><li data-i18n="f4b">Revisas, ajustas y la envías al cliente</li><li data-i18n="f4c">Sabes qué está cobrado y qué no</li></ul></span>
+          <span><h3 data-i18n="f4t">Factura lista para enviar</h3><p data-i18n="f4s">Los materiales pasan solos a la factura; tú pones el precio del trabajo.</p>
+            <ul><li data-i18n="f4a">Borrador de factura con un toque al terminar el trabajo</li><li data-i18n="f4b">Revisas, ajustas y la envías al cliente</li><li data-i18n="f4c">Sabes qué está cobrado y qué no</li></ul></span>
         </button>
       </div>
 
@@ -632,7 +604,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
           <li data-i18n="wt1">"Todo bien" o "Problema" en cada área, con un toque</li>
           <li data-i18n="wt2">Si hay un problema: dónde está, qué se vio y fotos de cerca</li>
           <li data-i18n="wt3">Objetos personales en pasillos, documentados con su ubicación exacta</li>
-          <li data-i18n="wt4">Botón de peligro inmediato que avisa a la oficina sin esperar el reporte</li>
+          <li data-i18n="wt4">Botón de peligro inmediato para avisar a la oficina en el momento, sin esperar el reporte</li>
           <li data-i18n="wt5">Las instrucciones de tu compañía dentro de cada walkthrough</li>
         </ul>
       </div>
@@ -674,7 +646,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
           <div class="exp"><span data-i18n="x3e">Ferretería · recibo adjunto</span><b>$42.80</b></div>
         </div>
         <h4 data-i18n="x3t">Horas y gastos que no se pierden</h4>
-        <p data-i18n="x3p">El técnico registra sus horas y sus compras con recibo, y pasan a la factura sin que nadie las copie a mano.</p>
+        <p data-i18n="x3p">Las horas de cada visita quedan en el reporte de horas, y las compras del técnico pasan a la factura sin que nadie las copie a mano.</p>
       </div>
     </div>
   </div>
@@ -712,7 +684,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <div>
         <h3 data-i18n="pvT">Tus datos, protegidos por rol</h3>
         <ul>
-          <li data-i18n="pv1">Tus técnicos no ven facturación, precios ni reportes</li>
+          <li data-i18n="pv1">Tus técnicos no entran a facturación ni ven las facturas</li>
           <li data-i18n="pv2">No pueden cambiar el cliente, la dirección ni el precio</li>
           <li data-i18n="pv3">Cada compañía ve solo sus propios datos</li>
           <li data-i18n="pv4">El panel de WalkCheck solo administra tu cuenta, no tus trabajos ni clientes</li>
@@ -878,8 +850,8 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       </div>
       <div>
         <h4 data-i18n="ftL">Legal</h4>
-        <a href="#" data-i18n="ftT">Términos</a>
-        <a href="#" data-i18n="ftPv">Privacidad</a>
+        <a href="/terminos/" data-i18n="ftT">Términos</a>
+        <a href="/privacidad/" data-i18n="ftPv">Privacidad</a>
       </div>
     </div>
     <div class="fbot">
@@ -912,24 +884,25 @@ fl1:"Precio por equipo, no por usuario",fl2:"Sin subida después del primer año
 fq7:"¿El precio va a subir?",fa7:"No para ti. Con el precio de fundador, lo que pagas al registrarte es lo que sigues pagando mientras te quedes con nosotros, sin cobro extra por usuario y sin subida después del primer año.",
 wtEy:"Walkthrough mensual",wtT:"Cada edificio revisado igual, todos los meses",wtS:"Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.",
 wtH:"Las mismas 8 áreas, el mismo estándar, sin importar quién vaya",wtP:"Pasillos, lobby, luces, paredes y concreto, equipos de seguridad, estacionamientos, cuartos de basura y áreas comunes. En cada una, el técnico sabe exactamente qué buscar.",
-wt1:'"Todo bien" o "Problema" en cada área, con un toque',wt2:"Si hay un problema: dónde está, qué se vio y fotos de cerca",wt3:"Objetos personales en pasillos, documentados con su ubicación exacta",wt4:"Botón de peligro inmediato que avisa a la oficina sin esperar el reporte",wt5:"Las instrucciones de tu compañía dentro de cada walkthrough",
+wt1:'"Todo bien" o "Problema" en cada área, con un toque',wt2:"Si hay un problema: dónde está, qué se vio y fotos de cerca",wt3:"Objetos personales en pasillos, documentados con su ubicación exacta",wt4:"Botón de peligro inmediato para avisar a la oficina en el momento, sin esperar el reporte",wt5:"Las instrucciones de tu compañía dentro de cada walkthrough",
 wtmT:"🚶 Walkthrough · Bayview Condominiums",wtmS:"Octubre · 5 de 8 áreas · 2 problemas",
 wa1:"Entradas y lobby",wa2:"Luces",wa3:"Pasillos y escaleras",wa4:"Paredes, techos y concreto",wa5:"Estacionamientos",wa6:"Equipos de seguridad",
 waOk:"Todo bien",waIss:"Problema",waDng:"Peligro",waPend:"Pendiente",waWhere:"Dónde:",waWhat:"Qué:",wa3w:"Piso 4, pasillo sur, frente a la 412",wa3q:"Zapatos y una bicicleta en el pasillo",
 mo1:"Ago",mo2:"Sep",mo3:"Oct",
 x1t:"Historial fotográfico mes a mes",x1p:"Las mismas fotos de los mismos lugares cada mes. Compara cómo estaba y cómo está, y tienes pruebas ante la junta, el seguro o un residente.",
 x2d:"Reporte mensual · Bayview HOA",x2a:"Áreas revisadas",x2b:"Problemas encontrados",x2c:"Fotos",x2t:"Un reporte para tu cliente",x2p:"Lo que se encontró, dónde y con fotos, listo para la junta del condominio o el dueño del edificio.",
-x3c:"Reloj de la visita",x3e:"Ferretería · recibo adjunto",x3t:"Horas y gastos que no se pierden",x3p:"El técnico registra sus horas y sus compras con recibo, y pasan a la factura sin que nadie las copie a mano.",
-pvT:"Tus datos, protegidos por rol",pv1:"Tus técnicos no ven facturación, precios ni reportes",pv2:"No pueden cambiar el cliente, la dirección ni el precio",pv3:"Cada compañía ve solo sus propios datos",pv4:"El panel de WalkCheck solo administra tu cuenta, no tus trabajos ni clientes",
+x3c:"Reloj de la visita",x3e:"Ferretería · recibo adjunto",x3t:"Horas y gastos que no se pierden",x3p:"Las horas de cada visita quedan en el reporte de horas, y las compras del técnico pasan a la factura sin que nadie las copie a mano.",
+pvT:"Tus datos, protegidos por rol",pv1:"Tus técnicos no entran a facturación ni ven las facturas",pv2:"No pueden cambiar el cliente, la dirección ni el precio",pv3:"Cada compañía ve solo sus propios datos",pv4:"El panel de WalkCheck solo administra tu cuenta, no tus trabajos ni clientes",
 biEy:"Español e inglés",biT:"Tu oficina en inglés, tus técnicos en español",biS:"Cada persona elige su idioma con un toque. El mismo trabajo, las mismas fotos y las mismas notas, sin traducir nada.",
 navFlow:"Cómo funciona",navRoles:"Para tu equipo",navPrecios:"Precios",navFaq:"Preguntas",navTrial:"15 días gratis",navEnter:"Entrar",
 aiTitle:"Asistente WalkCheck",aiPh:"Pregunta por WalkCheck o una demo…",aiSend:"Enviar",aiHello:"Hola. Te ayudo con WalkCheck. Para empezar, crea tu cuenta en /register/. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",aiErr:"No pude responder ahora. Intenta de nuevo.",aiWait:"Escribiendo…",
 heroEy:"Para compañías de servicios",
 heroT:'Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span>',
-heroS:"Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale lista con las horas y los materiales. Todo en un solo lugar.",
+heroS:"Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale con los materiales que registró el técnico. Todo en un solo lugar.",
 heroMain:"Empezar 15 días gratis",heroCta2:"Ver cómo funciona",heroNote:"Activas tu plan con tarjeta · No se cobra hasta el día 16 · Cancela cuando quieras",
 c1:"Trabajos",c2:"Visitas",c3:"Notas con fotos",c4:"Facturas",
 ft1:"3 fotos nuevas",ft2:"Factura enviada",
+hv1:"¿Papeles por todos lados?",hv2:"Trabajo terminado → creas la factura en un toque",hv3:"✓ Factura enviada al cliente",hv4:"Todo sin salir de WalkCheck",hv5:"Prueba 15 días gratis",
 mkTitle:"Trabajo #1048",mkLive:"En vivo",s1:"Trabajo",s2:"Visita",s3:"Notas",s4:"Factura",
 j1t:"Reparar fuga en baño, Unidad 4B",j1st:"Nuevo",kClient:"Cliente",kType:"Tipo",kPrio:"Prioridad",kSrc:"Pedido por",j1type:"Plomería",j1prio:"Alta",j1src:"Administración",j1btn:"＋ Asignar visita",
 v1t:"Visita agendada",v1s:"Jueves · 9:00 AM – 11:00 AM",v1st:"En camino",dLu:"Lu",dMa:"Ma",dMi:"Mi",dJu:"Ju",dVi:"Vi",v1tech:"Técnico · llega en 12 min",v1clock:"Reloj de la visita",
@@ -939,10 +912,10 @@ pa1t:"Trabajos en el WhatsApp",pa1:"Pedidos que se pierden entre mensajes, audio
 pa2t:"Fotos en el teléfono de cada técnico",pa2:"Cuando el cliente pregunta, nadie encuentra la foto del antes y el después.",
 pa3t:"Facturas que salen tarde",pa3:"Horas y materiales que se olvidan, y dinero que se queda sin cobrar.",
 flEy:"Cómo funciona",flT:"Un solo flujo, de principio a fin",flS:"Cada trabajo pasa por los mismos cuatro pasos. Todo tu equipo ve en qué va cada uno, sin preguntar.",
-f1t:"Crea el trabajo",f1s:"Cliente, dirección, tipo de trabajo y prioridad en un minuto.",f1a:"Lista de trabajos con filtros por estado y tipo",f1b:"Ves de un vistazo lo atrasado y lo que falta por facturar",f1c:"Plantillas por tipo de trabajo",
+f1t:"Crea el trabajo",f1s:"Cliente, dirección, tipo de trabajo e instrucciones en un minuto.",f1a:"Lista de trabajos con filtros por estado y tipo",f1b:"Ves de un vistazo lo atrasado y lo que falta por facturar",f1c:"Plantillas por tipo de trabajo",
 f2t:"Agenda la visita",f2s:"Asígnala a un técnico con día y hora de inicio y fin.",f2a:"Horario del equipo por día, semana o lista",f2b:"Varias visitas por trabajo y varios trabajos por día",f2c:"El técnico ve solo lo suyo en su teléfono",
-f3t:"Notas con fotos en el sitio",f3s:"El técnico documenta el antes, el después y los materiales.",f3a:"Fotos y notas guardadas en el trabajo, no en un teléfono",f3b:"Recibos de materiales adjuntos",f3c:"Horas registradas con el reloj de la visita",
-f4t:"Factura lista para enviar",f4s:"Horas, materiales y visitas pasan solos a la factura.",f4a:"Borrador de factura al cerrar el trabajo",f4b:"Revisas, ajustas y la envías al cliente",f4c:"Sabes qué está cobrado y qué no",
+f3t:"Notas con fotos en el sitio",f3s:"El técnico documenta el antes, el después y los materiales.",f3a:"Fotos y notas guardadas en el trabajo, no en un teléfono",f3b:"Recibos de materiales adjuntos",f3c:"Horas de cada visita en el reporte de horas",
+f4t:"Factura lista para enviar",f4s:"Los materiales pasan solos a la factura; tú pones el precio del trabajo.",f4a:"Borrador de factura con un toque al terminar el trabajo",f4b:"Revisas, ajustas y la envías al cliente",f4c:"Sabes qué está cobrado y qué no",
 st1:"Atrasados",st2:"Por facturar",st3:"Esta semana",pl1:"Trabajos",r1:"Fuga en baño · 4B",r2:"Pintura de pasillo · Piso 7",rs2:"Agendado",r3:"Cambio de luces · Lobby",rs3:"Por facturar",
 pl2:"Horario del equipo · Jueves",sc1:"9:00 – 11:00 · Fuga en baño · 4B",sc2:"10:00 – 2:00 · Pintura de pasillo",sc2s:"En sitio",sc3:"1:00 – 3:00 · Cambio de luces",sc3s:"Pendiente",
 pl2b:"Lo que ve el técnico",tk1:"Llegar y marcar inicio",tk2:"Fotos de antes",tk3:"Notas y fotos de después",
@@ -977,24 +950,25 @@ fl1:"Priced per team, not per user",fl2:"No increase after the first year",fl3:"
 fq7:"Will the price go up?",fa7:"Not for you. With founder pricing, what you pay when you sign up is what you keep paying for as long as you stay, with no per-user fees and no increase after the first year.",
 wtEy:"Monthly walkthrough",wtT:"Every building checked the same way, every month",wtS:"Your tech walks the common areas with a guided checklist. Your office sees the result without calling anyone.",
 wtH:"The same 8 areas, the same standard, no matter who goes",wtP:"Hallways, lobby, lighting, walls and concrete, safety equipment, parking, trash rooms and common areas. In each one, the tech knows exactly what to look for.",
-wt1:'"All good" or "Problem" for each area, in one tap',wt2:"If there's a problem: where it is, what was seen and close-up photos",wt3:"Personal items in hallways, documented with their exact location",wt4:"Immediate-danger button that alerts the office without waiting for the report",wt5:"Your company's instructions inside every walkthrough",
+wt1:'"All good" or "Problem" for each area, in one tap',wt2:"If there's a problem: where it is, what was seen and close-up photos",wt3:"Personal items in hallways, documented with their exact location",wt4:"Immediate-danger button to alert the office right away, without waiting for the report",wt5:"Your company's instructions inside every walkthrough",
 wtmT:"🚶 Walkthrough · Bayview Condominiums",wtmS:"October · 5 of 8 areas · 2 problems",
 wa1:"Entrances & lobby",wa2:"Lighting",wa3:"Hallways & stairs",wa4:"Walls, ceilings & concrete",wa5:"Parking",wa6:"Safety equipment",
 waOk:"All good",waIss:"Problem",waDng:"Danger",waPend:"Pending",waWhere:"Where:",waWhat:"What:",wa3w:"Floor 4, south hallway, by unit 412",wa3q:"Shoes and a bike in the hallway",
 mo1:"Aug",mo2:"Sep",mo3:"Oct",
 x1t:"Month-by-month photo history",x1p:"The same photos of the same spots every month. Compare before and now, and have proof for the board, the insurer or a resident.",
 x2d:"Monthly report · Bayview HOA",x2a:"Areas checked",x2b:"Problems found",x2c:"Photos",x2t:"A report for your client",x2p:"What was found, where, with photos, ready for the condo board or the building owner.",
-x3c:"Visit clock",x3e:"Hardware store · receipt attached",x3t:"Hours and expenses that don't get lost",x3p:"Techs log their hours and purchases with receipts, and they flow into the invoice without anyone retyping them.",
-pvT:"Your data, protected by role",pv1:"Your techs don't see billing, prices or reports",pv2:"They can't change the client, address or price",pv3:"Each company sees only its own data",pv4:"The WalkCheck admin panel only manages your account, not your jobs or clients",
+x3c:"Visit clock",x3e:"Hardware store · receipt attached",x3t:"Hours and expenses that don't get lost",x3p:"Hours for every visit go into the timesheet, and the tech's purchases flow into the invoice without anyone retyping them.",
+pvT:"Your data, protected by role",pv1:"Your techs can't open billing or see invoices",pv2:"They can't change the client, address or price",pv3:"Each company sees only its own data",pv4:"The WalkCheck admin panel only manages your account, not your jobs or clients",
 biEy:"Spanish and English",biT:"Your office in English, your techs in Spanish",biS:"Everyone picks their language in one tap. Same job, same photos, same notes, nothing to translate.",
 navFlow:"How it works",navRoles:"For your team",navPrecios:"Pricing",navFaq:"FAQ",navTrial:"15 days free",navEnter:"Sign in",
 aiTitle:"WalkCheck Assistant",aiPh:"Ask about WalkCheck or a demo…",aiSend:"Send",aiHello:"Hi. I can help with WalkCheck. To start, create your account at /register/. If you need help, email soporte@walkcheck.app.",aiErr:"I couldn't answer just now. Try again.",aiWait:"Typing…",
 heroEy:"For service companies",
 heroT:'From job to invoice, <span class="hl">no paper, no phone tag</span>',
-heroS:"Create the job, schedule it, your tech leaves notes and photos from their phone, and the invoice comes out ready with hours and materials. All in one place.",
+heroS:"Create the job, schedule it, your tech leaves notes and photos from their phone, and the invoice comes out with the materials your tech logged. All in one place.",
 heroMain:"Start 15-day free trial",heroCta2:"See how it works",heroNote:"Card required · Not charged until day 16 · Cancel anytime",
 c1:"Jobs",c2:"Visits",c3:"Notes with photos",c4:"Invoices",
 ft1:"3 new photos",ft2:"Invoice sent",
+hv1:"Paperwork everywhere?",hv2:"Job done → create the invoice in one tap",hv3:"✓ Invoice sent to the client",hv4:"All without leaving WalkCheck",hv5:"Try it free for 15 days",
 mkTitle:"Job #1048",mkLive:"Live",s1:"Job",s2:"Visit",s3:"Notes",s4:"Invoice",
 j1t:"Fix bathroom leak, Unit 4B",j1st:"New",kClient:"Client",kType:"Type",kPrio:"Priority",kSrc:"Requested by",j1type:"Plumbing",j1prio:"High",j1src:"Management",j1btn:"＋ Assign visit",
 v1t:"Visit scheduled",v1s:"Thursday · 9:00 AM – 11:00 AM",v1st:"On the way",dLu:"Mo",dMa:"Tu",dMi:"We",dJu:"Th",dVi:"Fr",v1tech:"Technician · arrives in 12 min",v1clock:"Visit clock",
@@ -1004,10 +978,10 @@ pa1t:"Jobs buried in WhatsApp",pa1:"Requests lost between texts, voice notes and
 pa2t:"Photos on every tech's phone",pa2:"When the client asks, nobody can find the before and after.",
 pa3t:"Invoices that go out late",pa3:"Forgotten hours and materials, and money left uncollected.",
 flEy:"How it works",flT:"One flow, start to finish",flS:"Every job goes through the same four steps. Your whole team sees where each one stands, without asking.",
-f1t:"Create the job",f1s:"Client, address, job type and priority in a minute.",f1a:"Job list with filters by status and type",f1b:"See what's late and what's left to invoice at a glance",f1c:"Templates by job type",
+f1t:"Create the job",f1s:"Client, address, job type and instructions in a minute.",f1a:"Job list with filters by status and type",f1b:"See what's late and what's left to invoice at a glance",f1c:"Templates by job type",
 f2t:"Schedule the visit",f2s:"Assign it to a tech with a day plus start and end time.",f2a:"Team schedule by day, week or list",f2b:"Several visits per job and several jobs per day",f2c:"Techs only see their own work on their phone",
-f3t:"Notes with photos on site",f3s:"The tech documents the before, the after and the materials.",f3a:"Photos and notes saved on the job, not on a phone",f3b:"Materials receipts attached",f3c:"Hours tracked with the visit clock",
-f4t:"Invoice ready to send",f4s:"Hours, materials and visits flow into the invoice.",f4a:"Draft invoice when the job closes",f4b:"Review, adjust and send it to the client",f4c:"Know what's paid and what isn't",
+f3t:"Notes with photos on site",f3s:"The tech documents the before, the after and the materials.",f3a:"Photos and notes saved on the job, not on a phone",f3b:"Materials receipts attached",f3c:"Hours for every visit in the timesheet",
+f4t:"Invoice ready to send",f4s:"Materials flow into the invoice; you set the price of the work.",f4a:"One-tap draft invoice when the job is done",f4b:"Review, adjust and send it to the client",f4c:"Know what's paid and what isn't",
 st1:"Late",st2:"To invoice",st3:"This week",pl1:"Jobs",r1:"Bathroom leak · 4B",r2:"Hallway paint · Floor 7",rs2:"Scheduled",r3:"Light replacement · Lobby",rs3:"To invoice",
 pl2:"Team schedule · Thursday",sc1:"9:00 – 11:00 · Bathroom leak · 4B",sc2:"10:00 – 2:00 · Hallway paint",sc2s:"On site",sc3:"1:00 – 3:00 · Light replacement",sc3s:"Pending",
 pl2b:"What the tech sees",tk1:"Arrive and clock in",tk2:"Before photos",tk3:"After notes and photos",
@@ -1070,6 +1044,7 @@ var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-moti
     });
     lbls.forEach(function(l, k){ l.classList.toggle("on", k === n); });
   }
+  if (!scenes.length) return;
   show(0);
   if (!reduceMotion) setInterval(function(){ i = (i + 1) % scenes.length; show(i); }, 3200);
   var start = Date.now() - 37 * 60 * 1000;
@@ -1079,6 +1054,26 @@ var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-moti
     clock.textContent = [h, m, x].map(function(v){ return String(v).padStart(2, "0"); }).join(":");
   }
   tick(); setInterval(tick, 1000);
+})();
+
+/* Hero video: show the caption that matches each part of the video
+   (stress → create invoice → invoice sent → happy → end card). */
+(function(){
+  var v = document.getElementById("heroVid"), cap = document.getElementById("heroCap");
+  if (!v || !cap) return;
+  var spans = cap.querySelectorAll("span");
+  var cuts = [2, 4.75, 6.5, 8.5, 99];
+  var cur = -1;
+  function sync(){
+    var t = v.currentTime || 0, n = 0;
+    while (t >= cuts[n]) n++;
+    if (n !== cur) { cur = n; spans.forEach(function(s, k){ s.classList.toggle("on", k === n); }); }
+    if (!v.paused) requestAnimationFrame(sync);
+  }
+  v.addEventListener("play", sync);
+  v.addEventListener("seeked", sync);
+  if (reduceMotion) { v.removeAttribute("autoplay"); v.pause(); v.currentTime = 3; }
+  sync();
 })();
 
 /* Flow stepper: click a step, or let it follow scroll on desktop */
@@ -1120,7 +1115,7 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: plataforma para compañías de servicios con este flujo: crear el trabajo, agendar la visita al técnico, notas con fotos en el sitio y factura lista con horas y materiales. Precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis registrando tarjeta en Stripe (no se cobra hasta el día 16; el panel se abre cuando Stripe confirma) en walkcheck.app/register. Precio de fundador: quien se registra ahora mantiene su precio para siempre mientras siga activo; precio por equipo, sin cobro por usuario extra. No hay plan anual todavía. Contacto de ventas: 305-205-2128 o info@walkcheck.app. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. No inventes funciones. Para cerrar, apunta a /register/ y a soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a soporte@walkcheck.app. Sé breve."
+    "Eres el closer de WalkCheck (walkcheck.app). SOLO hablas de WalkCheck: plataforma para compañías de servicios con este flujo: crear el trabajo, agendar la visita al técnico, notas con fotos en el sitio y factura con los materiales que registró el técnico (el precio del trabajo lo pone la oficina). Precios oficiales CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, más popular), UNLIMITED $299.99/mes (ilimitados). 15 días gratis registrando tarjeta en Stripe (no se cobra hasta el día 16; el panel se abre cuando Stripe confirma) en walkcheck.app/register. Precio de fundador: quien se registra ahora mantiene su precio para siempre mientras siga activo; precio por equipo, sin cobro por usuario extra. No hay plan anual todavía. Contacto de ventas: 305-205-2128 o info@walkcheck.app. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. No inventes funciones. Para cerrar, apunta a /register/ y a soporte@walkcheck.app. Si preguntan de otro tema, redirige a WalkCheck, a /register/ o a soporte@walkcheck.app. Sé breve."
 });
 const chat = model.startChat();
 let sent = 0;

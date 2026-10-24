@@ -31,7 +31,7 @@
 </header>
 <div class="card">
   <h2>Crear mi cuenta</h2>
-  <p class="muted">Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99. Al crear la cuenta te llevamos a Stripe para activar tu plan con tu tarjeta. Tu panel se abre en cuanto Stripe confirma el pago.</p>
+  <p class="muted">Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99 al mes. Al crear la cuenta te llevamos a Stripe para registrar tu tarjeta. <b>Tienes 15 días gratis:</b> no se cobra nada hasta el día 16 y, si cancelas antes desde Mi suscripción, no pagas. Después se cobra el plan cada mes hasta que canceles. Tu panel se abre en cuanto Stripe confirma.</p>
   <label>Plan</label>
   <select id="plan">
     <option value="crew5">CREW 5 $99.99</option>
@@ -50,6 +50,10 @@
   <select id="companyType" required>
     <option value="">Selecciona…</option>
   </select>
+  <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:#111;font-size:14px;margin:6px 0 12px">
+    <input id="agree" type="checkbox" style="width:auto;margin:3px 0 0">
+    <span>Acepto los <a href="/terminos/" target="_blank">Términos del servicio</a> y la <a href="/privacidad/" target="_blank">Política de privacidad</a>, y entiendo que al terminar los 15 días gratis se cobra el plan cada mes hasta que cancele.</span>
+  </label>
   <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta y activar mi plan</button>
   <div class="err" id="err"></div>
   <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
@@ -86,6 +90,10 @@ document.getElementById('go').onclick = async () => {
     err.textContent = 'Completa todos los campos, incluido Tipo de compañía.';
     return;
   }
+  if (!document.getElementById('agree').checked) {
+    err.textContent = 'Para continuar, acepta los Términos y la Política de privacidad.';
+    return;
+  }
   try {
     const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const uid = cred.user.uid;
@@ -99,6 +107,7 @@ document.getElementById('go').onclick = async () => {
     await ref.set({
       id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
       status: 'pending', adminUid: uid,
+      termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-24',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       is_paid: false
     });

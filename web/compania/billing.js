@@ -394,6 +394,15 @@
       var p0 = kind ? priceOfKind(kind) : 0;
       lines = [{ name: kind, desc: j.description || j.instructions || '', qty: 1, unitPrice: p0, amount: p0 }];
     }
+    // Materials the tech or the office logged on the job go in on their own
+    // line each, so nobody types them again (skipped if already on a line).
+    (typeof jobExpenses === 'function' ? jobExpenses(j) : []).forEach(function (e) {
+      var tot = Number(e.total || 0);
+      if (!(tot > 0)) return;
+      var desc = [e.items, e.vendor].filter(Boolean).join(' · ');
+      if (lines.some(function (l) { return l.desc === desc && Number(l.amount) === tot; })) return;
+      lines.push({ name: T('Materiales', 'Materials'), desc: desc, qty: 1, unitPrice: tot, amount: tot });
+    });
     var sub = lines.reduce(function (s, l) { return s + Number(l.amount || 0); }, 0);
     var chargeTax = !(typeof isPm === 'function' && isPm());
     var taxRate = chargeTax ? Number(companyTaxRate || 0) : 0;
