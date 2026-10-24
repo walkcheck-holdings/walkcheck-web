@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
+<script src="/js/paymentLinks.js"></script>
 <script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -170,6 +171,7 @@
       <div id="avatarMenu" class="avatar-menu" role="menu">
         <div class="avatar-who"><b id="avatarName"></b><span id="avatarRole"></span></div>
         <div id="coMenuList"></div>
+        <button type="button" id="mySubBtn" class="hidden" onclick="closeAvatar();openSubscription()" data-i18n="mySub">Mi suscripción</button>
         <button type="button" onclick="auth.signOut()" data-i18n="logout">Cerrar sesión</button>
       </div>
     </div>
@@ -569,6 +571,72 @@ function ymd(d){
   const x = d instanceof Date ? d : new Date(d);
   return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
 }
+/* ===== Mi suscripción (owner/admin only) =====
+   Plan + status come from the company doc, written by the Stripe webhook
+   (functions-stripe). Cancel / change card happens in Stripe's customer
+   portal: cancelling during the 15-day trial = no charge; otherwise Stripe
+   charges the chosen plan automatically on day 16 and every month. */
+async function openSubscription(){
+  if (!canSeeMoney()) return;
+  const en = loginLang() === 'en';
+  let d = {};
+  try { const co = await db.collection('companies').doc(cid()).get(); d = co.data() || {}; } catch(_){}
+  const fmtD = (t) => {
+    if (!t) return '';
+    const x = t.toDate ? t.toDate() : new Date(t);
+    return isNaN(x) ? '' : x.toLocaleDateString(en ? 'en-US' : 'es-ES', { day:'numeric', month:'long', year:'numeric' });
+  };
+  const plan = (window.normalizePlan && normalizePlan(d.plan)) || d.plan || '';
+  const planTxt = (window.PLAN_LABELS || {})[plan] || plan || '—';
+  const st = String(d.subscriptionStatus || '').toLowerCase();
+  const trialEnd = fmtD(d.trialEnd), periodEnd = fmtD(d.currentPeriodEnd);
+  const cancelling = d.cancelAtPeriodEnd === true;
+  let status, note;
+  if (cancelling) {
+    const day = st === 'trialing' ? trialEnd : periodEnd;
+    status = en ? 'Cancelled — access until ' + day : 'Cancelada — acceso hasta el ' + day;
+    note = st === 'trialing'
+      ? (en ? 'You cancelled during the free trial: you will not be charged.' : 'Cancelaste durante la prueba gratis: no se te cobrará nada.')
+      : (en ? 'No more charges. You can reactivate it before that date.' : 'No habrá más cobros. Puedes reactivarla antes de esa fecha.');
+  } else if (st === 'trialing') {
+    status = en ? 'Free trial until ' + trialEnd : 'Prueba gratis hasta el ' + trialEnd;
+    note = en ? 'If you do not cancel before that day, your plan is charged automatically and then every month.'
+              : 'Si no cancelas antes de ese día, se cobra tu plan automáticamente y después cada mes.';
+  } else if (st === 'active' || d.is_paid === true) {
+    status = en ? 'Active' : 'Activa';
+    note = periodEnd ? (en ? 'Next charge: ' + periodEnd : 'Próximo cobro: ' + periodEnd) : '';
+  } else if (!st && String(d.status || '').toLowerCase() === 'active') {
+    // Company created before Stripe billing: active, no Stripe subscription yet.
+    status = en ? 'Active' : 'Activa';
+    note = en ? 'This company has no Stripe subscription yet.' : 'Esta compañía todavía no tiene una suscripción en Stripe.';
+  } else if (st === 'past_due' || st === 'unpaid') {
+    status = en ? 'Payment failed' : 'Pago fallido';
+    note = en ? 'Update your card so your team keeps access.' : 'Actualiza tu tarjeta para que tu equipo no pierda el acceso.';
+  } else {
+    status = en ? 'Pending payment' : 'Pago pendiente';
+    note = '';
+  }
+  const inApp = !!d.iap_product;
+  const portal = (window.billingPortalHref && billingPortalHref((auth.currentUser && auth.currentUser.email) || '')) || '';
+  const action = inApp
+    ? `<p class="muted">${esc(en ? 'This plan is billed by Apple / Google: cancel it from your phone\'s subscription settings.' : 'Este plan se paga por Apple / Google: cancélalo desde los ajustes de suscripciones de tu teléfono.')}</p>`
+    : portal
+      ? `<a class="btn" href="${esc(portal)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">${esc(en ? 'Manage or cancel my subscription' : 'Administrar o cancelar mi suscripción')}</a>
+         <p class="muted" style="margin-top:8px">${esc(en ? 'Opens Stripe, our payment provider: cancel, change card or download receipts.' : 'Se abre Stripe, nuestro proveedor de pagos: ahí cancelas, cambias la tarjeta o bajas tus recibos.')}</p>`
+      : `<p class="muted">${esc(en ? 'To cancel, email soporte@walkcheck.app or call 305-205-2128.' : 'Para cancelar, escríbenos a soporte@walkcheck.app o llama al 305-205-2128.')}</p>`;
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box">
+    <h3>${esc(uiT('mySub'))}</h3>
+    <p class="muted">${esc(d.name || companyName || '')}</p>
+    <div class="card" style="margin:10px 0">
+      <p><b>${esc(en ? 'Plan' : 'Plan')}:</b> ${esc(planTxt)}${plan ? (en ? ' /month' : ' /mes') : ''}</p>
+      <p><b>${esc(en ? 'Status' : 'Estado')}:</b> ${esc(status)}</p>
+      ${note ? `<p class="muted">${esc(note)}</p>` : ''}
+    </div>
+    ${action}
+    <button class="btn ghost" style="margin-top:10px" onclick="$('modal').classList.add('hidden')">${esc(uiT('close'))}</button>
+  </div>`;
+}
 function canSeeMoney(){
   if (isWorker()) return false;
   if (isSuper()) return !!cid();
@@ -618,6 +686,7 @@ const UI_I18N = {
     needEmail: 'Escribe tu correo para enviarte el enlace.',
     sent: 'Si ese correo tiene cuenta, te enviamos el enlace para cambiar la contraseña.',
     fail: 'No se pudo entrar: ',
+    mySub:'Mi suscripción',
     money:'Facturación', types:'Tipos', logout:'Cerrar sesión', reports:'Reportes',
     genReport:'Generar reporte', downloadPdf:'Descargar PDF', sendWa:'Enviar por WhatsApp', sendMail:'Enviar por correo',
     pickBuildingMonth:'Elige edificio y mes', inspectedBld:'Edificios inspeccionados', pendingBld:'Edificios pendientes',
@@ -681,6 +750,7 @@ const UI_I18N = {
     needEmail: 'Enter your email so we can send the reset link.',
     sent: 'If that email has an account, we sent a link to reset the password.',
     fail: 'Could not sign in: ',
+    mySub:'My subscription',
     money:'Billing', types:'Types', logout:'Sign out', reports:'Reports',
     genReport:'Generate report', downloadPdf:'Download PDF', sendWa:'Send via WhatsApp', sendMail:'Send via email',
     pickBuildingMonth:'Pick building and month', inspectedBld:'Buildings inspected', pendingBld:'Buildings pending',
@@ -1560,6 +1630,7 @@ async function openCompanyPortal(){
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
   applyLayout();
   syncChrome();
   await loadCompanyOptions();
@@ -1842,6 +1913,7 @@ function navMore(){
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openJobs()">${esc(uiT('jobsMenu'))}</button>`);
   if (wkPhone()) items.push(`<button type="button" onclick="closeMore();toggleSites()">${esc(uiT('buildings'))}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
+  if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openSubscription()">${esc(uiT('mySub'))}</button>`);
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openBilling()">${esc(uiT('money'))}</button>`);
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
   if (wkPhone() && canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
@@ -1887,6 +1959,7 @@ function syncChrome(){
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
   if ($('jobsBtn')) $('jobsBtn').classList.toggle('hidden', isWorker());
   if ($('railCreate')) $('railCreate').classList.toggle('hidden', !canAssign());
   if ($('railJobs')) $('railJobs').classList.toggle('hidden', isWorker());

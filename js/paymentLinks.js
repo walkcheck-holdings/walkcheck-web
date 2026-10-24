@@ -4,6 +4,17 @@ window.PAYMENT_LINKS = {
   crew10:    'https://buy.stripe.com/dRm9AT7Twf134YpbPk63K01',
   unlimited: 'https://buy.stripe.com/3cI00jgq22eh1Md7z463K02'
 };
+/**
+ * Stripe customer portal (Stripe → Settings → Billing → Customer portal →
+ * "Login link"). The owner cancels, changes card or sees receipts there.
+ * Cancelling during the 15-day trial means no charge. Empty = button hidden.
+ */
+window.BILLING_PORTAL_URL = 'https://billing.stripe.com/p/login/00w8wP5Lo5qt3Ul3iO63K00';
+window.billingPortalHref = function (email) {
+  var base = window.BILLING_PORTAL_URL || '';
+  if (!base) return '';
+  return email ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'prefilled_email=' + encodeURIComponent(email) : base;
+};
 window.PLAN_LABELS = {
   crew5: 'CREW 5 $99.99',
   crew10: 'CREW 10 $149.99',
