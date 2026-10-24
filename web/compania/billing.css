@@ -24,3 +24,12 @@ body.view-archived #archivedPane { display: block; }
   .inv-paper { padding: 16px 12px; box-shadow: none; }
   .inv-actions .btn { min-width: 0; }
 }
+
+/* Invoice lines on phones: type and description full width, qty + price below. */
+@media (max-width: 640px) {
+  .inv-line-head { display: none !important; }
+  .inv-line { grid-template-columns: 1fr 1fr !important; }
+  .inv-line select, .inv-line textarea { grid-column: 1 / -1; }
+  .inv-line input[data-lqty]::before { content: ''; }
+}
+

@@ -19,6 +19,7 @@
 <script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="/web/compania/base.css">
 <link rel="stylesheet" href="/web/compania/pc.css">
 <link rel="stylesheet" href="/web/compania/phone.css">
@@ -398,6 +399,7 @@ let companyName = '';
 let companyLogo = '';
 let companyPhone = '';
 let companyTaxRate = 0;
+let companyLogoData = '';   // company logo (small PNG data URL) for invoices and PDFs
 let typePrices = {};
 let customTypes = [];
 let emptyStart = false;
@@ -1121,6 +1123,7 @@ async function loadBoard(){
     companyLogo = (co.exists && (co.data().logoUrl || co.data().logo || '')) || '';
     companyPhone = (co.exists && (co.data().phone || '')) || '';
     companyTaxRate = (co.exists && Number(co.data().taxRate)) || 0;
+    companyLogoData = (co.exists && co.data().logoData) || '';
     emptyStart = !!(co.exists && co.data().emptyStart);
     fillCompanyHeader();
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
