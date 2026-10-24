@@ -21,7 +21,7 @@
     <h3>Entrar a Walkcheck</h3>
   </div>
   <p class="muted">El panel de tu compañía: recorridos, fotos y reportes en un solo lugar.</p>
-  <input type="email" id="email" placeholder="Correo" autocomplete="username">
+  <input type="text" id="email" placeholder="Correo o usuario" autocomplete="username" autocapitalize="none" spellcheck="false">
   <div class="pw-wrap">
     <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
     <button type="button" class="pw-eye" id="pwEye" aria-label="Mostrar contraseña">👁</button>
@@ -60,7 +60,11 @@ $('btnLogin').onclick = async function () {
       ? firebase.auth.Auth.Persistence.LOCAL
       : firebase.auth.Auth.Persistence.SESSION;
     await auth.setPersistence(persist);
-    await auth.signInWithEmailAndPassword($('email').value.trim(), $('password').value);
+    // Workers created by their company log in with just their username
+    // (stored as username@workers.walkcheck.app, same as the app).
+    var id = $('email').value.trim();
+    if (id && id.indexOf('@') < 0) id = id.toLowerCase().replace(/\s+/g, '.') + '@workers.walkcheck.app';
+    await auth.signInWithEmailAndPassword(id, $('password').value);
     location.replace('/web/entrar.html');
   } catch (e) {
     $('loginErr').textContent = 'No se pudo entrar: ' + (e.message || e);

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/web/compartido/base.css">
 <script src="/web/compartido/firebase.js"></script>
 <script src="/web/entrar.js"></script>
+<script src="/js/paymentLinks.js"></script>
 <style>
 header.wk { display:flex; align-items:center; gap:16px; }
 header.wk .brand { font-weight:800; }
@@ -33,6 +34,14 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .row-actions .btn { width:auto; padding:8px 12px; min-height:36px; font-size:13px; }
 .q { max-width:320px; margin:0 0 16px; }
+/* Revenue report */
+.kpis { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:0 0 18px; }
+.kpi { background:#fff; border-radius:12px; padding:14px; }
+.kpi span { display:block; font-size:12px; color:#8E8E93; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.kpi b { display:block; font-size:24px; margin-top:4px; }
+.kpi small { color:#8E8E93; font-size:12px; }
+.kpi.main b { color:#1B7A36; }
+@media (max-width: 767px) { .kpis { grid-template-columns:1fr 1fr; } .kpi b { font-size:20px; } }
 @media (max-width: 767px) {
   .hide-sm { display:none; }
   /* Phone: name + status on one line, buttons on their own row below. */
@@ -52,6 +61,9 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
   <button type="button" id="btnOut">Cerrar sesión</button>
 </header>
 <div class="wrap">
+  <h2 style="margin:0 0 6px">Ingresos de WalkCheck</h2>
+  <p class="muted">Lo que pagan las compañías por su plan. El dinero cobrado de verdad y los recibos están en <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Stripe → Pagos</a>.</p>
+  <div class="kpis" id="kpis"></div>
   <h2 style="margin:0 0 6px">Compañías</h2>
   <p class="muted">Activa o suspende compañías. Por privacidad no se ven sus trabajos, clientes ni facturación.</p>
   <input class="q" type="text" id="q" placeholder="Buscar compañía">
@@ -61,12 +73,14 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
         <tr>
           <th>Compañía</th>
           <th class="hide-sm">Plan</th>
+          <th class="hide-sm">$/mes</th>
           <th class="hide-sm">Pago</th>
+          <th class="hide-sm">Próximo cobro</th>
           <th>Estado</th>
           <th></th>
         </tr>
       </thead>
-      <tbody id="rows"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody>
+      <tbody id="rows"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -95,17 +109,52 @@ async function load() {
   render();
 }
 
-function paid(c) {
-  return c.is_paid === true || String(c.subscriptionStatus || '').toLowerCase() === 'active';
+var PRICE = { crew5: 99.99, crew10: 149.99, unlimited: 299.99 };
+function planId(c) { return (window.normalizePlan && normalizePlan(c.plan || c.selectedPlan)) || ''; }
+function money(n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function day(t) {
+  if (!t) return '';
+  var d = t.toDate ? t.toDate() : new Date(t);
+  return isNaN(d) ? '' : d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+/* Billing state of one company, from what the Stripe webhook saved. */
+function billState(c) {
+  var s = String(c.subscriptionStatus || '').toLowerCase();
+  var st = String(c.status || '').toLowerCase();
+  if (st === 'pending' && !c.is_paid) return { k: 'nocard', txt: 'Sin tarjeta', cls: 'pend' };
+  if (c.cancelAtPeriodEnd) return { k: 'cancel', txt: 'Cancela el ' + day(s === 'trialing' ? c.trialEnd : c.currentPeriodEnd), cls: 'off' };
+  if (s === 'trialing') return { k: 'trial', txt: 'Prueba hasta ' + day(c.trialEnd), cls: 'pend' };
+  if (s === 'past_due' || s === 'unpaid') return { k: 'failed', txt: 'Pago fallido', cls: 'off' };
+  if (s === 'active') return { k: 'active', txt: 'Pagando', cls: 'pay' };
+  if (s === 'canceled') return { k: 'gone', txt: 'Cancelada', cls: 'off' };
+  if (c.is_paid) return { k: 'active', txt: 'Pagando', cls: 'pay' };
+  return { k: 'none', txt: 'Sin suscripción', cls: 'off' };
+}
+function renderKpis() {
+  var mrr = 0, nAct = 0, trialMrr = 0, nTrial = 0, nCancel = 0, nFail = 0, nNoCard = 0;
+  list.forEach(function (c) {
+    var b = billState(c), price = PRICE[planId(c)] || 0;
+    if (b.k === 'active') { mrr += price; nAct++; }
+    if (b.k === 'trial') { trialMrr += price; nTrial++; }
+    if (b.k === 'cancel') nCancel++;
+    if (b.k === 'failed') nFail++;
+    if (b.k === 'nocard') nNoCard++;
+  });
+  $('kpis').innerHTML =
+    '<div class="kpi main"><span>Entra cada mes</span><b>' + money(mrr) + '</b><small>' + nAct + ' compañías pagando</small></div>' +
+    '<div class="kpi"><span>En prueba</span><b>' + nTrial + '</b><small>' + money(trialMrr) + '/mes si se quedan</small></div>' +
+    '<div class="kpi"><span>Al año (si siguen)</span><b>' + money(mrr * 12) + '</b><small>lo de cada mes × 12</small></div>' +
+    '<div class="kpi"><span>Atención</span><b>' + (nFail + nCancel) + '</b><small>' + nFail + ' pago fallido · ' + nCancel + ' cancelando · ' + nNoCard + ' sin tarjeta</small></div>';
 }
 
 function render() {
+  renderKpis();
   var q = ($('q').value || '').toLowerCase().trim();
   var rows = list.filter(function (c) {
     return !q || String(c.name || '').toLowerCase().indexOf(q) >= 0 || String(c.id).toLowerCase().indexOf(q) >= 0;
   });
   if (!rows.length) {
-    $('rows').innerHTML = '<tr><td colspan="5" class="muted">No hay compañías.</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="7" class="muted">No hay compañías.</td></tr>';
     return;
   }
   $('rows').innerHTML = rows.map(function (c) {
@@ -113,13 +162,16 @@ function render() {
     var pending = st === 'pending';
     var on = st !== 'suspended' && !pending;
     var plan = c.plan || c.selectedPlan || '—';
+    var bs = billState(c);
     var pill = pending ? '<span class="st-pill pend">Pago pendiente</span>'
       : '<span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span>';
     var btnLabel = pending ? 'Activar a mano' : (on ? 'Suspender' : 'Activar');
     return '<tr>' +
       '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div></td>' +
       '<td class="hide-sm">' + esc(plan) + '</td>' +
-      '<td class="hide-sm"><span class="st-pill ' + (paid(c) ? 'pay' : 'off') + '">' + (paid(c) ? 'Pagó' : 'Sin pago') + '</span></td>' +
+      '<td class="hide-sm">' + (PRICE[planId(c)] ? money(PRICE[planId(c)]) : '—') + '</td>' +
+      '<td class="hide-sm"><span class="st-pill ' + bs.cls + '">' + esc(bs.txt) + '</span></td>' +
+      '<td class="hide-sm">' + esc(bs.k === 'active' ? day(c.currentPeriodEnd) : bs.k === 'trial' ? day(c.trialEnd) : '') + '</td>' +
       '<td>' + pill + '</td>' +
       '<td><div class="row-actions">' +
         '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '"' +

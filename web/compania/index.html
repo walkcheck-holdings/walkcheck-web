@@ -1802,6 +1802,7 @@ function openRolesPane(){
   const pane = $('rolesPane');
   if (!pane) return;
   pane.innerHTML = `<h3>${esc(uiT('teamRoles'))}</h3>
+    <button class="btn" style="width:auto;margin:0 0 12px" onclick="openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>
     ${techs.map(t => {
       const r = String(t.role||'worker').toLowerCase();
       const locked = r === 'owner' || r === 'admin';
@@ -1809,6 +1810,92 @@ function openRolesPane(){
         ${locked ? `<b>${esc(roleWord(r))}</b>` : roleSelectHtml(t.uid, r)}</div>`;
     }).join('') || `<p class="muted">${esc(uiT('noTeam'))}</p>`}
     <button class="btn ghost" style="margin-top:12px;width:auto" onclick="document.body.classList.remove('view-roles');setSchedView('day')">${esc(uiT('horario'))}</button>`;
+}
+/* ===== Create worker (office) =====
+   Same system as the app: username + temporary password. The account is
+   created on a second Firebase app so the office stays signed in. The plan's
+   worker limit applies (PLAN_WORKER_LIMIT in js/paymentLinks.js). */
+function openCreateWorker(){
+  if (!canManageRoles()) return;
+  const en = loginLang() === 'en';
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box">
+    <h3>${esc(en ? 'New worker' : 'Nuevo trabajador')}</h3>
+    <label class="muted">${esc(en ? 'Name *' : 'Nombre *')}</label><input id="cwName" type="text">
+    <label class="muted">${esc(en ? 'Username * (e.g. juan.perez)' : 'Usuario * (ej: juan.perez)')}</label>
+    <input id="cwUser" type="text" autocapitalize="none" spellcheck="false">
+    <label class="muted">${esc(en ? 'Role' : 'Rol')}</label>
+    <select id="cwRole"><option value="worker">${esc(uiT('workerRole'))}</option><option value="supervisor">${esc(uiT('supervisor'))}</option><option value="manager">${esc(uiT('manager'))}</option></select>
+    <div class="err" id="cwErr"></div>
+    <button class="btn" id="cwGo" onclick="createWorker()">${esc(en ? 'Create' : 'Crear')}</button>
+    <button class="btn ghost" onclick="$('modal').classList.add('hidden')">${esc(uiT('close'))}</button>
+  </div>`;
+}
+function tempPw(){
+  const c = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const a = new Uint32Array(8); crypto.getRandomValues(a);
+  return [...a].map(n => c[n % c.length]).join('');
+}
+async function createWorker(){
+  const en = loginLang() === 'en';
+  const err = $('cwErr'); err.textContent = '';
+  const name = ($('cwName').value || '').trim();
+  const username = ($('cwUser').value || '').trim().toLowerCase().replace(/\s+/g, '.');
+  const role = $('cwRole').value || 'worker';
+  if (!name || !username) { err.textContent = en ? 'Name and username are required.' : 'Nombre y usuario son obligatorios.'; return; }
+  if (!/^[a-z0-9._-]{3,40}$/.test(username)) { err.textContent = en ? 'Username: letters, numbers, dot or dash (3+).' : 'Usuario: letras, números, punto o guion (mínimo 3).'; return; }
+  $('cwGo').disabled = true;
+  try {
+    // Plan limit (owner not counted).
+    const co = (await db.collection('companies').doc(cid()).get()).data() || {};
+    const plan = (window.normalizePlan && normalizePlan(co.plan)) || co.plan || '';
+    const limit = (window.PLAN_WORKER_LIMIT || {})[plan];
+    if (limit) {
+      const team = await db.collection('users').where('companyId', '==', cid()).get();
+      const used = team.docs.filter(d => String(d.data().role || 'worker') !== 'owner').length;
+      if (used >= limit) {
+        err.textContent = en
+          ? `Your plan allows up to ${limit} workers and you have ${used}. Change plan in My subscription to add more.`
+          : `Tu plan permite hasta ${limit} trabajadores y ya tienes ${used}. Cambia de plan en Mi suscripción para añadir más.`;
+        $('cwGo').disabled = false; return;
+      }
+    }
+    const email = username + '@workers.walkcheck.app';
+    const temp = tempPw();
+    const second = firebase.initializeApp(firebaseConfig, 'wk' + Date.now());
+    let wuid = '';
+    try {
+      const cred = await second.auth().createUserWithEmailAndPassword(email, temp);
+      wuid = cred.user.uid;
+      await second.auth().signOut();
+    } finally { await second.delete(); }
+    await db.collection('users').doc(wuid).set({
+      uid: wuid, companyId: cid(), username, displayName: name, email, role,
+      mustChangePassword: true, tempPassword: temp,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    try {
+      await db.collection('companies').doc(cid()).collection('members').doc(wuid).set({ uid: wuid, role, email, displayName: name }, { merge: true });
+    } catch(_){}
+    techs.push({ uid: wuid, name, role, email });
+    $('modal').innerHTML = `<div class="box">
+      <h3>✅ ${esc(en ? 'Worker created' : 'Trabajador creado')}</h3>
+      <div class="card" style="margin:10px 0">
+        <p><b>${esc(en ? 'Username' : 'Usuario')}:</b> ${esc(username)}</p>
+        <p><b>${esc(en ? 'Temporary password' : 'Contraseña temporal')}:</b> ${esc(temp)}</p>
+      </div>
+      <p class="muted">${esc(en
+        ? 'Send it to them. They sign in at walkcheck.app → Sign in, with the username (no email needed), or in the app.'
+        : 'Pásaselo. Entra en walkcheck.app → Entrar, con el usuario (sin correo), o en la app.')}</p>
+      <button class="btn" onclick="$('modal').classList.add('hidden');openRolesPane()">${esc(en ? 'Done' : 'Listo')}</button>
+    </div>`;
+  } catch(e){
+    const m = String(e && (e.code || e.message) || e);
+    err.textContent = /email-already-in-use/.test(m)
+      ? (en ? 'That username is taken. Try another one.' : 'Ese usuario ya existe. Prueba otro.')
+      : (e.message || m);
+    $('cwGo').disabled = false;
+  }
 }
 function setSchedView(v){
   schedView = v;
@@ -1955,6 +2042,7 @@ function navMore(){
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
   if (wkPhone() && canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openArchived()">Archivados</button>`);
+  if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>`);
   if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
   if (isSuper()) items.push(`<button type="button" onclick="closeMore();openCompaniesPane()">${esc(uiT('allCompanies'))}</button>`);
   items.push(`<button type="button" onclick="closeMore()">${esc(uiT('closeMenu'))}</button>`);
