@@ -225,6 +225,7 @@
       </div>
     </div>
     <button type="button" class="btn create-job" id="createJobBtn" onclick="openCreateJob()" data-i18n="createJob">+ Crear trabajo</button>
+    <button type="button" class="btn ghost create-job" id="assignJobBtn" onclick="openAssign()" data-i18n="assignJob" style="margin-top:8px">+ Asignar trabajo</button>
     <div class="addbox hidden" id="addbox">
       <div class="muted" id="addboxLbl">＋ Nuevo edificio</div>
       <input type="text" id="nbName" placeholder="Nombre del edificio" data-i18n-ph="buildingName">
@@ -271,7 +272,8 @@
       <div class="hours" id="hours"></div>
       <div id="rows"></div>
       <div id="assignBar" class="hidden">
-        <button class="btn" onclick="openAssign()" data-i18n="assignJob">+ Asignar trabajo</button>
+        <button class="btn" onclick="openCreateJob()" data-i18n="createJob">+ Crear trabajo</button>
+        <button class="btn ghost" onclick="openAssign()" data-i18n="assignJob">+ Asignar trabajo</button>
         <button class="btn ghost" onclick="setSchedView('day')" data-i18n="horario">Horario</button>
         <button class="btn ghost" onclick="openTimesheet(1)" data-i18n="hoursTeam">Horas del equipo</button>
         <button class="btn ghost" onclick="openReports()" data-i18n="reports">Reportes</button>
@@ -702,7 +704,7 @@ const UI_I18N = {
     buildings:'Buildings', agenda:'Schedule', map:'Map',
     today:'Today', todayBtn:'Today', sites:'Sites', team:'Team', newPlus:'＋ New',
     filters:'Filters', filtersHint:'Filters: Inspections / Maintenance on the left',
-    assignJob:'+ Assign Job', teamSchedule:'Team schedule', weekOf:'Week of',
+    assignJob:'+ Assign job', teamSchedule:'Team schedule', weekOf:'Week of',
     mySchedule:'My Schedule', jobType:'Job type', chooseType:'Choose type…',
     searchType:'Search type…', frequent:'Frequent', newType:'+ New type', noTypes:'No types',
     createJob:'+ Create job',
@@ -716,7 +718,7 @@ const UI_I18N = {
     newBuilding:'＋ New building', newSite:'＋ New site',
     buildingName:'Building name', siteName:'Site / client name', add:'Add', close:'Close',
     all:'All', inspections:'Inspections', maintenance:'Maintenance',
-    assignTitle:'Assign Job', editTitle:'Edit / reassign',
+    assignTitle:'Assign job', editTitle:'Edit / reassign',
     address:'Address (if no site)', worker:'Worker', start:'Start time', end:'End time',
     unit:'Unit', contact:'Contact / tenant', phone:'Phone',
     instructions:'Instructions', instrPh:'Optional. Leave empty if you type nothing.',
@@ -1557,6 +1559,7 @@ async function openCompanyPortal(){
   if ($('rolesBtn')) $('rolesBtn').classList.add('hidden');
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
   applyLayout();
   syncChrome();
   await loadCompanyOptions();
@@ -1741,7 +1744,9 @@ function navSearch(){
 }
 function todayJobs(){
   const src = typeof scheduleItems === 'function' ? scheduleItems() : jobs.filter(j => !jobArchived(j));
-  return src.filter(j => sameDay(jobTime(j), selectedDay));
+  // Same day rule as the schedule (jobDayOk). jobTime() always returns a time
+  // on selectedDay, so comparing it could list every job as "today".
+  return src.filter(jobDayOk);
 }
 function workerNameOf(j){
   const uid = accountUidOf(j);
@@ -1763,11 +1768,11 @@ function openHome(){
       <div class="daycard-a">${esc(cardAddr(j))}</div>
       <div class="daycard-w">${esc(workerNameOf(j))}</div>
     </button>`;
-  }).join('') || `<div class="day-empty">${esc(uiT('noJobsDay'))}${canAssign()?`<div><button class="btn" style="margin-top:12px;width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button></div>`:''}</div>`;
+  }).join('') || `<div class="day-empty">${esc(uiT('noJobsDay'))}${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"><button class="btn" style="width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`;
   pane.innerHTML = `<div id="dayList">
     <h2 style="margin:4px 0 8px">${esc(uiT('homeHello'))}</h2>
     <p class="muted">${list.length} ${esc(uiT('jobsScheduled'))} · ${done} ${esc(uiT('completedOne'))} · ${list.length-done} ${esc(uiT('pendingOne'))}</p>
-    ${canAssign()?`<button class="btn" style="margin:8px 0 12px" onclick="openCreateJob()">${esc(uiT('createJob'))}</button>`:''}
+    ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}
     ${cards}
   </div>`;
   markNav('home');
@@ -1833,6 +1838,7 @@ function navMore(){
   if (sh.classList.contains('open')) { closeMore(); return; }
   const items = [];
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openCreateJob()">${esc(uiT('createJob'))}</button>`);
+  if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openJobs()">${esc(uiT('jobsMenu'))}</button>`);
   if (wkPhone()) items.push(`<button type="button" onclick="closeMore();toggleSites()">${esc(uiT('buildings'))}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
@@ -1880,6 +1886,7 @@ function syncChrome(){
   if ($('addbox')) $('addbox').classList.toggle('hidden', !canAssign());
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
   if ($('jobsBtn')) $('jobsBtn').classList.toggle('hidden', isWorker());
   if ($('railCreate')) $('railCreate').classList.toggle('hidden', !canAssign());
   if ($('railJobs')) $('railJobs').classList.toggle('hidden', isWorker());
@@ -2528,7 +2535,7 @@ function renderDayGrid(cols){
     });
     const empty = !list.length
       ? `<div class="col-empty"><b>${esc(uiT('noJobsCol'))}</b><div>${esc(uiT('freeDay'))}</div>
-          ${canAssign()?`<button type="button" class="btn" onclick="event.stopPropagation();preWorker='${t.uid}';openAssign()">${esc(uiT('createJob'))}</button>`:''}</div>`
+          ${canAssign()?`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><button type="button" class="btn" onclick="event.stopPropagation();openCreateJob()">${esc(uiT('createJob'))}</button><button type="button" class="btn ghost" onclick="event.stopPropagation();preWorker='${t.uid}';openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`
       : '';
     return `<div class="wcol" data-uid="${t.uid}" style="height:${H}px" ondragover="allowDrop(event)" ondrop="dropJob(event)">${q}${cards}${empty}</div>`;
   }).join('');
@@ -2618,7 +2625,12 @@ function renderMobileAgenda(){
       </button>`;
     }).join('');
   }
-  if (canAssign()) html += `<button type="button" class="btn day-assign" onclick="openAssign()">${esc(uiT('assignJob'))}</button>`;
+  if (canAssign()) {
+    html += `<div class="day-actions" style="display:flex;gap:8px;flex-wrap:wrap">`
+      + `<button type="button" class="btn day-assign" onclick="openCreateJob()">${esc(uiT('createJob'))}</button>`
+      + `<button type="button" class="btn ghost day-assign" onclick="openAssign()">${esc(uiT('assignJob'))}</button>`
+      + `</div>`;
+  }
   html += '</div>';
   if (rowsEl) rowsEl.innerHTML = html;
 }
@@ -2782,6 +2794,9 @@ function openAssign(kindPref){
     <button class="btn ghost" onclick="editJobId='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">${esc(uiT('cancel'))}</button>
   </div>`;
   bindTypeComboUi();
+  // New job: fill the type's instructions right away (e.g. Walkthrough is the
+  // default type and its instructions were only added after changing type).
+  if (!existing && $('ajD') && !$('ajD').value.trim()) onKindChange();
 }
 function onKindChange(){
   const t = typeOf($('ajK').value);

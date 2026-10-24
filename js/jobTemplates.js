@@ -69,5 +69,10 @@ window.COMPANY_TYPE_OPTIONS = [
   { id: 'inspections', label: 'Inspecciones' },
   { id: 'landscaping', label: 'Jardinería y exteriores' },
   { id: 'technical', label: 'Servicios técnicos' },
+  { id: 'construction', label: 'Construcción' },
+  { id: 'electrical', label: 'Electricidad' },
+  { id: 'plumbing', label: 'Plomería' },
+  { id: 'hvac', label: 'Aire acondicionado (HVAC)' },
+  { id: 'roofing', label: 'Techos' },
   { id: 'other', label: 'Otra' }
 ];
