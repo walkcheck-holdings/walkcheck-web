@@ -229,6 +229,7 @@
     </div>
     <button type="button" class="btn create-job" id="createJobBtn" onclick="openCreateJob()" data-i18n="createJob">+ Crear trabajo</button>
     <button type="button" class="btn ghost create-job" id="assignJobBtn" onclick="openAssign()" data-i18n="assignJob" style="margin-top:8px">+ Asignar trabajo</button>
+    <button type="button" class="btn ghost create-job hidden" id="createWorkerBtn" onclick="openCreateWorker()" style="margin-top:8px">+ Crear trabajador</button>
     <div class="addbox hidden" id="addbox">
       <div class="muted" id="addboxLbl">＋ Nuevo edificio</div>
       <input type="text" id="nbName" placeholder="Nombre del edificio" data-i18n-ph="buildingName">
@@ -503,6 +504,10 @@ function canVerifyJobs(){
 }
 function canManageRoles(){
   return isSuper() || ['owner','admin'].includes(normRole()) || isCompanyCreatorLike();
+}
+/* Only the company itself (owner/admin) adds people. Not the app owner, not managers. */
+function canCreateWorkers(){
+  return !isSuper() && (['owner','admin'].includes(normRole()) || isCompanyCreatorLike());
 }
 function canSeeTimesheet(){
   if (isWorker()) return false;
@@ -1667,6 +1672,7 @@ async function openCompanyPortal(){
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('createWorkerBtn')) { $('createWorkerBtn').classList.toggle('hidden', !canCreateWorkers()); $('createWorkerBtn').textContent = loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador'; }
   if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
   applyLayout();
   syncChrome();
@@ -1802,7 +1808,7 @@ function openRolesPane(){
   const pane = $('rolesPane');
   if (!pane) return;
   pane.innerHTML = `<h3>${esc(uiT('teamRoles'))}</h3>
-    <button class="btn" style="width:auto;margin:0 0 12px" onclick="openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>
+    ${canCreateWorkers() ? `<button class="btn" style="width:auto;margin:0 0 12px" onclick="openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>` : ''}
     ${techs.map(t => {
       const r = String(t.role||'worker').toLowerCase();
       const locked = r === 'owner' || r === 'admin';
@@ -1816,7 +1822,7 @@ function openRolesPane(){
    created on a second Firebase app so the office stays signed in. The plan's
    worker limit applies (PLAN_WORKER_LIMIT in js/paymentLinks.js). */
 function openCreateWorker(){
-  if (!canManageRoles()) return;
+  if (!canCreateWorkers()) return;
   const en = loginLang() === 'en';
   $('modal').classList.remove('hidden');
   $('modal').innerHTML = `<div class="box">
@@ -1967,7 +1973,7 @@ function openHome(){
   pane.innerHTML = `<div id="dayList">
     <h2 style="margin:4px 0 8px">${esc(uiT('homeHello'))}</h2>
     <p class="muted">${list.length} ${esc(uiT('jobsScheduled'))} · ${done} ${esc(uiT('completedOne'))} · ${list.length-done} ${esc(uiT('pendingOne'))}</p>
-    ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}
+    ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
     ${cards}
   </div>`;
   markNav('home');
@@ -2034,6 +2040,7 @@ function navMore(){
   const items = [];
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openCreateJob()">${esc(uiT('createJob'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
+  if (canCreateWorkers()) items.push(`<button type="button" onclick="closeMore();openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openJobs()">${esc(uiT('jobsMenu'))}</button>`);
   if (wkPhone()) items.push(`<button type="button" onclick="closeMore();toggleSites()">${esc(uiT('buildings'))}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
@@ -2042,7 +2049,6 @@ function navMore(){
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
   if (wkPhone() && canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openArchived()">Archivados</button>`);
-  if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>`);
   if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
   if (isSuper()) items.push(`<button type="button" onclick="closeMore();openCompaniesPane()">${esc(uiT('allCompanies'))}</button>`);
   items.push(`<button type="button" onclick="closeMore()">${esc(uiT('closeMenu'))}</button>`);
@@ -2084,6 +2090,7 @@ function syncChrome(){
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('createWorkerBtn')) { $('createWorkerBtn').classList.toggle('hidden', !canCreateWorkers()); $('createWorkerBtn').textContent = loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador'; }
   if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
   if ($('jobsBtn')) $('jobsBtn').classList.toggle('hidden', isWorker());
   if ($('railCreate')) $('railCreate').classList.toggle('hidden', !canAssign());
