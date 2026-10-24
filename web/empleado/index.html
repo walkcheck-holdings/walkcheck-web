@@ -3227,16 +3227,28 @@ async function openJobView(id){
   const notesHtml = (j.notesLog || []).map(n => `<div class="note-item"><div class="muted">${esc(n.authorName||'')}</div>${esc(n.text||'')}</div>`).join('')
     || (j.notes ? `<p>${esc(j.notes)}</p>` : '<p class="muted">Sin notas</p>');
   const fieldEx = (j.expenses || []).filter(e => e.source === 'worker');
-  const checks = `<div class="prog" id="repProg">${done}/6</div>
+  // Trade pack: steps to check off, what each photo should show and common
+  // materials, all from the company's trade (js/jobTemplates.js).
+  const tp = (window.tradePack ? tradePack(companyType) : {}) || {};
+  const tSteps = window.tradeSteps ? tradeSteps(companyType, j.kind || j.title || '') : [];
+  const stepsDone = Array.isArray(r.steps) ? r.steps : [];
+  const enL = loginLang() === 'en';
+  const stepsHtml = tSteps.length ? `<h3>${esc(enL ? 'Job steps' : 'Pasos del trabajo')} <span class="muted" style="font-weight:400">(${stepsDone.filter(s => tSteps.includes(s)).length}/${tSteps.length})</span></h3>
+      <div class="trade-steps">${tSteps.map(s => `<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #EEF1F5;font-size:15px"><input type="checkbox" data-step="${esc(s)}" ${stepsDone.includes(s)?'checked':''} style="width:22px;height:22px;flex:none"> ${esc(s)}</label>`).join('')}</div>` : '';
+  const ph = tp.photos || {};
+  const mats = (tp.materials || []);
+  const checks = `${stepsHtml}<div class="prog" id="repProg">${done}/6</div>
       <label class="muted">Inspection Report / Job Report</label>
       <p class="muted">${esc(loginLang()==='en'?'Type your start and end. They are not filled in for you.':'Pon tu hora de inicio y fin. No se llenan solas.')}</p>
       <label class="muted">Actual start</label><input id="rpAS" type="time" value="${esc(r.actualStart||'')}">
       <label class="muted">Actual end</label><input id="rpAE" type="time" value="${esc(r.actualEnd||'')}">
       <label class="muted">Problem Description</label><textarea id="rpP" rows="3">${esc(r.problem||'')}</textarea>
       <label class="muted">BEFORE photos</label>
+      ${ph.before ? `<p class="muted" style="margin:0">📸 ${esc(ph.before)}</p>` : ''}
       <div class="thumbs" id="rpThumbs">${photos.map(u=>`<img src="${esc(u)}">`).join('')}</div>
       <input id="rpBefore" type="file" accept="image/*" multiple>
       <label class="muted">AFTER photos</label>
+      ${ph.after ? `<p class="muted" style="margin:0">📸 ${esc(ph.after)}</p>` : ''}
       <div class="thumbs">${afters.map(u=>`<img src="${esc(u)}">`).join('')}</div>
       <input id="rpAfter" type="file" accept="image/*" multiple>
       <label class="muted">Was it solved?</label>
@@ -3249,7 +3261,9 @@ async function openJobView(id){
       <label class="muted">Final Notes / Recommendations</label><textarea id="rpN" rows="3">${esc(r.finalNotes||'')}</textarea>
       <h3>${esc(loginLang()==='en'?'Field expense':'Gasto de campo')}</h3>
       ${fieldEx.map(e => `<p class="muted">${esc(e.items||e.vendor||'')} · $${Number(e.total||0).toFixed(2)}</p>`).join('') || ''}
-      <label class="muted">${esc(loginLang()==='en'?'What you bought':'Qué compraste')}</label><input id="feItems" type="text">
+      <label class="muted">${esc(loginLang()==='en'?'What you bought':'Qué compraste')}</label>
+      ${mats.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px">${mats.map(m => `<button type="button" class="btn ghost" style="width:auto;padding:6px 10px;font-size:13px;min-height:0;margin:0" onclick="var i=$('feItems');i.value=i.value?(i.value+', '+this.textContent):this.textContent">${esc(m)}</button>`).join('')}</div>` : ''}
+      <input id="feItems" type="text">
       <label class="muted">Total</label><input id="feTotal" type="number" min="0" step="0.01">
       <button type="button" class="btn ghost" onclick="saveFieldExpense('${j.id}')">${esc(loginLang()==='en'?'Add expense':'Agregar gasto')}</button>
       <div class="err" id="rpErr"></div>
@@ -3352,6 +3366,7 @@ async function saveJobReport(id, complete){
     returnReason: solvedVal==='return' ? returnReason : '',
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
+    steps: [...document.querySelectorAll('#viewJobs [data-step]')].filter(c => c.checked).map(c => c.dataset.step),
     draft: !complete,
     completed: false,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),

@@ -417,6 +417,7 @@
         '</b></div><div><span class="muted">' + esc(loginLang() === 'en' ? 'Margin' : 'Margen') + '</span><b>' + usd(billed - spent) + '</b></div></div></div>' : '') +
       '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Scheduled visits' : 'Visitas') + '</h3>' + vis +
       (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="openAddVisit(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? '+ Visit' : '+ Visita') + '</button>' : '') + '</div>' +
+      (typeof tradeStepsOfficeHtml === 'function' ? tradeStepsOfficeHtml(j).replace('<div class="card">', '<div class="job-sec">') : '') +
       '<div class="job-sec"><h3>Notes</h3>' + notes +
       '<textarea id="jdNote" rows="2"></textarea><button class="btn ghost" onclick="addJobNote(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Add note' : 'Agregar nota') + '</button></div>';
   };

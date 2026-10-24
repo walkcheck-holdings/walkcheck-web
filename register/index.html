@@ -46,7 +46,8 @@
   <input id="email" type="email" required>
   <label>Contraseña</label>
   <input id="password" type="password" minlength="6" required>
-  <label>Tipo de compañía *</label>
+  <label>¿A qué se dedica tu compañía? *</label>
+  <p class="muted" style="margin:0 0 4px">Tu panel llega listo para tu oficio: tipos de trabajo, pasos del técnico, fotos y materiales.</p>
   <select id="companyType" required>
     <option value="">Selecciona…</option>
   </select>
@@ -74,9 +75,18 @@ if (typeof fillPlanSelect === 'function') fillPlanSelect(planSel);
 const fromUrl = (typeof normalizePlan === 'function' ? normalizePlan(new URLSearchParams(location.search).get('plan')) : '') || '';
 if (fromUrl) planSel.value = fromUrl;
 const sel = document.getElementById('companyType');
-(window.COMPANY_TYPE_OPTIONS||[]).forEach(o => {
-  const opt = document.createElement('option');
-  opt.value = o.id; opt.textContent = o.label; sel.appendChild(opt);
+// Trades grouped in sections; each one brings its own job types, steps,
+// photos and materials (js/jobTemplates.js).
+(window.COMPANY_TYPE_GROUPS || [{ id: '', label: '' }]).forEach(g => {
+  const list = (window.COMPANY_TYPE_OPTIONS||[]).filter(o => !g.id || o.group === g.id);
+  if (!list.length) return;
+  const box = g.id ? document.createElement('optgroup') : sel;
+  if (g.id) box.label = g.label;
+  list.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.id; opt.textContent = o.label; box.appendChild(opt);
+  });
+  if (g.id) sel.appendChild(box);
 });
 document.getElementById('go').onclick = async () => {
   const err = document.getElementById('err');

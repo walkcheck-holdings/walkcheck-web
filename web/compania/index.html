@@ -3157,6 +3157,7 @@ async function openJobView(id){
     ${rescheduleOfficeHtml(j)}
     ${returnOfficeHtml(j)}
     ${wtOfficeHtml(j)}
+    ${tradeStepsOfficeHtml(j)}
     <div class="card">
       <h3>Notes</h3>
       <textarea id="jobNotes" rows="3">${esc(j.notes||'')}</textarea>
@@ -3183,6 +3184,19 @@ async function openJobView(id){
       <div class="err" id="rpErr"></div>
       <button class="btn ghost" onclick="saveJobReport('${j.id}', false)">Save Progress</button>
       <button class="btn" onclick="saveJobReport('${j.id}', true)">Complete report</button>
+    </div>`;
+}
+/* Steps of the company's trade for this job type, as checked by the tech. */
+function tradeStepsOfficeHtml(j){
+  const steps = window.tradeSteps ? tradeSteps(companyType, j.kind || j.title || '') : [];
+  if (!steps.length) return '';
+  const done = ((j.report || {}).steps) || [];
+  const en = loginLang() === 'en';
+  const n = steps.filter(s => done.includes(s)).length;
+  return `<div class="card">
+      <h3>${esc(en ? 'Job steps' : 'Pasos del trabajo')} <span class="muted" style="font-weight:400">${n}/${steps.length}</span></h3>
+      ${steps.map(s => `<p style="margin:4px 0">${done.includes(s) ? '✅' : '⬜'} ${esc(s)}</p>`).join('')}
+      ${n ? '' : `<p class="muted">${esc(en ? 'The tech checks these off from their phone.' : 'El técnico los marca desde su teléfono.')}</p>`}
     </div>`;
 }
 async function saveJobNotes(id){
@@ -3232,6 +3246,7 @@ async function saveJobReport(id, complete){
     solved: solvedVal==='' ? null : solvedVal==='yes',
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
+    steps: Array.isArray(prev.steps) ? prev.steps : [],   // checked by the tech; keep them
     draft: !complete,
     completed: false,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),

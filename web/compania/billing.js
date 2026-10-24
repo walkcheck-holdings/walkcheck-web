@@ -448,9 +448,14 @@
     var ok = clientOk(c);
     draft.paymentTerms = termsKey(draft.paymentTerms);
     $('modal').classList.remove('hidden');
+    // How this trade usually charges (pie², hora, visita…), shown next to Qty.
+    var unitEs = ((window.tradePack && typeof companyType !== 'undefined') ? (tradePack(companyType).unit || '') : '');
+    var UNIT_EN = { 'visita': 'visit', 'hora': 'hour', 'pie²': 'sq ft', 'pie lineal': 'linear ft', 'yarda³': 'cu yd', 'trabajo': 'job' };
+    var unit = unitEs ? T(unitEs, UNIT_EN[unitEs] || unitEs) : '';
+    var qtyLbl = T('Cant.', 'Qty') + (unit ? ' (' + unit + ')' : '');
     var head = '<div class="line-row inv-line-head" style="grid-template-columns:1fr 2fr 70px 90px;font-size:12px;font-weight:800;color:#6B7280">' +
       '<span>' + esc(T('Tipo de trabajo', 'Job type')) + '</span><span>' + esc(T('Descripción', 'Description')) + '</span>' +
-      '<span>' + esc(T('Cant.', 'Qty')) + '</span><span>' + esc(T('Precio', 'Price')) + '</span></div>';
+      '<span>' + esc(qtyLbl) + '</span><span>' + esc(T('Precio', 'Price')) + '</span></div>';
     // Each line = ONE job type picked from the company's types; picking it
     // fills that type's price (set in Billing). More types = "+ Agregar línea".
     var typeNames = allTypes(true).map(function (t) { return t.name; });
@@ -469,7 +474,7 @@
       return '<div class="line-row inv-line" style="grid-template-columns:1fr 2fr 70px 90px">' +
         typeSelect(i, l.name || '') +
         '<textarea data-ldesc="' + i + '" rows="3">' + esc(l.desc || '') + '</textarea>' +
-        '<input data-lqty="' + i + '" type="number" min="0" step="1" value="' + Number(l.qty || 1) + '" placeholder="' + esc(T('Cant.', 'Qty')) + '" title="' + esc(T('Cantidad', 'Quantity')) + '">' +
+        '<input data-lqty="' + i + '" type="number" min="0" step="any" value="' + Number(l.qty || 1) + '" placeholder="' + esc(qtyLbl) + '" title="' + esc(T('Cantidad', 'Quantity')) + '">' +
         '<input data-lamt="' + i + '" type="number" min="0" step="0.01" value="' + Number(l.unitPrice != null ? l.unitPrice : l.amount || 0) + '" placeholder="' + esc(T('Precio', 'Price')) + '" title="' + esc(T('Precio', 'Price')) + '">' +
         '</div>';
     }).join('');
@@ -481,7 +486,7 @@
       '<p class="muted">' + esc(T('Trabajo #', 'Job #') + (draft.jobNumber || '') + ' · ' + (draft.kind || '') + ' · ' + (draft.building || '')) + '</p>' +
       partiesHtml(draft, c) +
       head + lineHtml +
-      '<p class="muted" style="margin:4px 0">' + esc(T('El precio se puede cambiar en cada línea. Si se hizo algo que no estaba programado, agrega una línea con “Trabajo extra” y escribe qué se hizo y su precio.', 'You can change the price on each line. For work that was not scheduled, add a line with “Extra work” and type what was done and its price.')) + '</p>' +
+      '<p class="muted" style="margin:4px 0">' + (unit ? esc(T('La cantidad va en ' + unitEs + '. ', 'Quantity is in ' + unit + '. ')) : '') + esc(T('El precio se puede cambiar en cada línea. Si se hizo algo que no estaba programado, agrega una línea con “Trabajo extra” y escribe qué se hizo y su precio.', 'You can change the price on each line. For work that was not scheduled, add a line with “Extra work” and type what was done and its price.')) + '</p>' +
       '<button type="button" class="btn ghost" onclick="addInvoiceLine()">' + esc(T('+ Agregar línea', '+ Add line')) + '</button>' +
       '<label class="muted">' + esc(T('Términos de pago', 'Payment terms')) + '</label><select id="invTerms">' + termsOpts + '</select>' +
       '<label class="muted">' + esc(T('Fecha de emisión', 'Issue date')) + '</label><input id="invIssue" type="date" value="' + esc(draft.issueDate || ymd(new Date())) + '">' +
