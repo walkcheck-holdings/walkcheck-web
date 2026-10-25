@@ -1984,6 +1984,35 @@ function workerNameOf(j){
   return (t && t.name) || j.assignedName || '';
 }
 let homeFilter = 'all';
+/* "Necesita atención" (same as the app's Inicio): late jobs with the tech's
+   reason, need-to-return, rescheduled by a tech, and jobs with no tech. */
+function homeAttentionHtml(){
+  const en = loginLang() === 'en';
+  const now = new Date();
+  const isStarted = j => !!j.visitStartedAt || ['en_camino','in_progress','started'].includes(String(j.status||'').toLowerCase());
+  const today = todayJobs();
+  const items = [];
+  today.filter(j => !jobDone(j) && !isStarted(j) && jobTime(j) < now).forEach(j => {
+    const r = j.lateReason ? `${en?'Reason':'Motivo'}: ${j.lateReason}${j.lateNote?' ('+j.lateNote+')':''}${j.lateEtaMin?' · '+(en?'arrives in ':'llega en ')+j.lateEtaMin+' min':''}` : (en?'No reason yet':'Sin motivo todavía');
+    items.push({ c:'#EF4444', t:`${en?'Late':'Atrasado'} · ${j.kind||j.title||'Job'}`, s:`${workerNameOf(j)||'—'} · ${en?'due at':'tenía que llegar'} ${fmt(jobTime(j))} · ${cardAddr(j)}`, r, bg:'#FEF2F2', fg:'#B91C1C', id:j.id });
+  });
+  jobs.filter(j => !jobArchived(j) && j.needsReturn === true && !jobDone(j)).forEach(j => {
+    const rr = j.returnReason || (j.returnRequest && j.returnRequest.reason) || '';
+    items.push({ c:'#F97316', t:`${en?'Needs return':'Necesita volver'} · ${j.kind||j.title||'Job'}`, s:`${workerNameOf(j)||'—'} · ${cardAddr(j)}`, r: rr ? `${en?'Missing':'Falta'}: ${rr}` : '', bg:'#FFF7ED', fg:'#C2410C', id:j.id });
+  });
+  jobs.filter(j => !jobArchived(j) && j.lastReschedule && j.lastReschedule.seen !== true && !jobDone(j)).forEach(j => {
+    items.push({ c:'#3B82F6', t:`${en?'Rescheduled':'Reprogramado'} · ${j.kind||j.title||'Job'}`, s:`${workerNameOf(j)||'—'} · ${j.scheduledDate||''}`, r:`${en?'Reason':'Motivo'}: ${j.lastReschedule.reason||'—'}`, bg:'#EFF6FF', fg:'#1D4ED8', id:j.id });
+  });
+  const unassigned = jobs.filter(j => !jobArchived(j) && !jobDone(j) && !accountUidOf(j)).length;
+  if (unassigned && canAssign()) items.push({ c:'#9CA3AF', t:`${unassigned} ${en?(unassigned===1?'unassigned job':'unassigned jobs'):(unassigned===1?'trabajo sin asignar':'trabajos sin asignar')}`, s: en?'Tap to assign a tech':'Toca para asignarles técnico', r:'', act:'openAssign()' });
+  if (!items.length) return '';
+  return `<h3 style="margin:14px 0 6px">⚠️ ${esc(en?'Needs attention':'Necesita atención')} (${items.length})</h3>
+    <div class="card" style="padding:0;margin-bottom:12px">${items.map(it => `<button type="button" onclick="${it.act ? it.act : `openJobView('${it.id}')`}" style="display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #F3F4F6;padding:11px 12px;cursor:pointer;color:#111">
+      <span style="width:10px;height:10px;border-radius:50%;background:${it.c};margin-top:5px;flex:none"></span>
+      <span><b style="font-size:14px">${esc(it.t)}</b><br><span class="muted" style="font-size:12.5px">${esc(it.s)}</span>
+      ${it.r ? `<br><span style="display:inline-block;margin-top:4px;background:${it.bg};color:${it.fg};font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px">${esc(it.r)}</span>` : ''}</span>
+    </button>`).join('')}</div>`;
+}
 function openHome(){
   document.body.classList.add('view-home');
   document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'sites-open');
@@ -2009,6 +2038,7 @@ function openHome(){
       <button type="button" class="${homeFilter==='pend'?'on':''}" onclick="homeFilter='pend';openHome()">${esc(uiT('pendingLbl'))} (${list.length-done})</button>
     </div>
     ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
+    ${homeAttentionHtml()}
     ${cards}
   </div>`;
   markNav('home');
