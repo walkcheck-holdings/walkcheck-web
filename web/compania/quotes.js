@@ -167,6 +167,8 @@
     var err = $('qErr');
     if (!d.client || !/^\S+@\S+\.\S+$/.test(d.clientEmail)) { err.textContent = T('Pon el nombre y el correo del cliente.', 'Add the client name and email.'); return; }
     if (!d.lines.length || !d.lines.some(function (l) { return l.unitPrice > 0; })) { err.textContent = T('Agrega al menos una línea con precio.', 'Add at least one priced line.'); return; }
+    // The client must see what each price is for.
+    if (d.lines.some(function (l) { return !l.name && !l.desc; })) { err.textContent = T('Cada línea necesita el tipo de trabajo o qué se va a hacer.', 'Each line needs a job type or what will be done.'); return; }
     var t = totals(d.lines, d.chargeTax);
     var data = {
       client: d.client, clientEmail: d.clientEmail, clientPhone: d.clientPhone, clientAddress: d.clientAddress,
