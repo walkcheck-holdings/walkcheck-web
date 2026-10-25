@@ -225,7 +225,9 @@
     var pane = $('jobPane');
     var bopts = '<option value="">' + esc(uiT('siteOrAddr')) + '</option>' +
       buildings.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
-    var topts = techs.map(function (t) { return '<option value="' + t.uid + '">' + esc(t.name) + '</option>'; }).join('');
+    // A job can be created without a tech; "Asignar trabajo" picks it later.
+    var topts = '<option value="">' + esc(loginLang() === 'en' ? '— Not assigned yet —' : '— Sin asignar todavía —') + '</option>' +
+      techs.map(function (t) { return '<option value="' + t.uid + '">' + esc(t.name) + '</option>'; }).join('');
     pane.innerHTML =
       '<div class="job-actions"><button class="btn ghost" onclick="openJobs()">← ' + esc(loginLang() === 'en' ? 'Jobs' : 'Trabajos') + '</button></div>' +
       '<div class="job-sec"><h3>' + esc(uiT('createJob')) + '</h3>' +
@@ -281,7 +283,6 @@
     var start = clockToDate(snapClock($('njStart').value), new Date($('njDate').value + 'T12:00:00'));
     var end = clockToDate(snapClock($('njEnd').value), start);
     if (!cid()) { err.textContent = uiT('pickCompany'); return; }
-    if (!uidW) { err.textContent = loginLang() === 'en' ? 'Pick a worker.' : 'Elige un trabajador.'; return; }
     if (!start || !end || !(end > start)) { err.textContent = loginLang() === 'en' ? 'End after start.' : 'La hora de fin va después del inicio.'; return; }
     var b = buildings.find(function (x) { return x.id === bid; });
     var title = ($('njTitle').value || '').trim() || (b && b.name) || ($('njAddr').value || '').trim() || 'Job';
@@ -329,7 +330,7 @@
       hour: visit.hour, minute: visit.minute, endHour: visit.endHour, endMinute: visit.endMinute,
       appointment_start: firebase.firestore.Timestamp.fromDate(start),
       appointment_end: firebase.firestore.Timestamp.fromDate(end)
-    }, assignmentPatch(uidW));
+    }, uidW ? assignmentPatch(uidW) : { assignedUid: '', workerId: '', assignedName: '', unassigned: true });
     try {
       var coRef = db.collection('companies').doc(cid());
       var jobRef = db.collection('jobs').doc();

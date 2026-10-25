@@ -2993,8 +2993,92 @@ function openEdit(id){
   selectedBuilding = j.buildingId || selectedBuilding;
   openAssign(j.kind);
 }
+/* "Asignar trabajo" = pick one of the jobs already created that has no tech
+   yet, then choose tech, day and time. (Editing a job still uses the form
+   below; "Crear trabajo" is where new jobs are made.) */
+function unassignedJobs(){
+  return jobs.filter(j => !jobArchived(j) && !jobDone(j) && !accountUidOf(j))
+    .sort((a,b) => String(a.scheduledDate||'').localeCompare(String(b.scheduledDate||'')));
+}
+function openAssignPick(pickId){
+  if (!canAssign()) { alert(uiT('cannotAssign')); return; }
+  const en = loginLang() === 'en';
+  const list = unassignedJobs();
+  const worker = preWorker || ((techs.find(t => String(t.role||'worker') === 'worker') || techs[0] || {}).uid) || '';
+  const startVal = snapClock(preStartClock || String(preHour||9).padStart(2,'0')+':00');
+  const p = startVal.split(':');
+  const em = (parseInt(p[0],10)||9)*60 + (parseInt(p[1],10)||0) + 120;
+  const endVal = snapClock(preEndClock || (String(Math.min(23, Math.floor(em/60))).padStart(2,'0')+':'+String(em%60).padStart(2,'0')));
+  const sel = pickId || (list[0] && list[0].id) || '';
+  $('modal').classList.remove('hidden');
+  if (!list.length) {
+    $('modal').innerHTML = `<div class="box">
+      <h3>${esc(uiT('assignTitle'))}</h3>
+      <p>${esc(en ? 'There are no unassigned jobs. Create the job first; you can leave it without a tech and assign it here.' : 'No hay trabajos sin asignar. Primero crea el trabajo; puedes dejarlo sin técnico y asignarlo aquí.')}</p>
+      <button class="btn" onclick="$('modal').classList.add('hidden');openCreateJob()">${esc(uiT('createJob'))}</button>
+      <button class="btn ghost" onclick="preWorker='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">${esc(uiT('cancel'))}</button>
+    </div>`;
+    return;
+  }
+  const workers = techs.filter(t => String(t.role||'worker') === 'worker');
+  const topts = techs.map(t => `<option value="${t.uid}" ${t.uid===worker?'selected':''}>${esc(t.name)}${String(t.role||'worker')==='worker'?'':' ('+esc(roleWord(String(t.role)))+')'}</option>`).join('');
+  $('modal').innerHTML = `<div class="box" style="max-width:560px">
+    <h3>${esc(uiT('assignTitle'))}</h3>
+    <p class="muted">${esc(en ? 'Pick a job that has no tech yet.' : 'Elige un trabajo que todavía no tiene técnico.')}</p>
+    <div style="max-height:260px;overflow:auto;margin:6px 0 10px">
+      ${list.map(j => `<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;width:100%;padding:8px 10px;margin:0 0 6px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;font-weight:400;color:#111">
+        <input type="radio" name="apJob" value="${j.id}" ${j.id===sel?'checked':''} style="width:auto;margin-top:4px">
+        <span><b>${esc(j.kind || j.title || 'Job')}</b>${j.jobNumber ? ' <span class="muted">#'+esc(j.jobNumber)+'</span>' : ''}<br>
+        <span class="muted">${esc(cardAddr(j))}${j.clientName ? ' · '+esc(j.clientName) : ''}${j.scheduledDate ? ' · '+esc(j.scheduledDate) : ''}</span></span>
+      </label>`).join('')}
+    </div>
+    <label class="muted">${esc(uiT('worker'))}</label><select id="apT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
+    ${workers.length ? '' : `<p class="muted" style="color:#9A5B00">${esc(en ? 'You have no technicians yet: create them in More → + Create worker.' : 'Todavía no tienes técnicos: créalos en Más → + Crear trabajador.')}</p>`}
+    <label class="muted">${esc(en ? 'Day' : 'Día')}</label><input id="apDate" type="date" value="${ymd(selectedDay)}">
+    <label class="muted">${esc(uiT('start'))}</label><select id="apStart">${clockChoices(startVal)}</select>
+    <label class="muted">${esc(uiT('end'))}</label><select id="apEnd">${clockChoices(endVal)}</select>
+    <div class="err" id="apErr"></div>
+    <button class="btn" onclick="saveAssignPick()">${esc(uiT('assign'))}</button>
+    <button class="btn ghost" onclick="preWorker='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">${esc(uiT('cancel'))}</button>
+  </div>`;
+}
+async function saveAssignPick(){
+  const en = loginLang() === 'en';
+  const err = $('apErr'); err.textContent = '';
+  const r = document.querySelector('input[name="apJob"]:checked');
+  const id = r && r.value;
+  const uidW = $('apT').value;
+  const day = $('apDate').value;
+  if (!id) { err.textContent = en ? 'Pick a job.' : 'Elige un trabajo.'; return; }
+  if (!uidW) { err.textContent = en ? 'Pick a technician.' : 'Elige un técnico.'; return; }
+  const base = new Date(day + 'T12:00:00');
+  const start = clockToDate(snapClock($('apStart').value), base);
+  const end = clockToDate(snapClock($('apEnd').value), base);
+  if (!start || !end || !(end > start)) { err.textContent = en ? 'End after start.' : 'La hora de fin va después del inicio.'; return; }
+  const j = jobs.find(x => x.id === id) || {};
+  const visits = (Array.isArray(j.visits) && j.visits.length ? j.visits : [{ id: 'v1', status: 'open' }]).map((v, i) => i ? v : Object.assign({}, v, {
+    scheduledDate: day, startClock: toClock(start), endClock: toClock(end),
+    hour: start.getHours(), minute: start.getMinutes(), endHour: end.getHours(), endMinute: end.getMinutes(),
+    assignedUid: uidW
+  }));
+  try {
+    await db.collection('jobs').doc(id).set(Object.assign({
+      scheduledDate: day, startClock: toClock(start), endClock: toClock(end),
+      hour: start.getHours(), minute: start.getMinutes(), endHour: end.getHours(), endMinute: end.getMinutes(),
+      appointment_start: firebase.firestore.Timestamp.fromDate(start),
+      appointment_end: firebase.firestore.Timestamp.fromDate(end),
+      visits, unassigned: false,
+      assignedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, assignmentPatch(uidW)), { merge: true });
+    preWorker = ''; preStartClock = ''; preEndClock = '';
+    $('modal').classList.add('hidden');
+    selectedDay = base; loadBoard();
+  } catch(e){ err.textContent = e.message || e; }
+}
 function openAssign(kindPref){
   if (!canAssign()) { alert(uiT('cannotAssign')); return; }
+  // Plain "Asignar trabajo" → choose among created jobs.
+  if (!editJobId && !kindPref) { openAssignPick(); return; }
   const chosen = kindPref || preKind || (allTypes(true)[0]&&allTypes(true)[0].name) || '';
   const worker = preWorker || (techs[0]&&techs[0].uid) || (auth.currentUser&&auth.currentUser.uid) || '';
   const existing = editJobId ? jobs.find(x=>x.id===editJobId) : null;
