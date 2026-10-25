@@ -1060,6 +1060,33 @@ function dayLong(d){
 function fmtCard(d){
   return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
 }
+/* Tap "Trabajos hoy / Completados / Pendientes" → list of those jobs for the
+   selected day; tap one to open it. */
+function openDayList(kind){
+  const en = loginLang() === 'en';
+  const all = dayJobs().sort((a,b) => jobTime(a) - jobTime(b));
+  const list = kind === 'done' ? all.filter(jobDone) : kind === 'pend' ? all.filter(j => !jobDone(j)) : all;
+  const title = kind === 'done' ? uiT('completedLbl') : kind === 'pend' ? uiT('pendingLbl') : uiT('jobsToday');
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box" style="max-width:520px">
+    <h3>${esc(title)} · ${esc(dayLong(selectedDay))}</h3>
+    <div class="view-tabs" style="margin:6px 0 10px;flex-wrap:wrap">
+      <button type="button" class="${kind==='all'?'on':''}" onclick="openDayList('all')">${esc(uiT('jobsToday'))} (${all.length})</button>
+      <button type="button" class="${kind==='done'?'on':''}" onclick="openDayList('done')">${esc(uiT('completedLbl'))} (${all.filter(jobDone).length})</button>
+      <button type="button" class="${kind==='pend'?'on':''}" onclick="openDayList('pend')">${esc(uiT('pendingLbl'))} (${all.filter(j=>!jobDone(j)).length})</button>
+    </div>
+    ${list.map(j => {
+      const st = jobTime(j), e = jobEnd(j, st);
+      return `<button type="button" class="daycard" style="width:100%;text-align:left" onclick="$('modal').classList.add('hidden');openJobView('${j.id}')">
+        <div class="daycard-k">${jobDone(j)?'✓ ':''}${esc(j.kind||j.title||'Job')}</div>
+        <div class="daycard-t">${fmt(st)} – ${fmt(e)}</div>
+        <div class="daycard-a">${esc(cardAddr(j))}</div>
+        <div class="daycard-w">${esc(workerNameOf(j) || (en ? 'Not assigned' : 'Sin asignar'))}</div>
+      </button>`;
+    }).join('') || `<p class="muted">${esc(en ? 'Nothing here for this day.' : 'No hay trabajos aquí este día.')}</p>`}
+    <button class="btn ghost" style="margin-top:10px" onclick="$('modal').classList.add('hidden')">${esc(uiT('close'))}</button>
+  </div>`;
+}
 function renderTodaySummary(){
   const list = dayJobs();
   const done = list.filter(jobDone).length;
@@ -1067,9 +1094,9 @@ function renderTodaySummary(){
   const sum = $('todaySummary');
   if (sum) {
     sum.innerHTML =
-      `<div class="side-stat"><span><i class="dot today"></i>${esc(uiT('jobsToday'))}</span><b>${list.length}</b></div>` +
-      `<div class="side-stat"><span><i class="dot done"></i>${esc(uiT('completedLbl'))}</span><b class="n-done">${done}</b></div>` +
-      `<div class="side-stat"><span><i class="dot pend"></i>${esc(uiT('pendingLbl'))}</span><b class="n-pend">${pend}</b></div>`;
+      `<button type="button" class="side-stat" style="width:100%;border:0;background:none;cursor:pointer;text-align:left" onclick="openDayList('all')"><span><i class="dot today"></i>${esc(uiT('jobsToday'))}</span><b>${list.length}</b></button>` +
+      `<button type="button" class="side-stat" style="width:100%;border:0;background:none;cursor:pointer;text-align:left" onclick="openDayList('done')"><span><i class="dot done"></i>${esc(uiT('completedLbl'))}</span><b class="n-done">${done}</b></button>` +
+      `<button type="button" class="side-stat" style="width:100%;border:0;background:none;cursor:pointer;text-align:left" onclick="openDayList('pend')"><span><i class="dot pend"></i>${esc(uiT('pendingLbl'))}</span><b class="n-pend">${pend}</b></button>`;
   }
   const ban = $('dayBanner');
   if (ban) {
@@ -1954,6 +1981,7 @@ function workerNameOf(j){
   const t = techs.find(x => x.uid === uid);
   return (t && t.name) || j.assignedName || '';
 }
+let homeFilter = 'all';
 function openHome(){
   document.body.classList.add('view-home');
   document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'sites-open');
@@ -1961,7 +1989,8 @@ function openHome(){
   if (!pane) return;
   const list = todayJobs().sort((a,b) => jobTime(a) - jobTime(b));
   const done = list.filter(jobDone).length;
-  const cards = list.map(j => {
+  const shownList = homeFilter === 'done' ? list.filter(jobDone) : homeFilter === 'pend' ? list.filter(j => !jobDone(j)) : list;
+  const cards = shownList.map(j => {
     const st = jobTime(j), en = jobEnd(j, st);
     return `<button type="button" class="daycard" onclick="openJobView('${j.id}')">
       <div class="daycard-k">${jobDone(j)?'✓ ':''}${esc(j.kind||'Job')}</div>
@@ -1972,7 +2001,11 @@ function openHome(){
   }).join('') || `<div class="day-empty">${esc(uiT('noJobsDay'))}${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"><button class="btn" style="width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`;
   pane.innerHTML = `<div id="dayList">
     <h2 style="margin:4px 0 8px">${esc(uiT('homeHello'))}</h2>
-    <p class="muted">${list.length} ${esc(uiT('jobsScheduled'))} · ${done} ${esc(uiT('completedOne'))} · ${list.length-done} ${esc(uiT('pendingOne'))}</p>
+    <div class="view-tabs" style="margin:0 0 10px;flex-wrap:wrap">
+      <button type="button" class="${homeFilter==='all'?'on':''}" onclick="homeFilter='all';openHome()">${esc(uiT('jobsToday'))} (${list.length})</button>
+      <button type="button" class="${homeFilter==='done'?'on':''}" onclick="homeFilter='done';openHome()">${esc(uiT('completedLbl'))} (${done})</button>
+      <button type="button" class="${homeFilter==='pend'?'on':''}" onclick="homeFilter='pend';openHome()">${esc(uiT('pendingLbl'))} (${list.length-done})</button>
+    </div>
     ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
     ${cards}
   </div>`;
