@@ -23,6 +23,8 @@ auth.onAuthStateChanged(async function (user) {
   if (!WK_hasAccess(user.email, doc)) { WK_denyAccess(); return; }
   var profile = doc.exists ? doc.data() : { role: 'worker' };
   if (await WK_paymentGate(user.email, profile)) return;
+  // First sign-in with the company's temporary password → create your own.
+  if (profile.mustChangePassword === true) { location.replace('/web/compartido/cambiar-clave.html'); return; }
   location.replace(WK_folderFor(user.email, profile.role));
 });
 </script>

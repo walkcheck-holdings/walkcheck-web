@@ -1165,6 +1165,8 @@ auth.onAuthStateChanged(async user => {
   const doc = await db.collection('users').doc(user.uid).get();
   if (!WK_hasAccess(user.email, doc)) { WK_denyAccess(); return; }
   profile = doc.exists ? doc.data() : { role: 'worker', companyId: '' };
+  // Temporary password from the company → create your own first.
+  if (profile.mustChangePassword === true) { location.replace('/web/compartido/cambiar-clave.html'); return; }
   try {
     if (doc.exists) await db.collection('users').doc(user.uid).set({
       uid: user.uid,

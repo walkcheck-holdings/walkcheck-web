@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WalkCheck · Crea tu contraseña</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<link rel="stylesheet" href="/web/compartido/base.css">
+<script src="/web/compartido/firebase.js"></script>
+</head>
+<body>
+<header class="wk">
+  <a href="/">WalkCheck <small style="font-size:10px;letter-spacing:.18em;opacity:.85">HOLDINGS LLC</small></a>
+</header>
+<!-- First sign-in with the temporary password the company gave: the person
+     must create their own password before entering (same as the app). -->
+<div class="card">
+  <h3 id="t">Crea tu contraseña</h3>
+  <p class="muted" id="s">Entraste con la contraseña temporal que te dio tu compañía. Crea la tuya para seguir.</p>
+  <input type="password" id="p1" placeholder="Nueva contraseña (mínimo 6)" autocomplete="new-password">
+  <input type="password" id="p2" placeholder="Repite la contraseña" autocomplete="new-password">
+  <button class="btn" id="go">Guardar y entrar</button>
+  <div class="err" id="err"></div>
+  <p class="muted" style="margin-top:14px;text-align:center"><a href="#" id="out">Cerrar sesión</a></p>
+</div>
+<script>
+var en = (function(){ try { return (localStorage.getItem('wkLang') || localStorage.getItem('loginLang')) === 'en'; } catch(_) { return false; } })();
+if (en) {
+  $('t').textContent = 'Create your password';
+  $('s').textContent = 'You signed in with the temporary password your company gave you. Create your own to continue.';
+  $('p1').placeholder = 'New password (at least 6)';
+  $('p2').placeholder = 'Repeat the password';
+  $('go').textContent = 'Save and enter';
+  $('out').textContent = 'Sign out';
+}
+$('out').onclick = function (e) { e.preventDefault(); auth.signOut().then(function(){ location.replace('/web/compartido/login.html'); }); };
+auth.onAuthStateChanged(function (user) {
+  if (!user) location.replace('/web/compartido/login.html');
+});
+$('go').onclick = async function () {
+  $('err').textContent = '';
+  var a = $('p1').value, b = $('p2').value;
+  if (a.length < 6) { $('err').textContent = en ? 'At least 6 characters.' : 'Mínimo 6 caracteres.'; return; }
+  if (a !== b) { $('err').textContent = en ? 'The two passwords are different.' : 'Las dos contraseñas no son iguales.'; return; }
+  var user = auth.currentUser;
+  if (!user) return;
+  $('go').disabled = true;
+  try {
+    await user.updatePassword(a);
+    await db.collection('users').doc(user.uid).update({
+      mustChangePassword: false,
+      tempPassword: firebase.firestore.FieldValue.delete(),
+      passwordChangedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    location.replace('/web/entrar.html');
+  } catch (e) {
+    $('go').disabled = false;
+    $('err').textContent = /requires-recent-login/.test(String(e.code || e.message))
+      ? (en ? 'For safety, sign in again and try once more.' : 'Por seguridad, vuelve a entrar e inténtalo de nuevo.')
+      : (e.message || e);
+  }
+};
+</script>
+</body>
+</html>
