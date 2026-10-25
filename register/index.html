@@ -134,7 +134,7 @@ document.getElementById('go').onclick = async () => {
     await ref.set({
       id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
       status: 'pending', adminUid: uid,
-      termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-24',
+      termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-25',
       referredBy: referredBy || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       is_paid: false
