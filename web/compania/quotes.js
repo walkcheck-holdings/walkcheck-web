@@ -236,8 +236,28 @@
         '<p class="muted">' + esc(T('Válida hasta', 'Valid until')) + ': ' + esc(q.validUntil || '') + '</p>' +
         (q.notes ? '<p style="white-space:pre-wrap">' + esc(q.notes) + '</p>' : '') +
       '</div>' +
-      (q.viewToken && q.status !== 'draft' ? '<p class="muted">🔗 ' + esc(T('Enlace para el cliente', 'Client link')) + ': <a href="' + esc(link(id, q)) + '" target="_blank" rel="noopener">' + esc(T('abrir', 'open')) + '</a></p>' : '');
+      (q.viewToken && q.status !== 'draft' ? '<p class="muted">🔗 ' + esc(T('Enlace para el cliente', 'Client link')) + ': <a href="' + esc(link(id, q)) + '" target="_blank" rel="noopener">' + esc(T('abrir', 'open')) + '</a></p>' : '') +
+      '<div id="qDelivery"></div>';
+    if (q.sends && q.sends.length) showDelivery(id);
   };
+
+  // Shows whether the last email for this quote was delivered (set by sendMail).
+  async function showDelivery(id) {
+    var box = $('qDelivery');
+    try {
+      var s = await db.collection('mail').where('companyId', '==', cid()).where('quoteId', '==', id).get();
+      var last = s.docs.map(function (d) { return d.data(); }).sort(function (a, b) {
+        return ((b.createdAt && b.createdAt.seconds) || 0) - ((a.createdAt && a.createdAt.seconds) || 0);
+      })[0];
+      if (!last || !box) return;
+      var dl = last.delivery || {};
+      box.innerHTML = dl.state === 'SUCCESS'
+        ? '<p class="muted">📧 ' + esc(T('Correo entregado a', 'Email delivered to')) + ' ' + esc((last.to || []).join(', ')) + '</p>'
+        : dl.state === 'ERROR'
+          ? '<div class="card" style="background:#FEF2F2"><b>⚠️ ' + esc(T('El correo no salió', 'The email was not sent')) + '</b><div class="muted">' + esc(dl.error || '') + '</div></div>'
+          : '<p class="muted">📧 ' + esc(T('Enviando correo…', 'Sending email…')) + '</p>';
+    } catch (e) { /* no read access yet: show nothing */ }
+  }
 
   /* ---------- Send ---------- */
   window.sendQuote = async function (id) {
