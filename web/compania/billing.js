@@ -326,6 +326,10 @@
         '<div style="flex:1;min-width:180px"><p class="muted" style="margin:0 0 6px">' + esc(T('Sale en tus facturas y en el PDF. Usa un PNG o JPG cuadrado.', 'Shown on your invoices and PDF. Use a square PNG or JPG.')) + '</p>' +
         '<input id="logoFile" type="file" accept="image/png,image/jpeg" onchange="saveCompanyLogo(this)"></div></div>' +
         '<div class="err" id="logoErr"></div></div>' +
+      // Card payments: each company connects its own Stripe (money goes to it).
+      '<div class="card" id="payCard"><h3 style="margin:0 0 8px">💳 ' + esc(T('Cobrar con tarjeta', 'Get paid by card')) + '</h3>' +
+        '<p class="muted" style="margin:0 0 8px">' + esc(T('Conecta tu cuenta de Stripe y cada factura que envíes llevará el botón "Pagar en línea". El dinero va directo a tu cuenta y la factura se marca Pagada sola.', 'Connect your Stripe account and every invoice you send gets a "Pay online" button. The money goes straight to you and the invoice is marked Paid by itself.')) + '</p>' +
+        '<div id="payState" class="muted">' + esc(T('Revisando…', 'Checking…')) + '</div></div>' +
       '<div class="card"><h3 style="margin:0 0 8px">' + esc(uiT('money')) + '</h3>' +
       '<p class="muted">' + esc(T('Precios por tipo de trabajo (solo dueño). El técnico no los ve.', 'Prices per job type (owner only). Technicians never see them.')) + '</p>' +
       '<label class="muted">' + esc(T('Impuesto %', 'Tax %')) + '</label>' +
@@ -334,7 +338,56 @@
       '<button class="btn" style="margin-top:10px" onclick="saveBillingSettings()">' + esc(T('Guardar precios', 'Save prices')) + '</button></div>' +
       list +
       '<button class="btn ghost" onclick="document.body.classList.remove(\'view-billing\');renderSchedule()">' + esc(T('Volver al horario', 'Back to schedule')) + '</button>';
+    refreshPayState();
   };
+
+  /* ---------- Card payments (Stripe Connect, functions-stripe) ---------- */
+  var FN = 'https://us-central1-walkcheck-a4f1e.cloudfunctions.net/';
+  window.companyCanTakeCards = false;
+  async function connectCall(action) {
+    var tok = await auth.currentUser.getIdToken();
+    var r = await fetch(FN + 'connectOnboard' + (action ? '?action=' + action : ''), {
+      method: action ? 'GET' : 'POST', headers: { Authorization: 'Bearer ' + tok }
+    });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    return j;
+  }
+  async function refreshPayState() {
+    var box = $('payState');
+    if (!box) return;
+    try {
+      var s = await connectCall('status');
+      window.companyCanTakeCards = !!s.chargesEnabled;
+      if (s.chargesEnabled) {
+        box.innerHTML = '<span class="st-pill on">' + esc(T('Activo', 'Active')) + '</span> ' +
+          esc(T('Tus facturas ya llevan "Pagar en línea".', 'Your invoices now include "Pay online".'));
+      } else {
+        box.innerHTML = (s.connected ? '<p>' + esc(T('Falta terminar los datos en Stripe (banco, identidad).', 'Finish your details in Stripe (bank, identity).')) + '</p>' : '') +
+          (canManageRoles() ? '<button class="btn" style="width:auto" onclick="startConnect()">' + esc(s.connected ? T('Terminar en Stripe', 'Finish in Stripe') : T('Conectar mi Stripe', 'Connect my Stripe')) + '</button>'
+            : '<p class="muted">' + esc(T('Solo el dueño puede conectarlo.', 'Only the owner can connect it.')) + '</p>');
+      }
+    } catch (e) {
+      box.textContent = T('No se pudo revisar el cobro con tarjeta: ', 'Could not check card payments: ') + (e.message || e);
+    }
+  }
+  window.startConnect = async function () {
+    var box = $('payState');
+    if (box) box.textContent = T('Abriendo Stripe…', 'Opening Stripe…');
+    try { var j = await connectCall(''); location.href = j.url; }
+    catch (e) { if (box) box.textContent = T('No se pudo abrir Stripe: ', 'Could not open Stripe: ') + (e.message || e); }
+  };
+  // Back from Stripe onboarding → open Billing to show the new state.
+  if (/[?&]connect=(done|refresh)/.test(location.search)) {
+    setTimeout(function () { try { openBilling(); } catch (_) {} }, 2500);
+  }
+  function randToken() {
+    var a = new Uint8Array(18); crypto.getRandomValues(a);
+    return Array.from(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function payLink(id, token) {
+    return 'https://walkcheck.app/pagar/?c=' + encodeURIComponent(cid()) + '&i=' + encodeURIComponent(id) + '&t=' + token + '&lang=' + loginLang();
+  }
 
   // Logo: resized to max 256px and stored on the company doc (small data URL),
   // so invoices and PDFs can use it without storage/CORS issues.
@@ -663,6 +716,10 @@
         '<p class="muted">' + esc(T('Términos de pago', 'Payment terms')) + ': ' + esc(termsLabel(inv.paymentTerms)) + ' · ' + esc(T('Saldo', 'Balance due')) + ': ' + money(dueAmt) + '</p>' +
       '</div>' +
       '<div class="job-sec"><h3>' + esc(T('Pagos', 'Payments')) + '</h3>' + pays +
+      (inv.payToken && st !== 'paid'
+        ? '<p class="muted">💳 ' + esc(T('Enlace para pagar con tarjeta', 'Card payment link')) + ': <a href="' + esc(payLink(id, inv.payToken)) + '" target="_blank" rel="noopener">' + esc(T('abrir', 'open')) + '</a> · ' +
+          '<a href="#" onclick="navigator.clipboard.writeText(\'' + esc(payLink(id, inv.payToken)) + '\');this.textContent=\'' + esc(T('copiado', 'copied')) + '\';return false">' + esc(T('copiar', 'copy')) + '</a></p>'
+        : '') +
       (st !== 'paid' ? '<label class="muted">' + esc(T('Monto', 'Amount')) + '</label><input id="payAmt" type="number" min="0" step="0.01">' +
         '<label class="muted">' + esc(T('Fecha', 'Date')) + '</label><input id="payDate" type="date" value="' + ymd(new Date()) + '">' +
         '<label class="muted">' + esc(T('Método', 'Method')) + '</label><input id="payMethod" type="text">' +
@@ -736,7 +793,23 @@
       var ref = storage.ref('reports/' + cid() + '/invoices/' + (inv.number || id) + '_' + Date.now() + '.pdf');
       await ref.put(blob, { contentType: 'application/pdf' });
       var url = await ref.getDownloadURL();
-      var html = '<p>' + esc(body).replace(/\n/g, '<br>') + '</p><p><a href="' + url + '">' + esc(T('Descargar la factura en PDF', 'Download the invoice PDF')) + '</a></p>';
+      // "Pagar en línea" when the company has connected its Stripe.
+      var payUrl = '';
+      try { var ps0 = await connectCall('status'); window.companyCanTakeCards = !!ps0.chargesEnabled; } catch (_) {}
+      if (window.companyCanTakeCards) {
+        var tok = inv.payToken || randToken();
+        if (!inv.payToken) {
+          await db.collection('companies').doc(cid()).collection('invoices').doc(id || inv.id).set({ payToken: tok, lang: loginLang() }, { merge: true });
+          inv.payToken = tok;
+        }
+        payUrl = payLink(id || inv.id, tok);
+      }
+      var payBtn = payUrl
+        ? '<p style="margin:18px 0"><a href="' + payUrl + '" style="background:#16A34A;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;display:inline-block">' +
+          esc(T('Pagar en línea', 'Pay online')) + ' · ' + money(inv.total) + '</a></p>'
+        : '';
+      var html = '<p>' + esc(body).replace(/\n/g, '<br>') + '</p>' + payBtn + '<p><a href="' + url + '">' + esc(T('Descargar la factura en PDF', 'Download the invoice PDF')) + '</a></p>';
+      if (payUrl) body = body + '\n\n' + T('Pagar en línea con tarjeta: ', 'Pay online by card: ') + payUrl;
       await db.collection('mail').add({
         to: [to],
         companyId: cid(),
