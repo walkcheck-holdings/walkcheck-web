@@ -670,6 +670,12 @@ async function enforceTrial(){
   try {
     const co = await db.collection('companies').doc(cid()).get();
     const d = co.data() || {};
+    // Suspended from /web/plataforma: blocked even if it paid.
+    if (String(d.status||'').toLowerCase() === 'suspended') {
+      alert(uiT('suspended'));
+      auth.signOut();
+      return false;
+    }
     // Not paid yet: no panel until Stripe confirms (see functions-stripe).
     if (String(d.status||'').toLowerCase() === 'pending') {
       location.replace('/web/compartido/pago-pendiente.html');
