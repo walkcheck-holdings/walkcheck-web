@@ -58,6 +58,13 @@ async function check(manual) {
     var href = (window.paymentHref && paymentHref(plan, { email: user.email || '', clientRef: companyId })) || '/pricing/';
     $('ppPay').href = href;
     if (manual) $('ppErr').textContent = 'Todavía no llega la confirmación de Stripe. Espera un minuto y vuelve a revisar.';
+    // Opens the panel by itself the moment Stripe confirms (no button needed).
+    if (!window.__wkWatch) {
+      window.__wkWatch = db.collection('companies').doc(companyId).onSnapshot(function (s) {
+        var now = String(((s.exists && s.data()) || {}).status || '').toLowerCase();
+        if (now && now !== 'pending') location.replace('/web/entrar.html');
+      }, function () {});
+    }
   } catch (e) {
     $('ppErr').textContent = 'No se pudo revisar: ' + (e.message || e);
   }
