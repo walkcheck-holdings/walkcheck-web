@@ -96,6 +96,7 @@
     d.title = ($('qTitle').value || '').trim();
     d.notes = ($('qNotes').value || '').trim();
     d.validUntil = $('qValid').value || addDays(today(), 30);
+    d.lang = $('qLang').value === 'en' ? 'en' : 'es';
     d.chargeTax = !!$('qTax').checked;
     d.lines = [].map.call(document.querySelectorAll('#modal [data-qn]'), function (el) {
       var i = el.getAttribute('data-qn');
@@ -127,6 +128,10 @@
       '<button type="button" class="btn ghost" onclick="qtAddLine()">' + esc(T('+ Agregar línea', '+ Add line')) + '</button>' +
       '<label><input type="checkbox" id="qTax"' + (d.chargeTax ? ' checked' : '') + '> ' + esc(T('Cobrar impuesto', 'Charge tax') + ' (' + Math.round(Number(companyTaxRate || 0) * 10000) / 100 + '%)') + '</label>' +
       '<label class="muted">' + esc(T('Válida hasta', 'Valid until')) + '</label><input id="qValid" type="date" value="' + esc(d.validUntil || addDays(today(), 30)) + '">' +
+      // Language of the email and page the client sees (not the panel's).
+      '<label class="muted">' + esc(T('Idioma del cliente', 'Client language')) + '</label><select id="qLang">' +
+        '<option value="es"' + ((d.lang || loginLang()) === 'es' ? ' selected' : '') + '>Español</option>' +
+        '<option value="en"' + ((d.lang || loginLang()) === 'en' ? ' selected' : '') + '>English</option></select>' +
       '<label class="muted">' + esc(T('Notas para el cliente (opcional)', 'Notes for the client (optional)')) + '</label><textarea id="qNotes" rows="2">' + esc(d.notes || '') + '</textarea>' +
       '<p style="text-align:right"><b>Total ' + money(t.total) + '</b> <span class="muted">(' + esc(T('se recalcula al guardar', 'recalculated on save')) + ')</span></p>' +
       '<div class="err" id="qErr"></div>' +
@@ -174,7 +179,7 @@
       client: d.client, clientEmail: d.clientEmail, clientPhone: d.clientPhone, clientAddress: d.clientAddress,
       buildingId: d.buildingId || '', title: d.title || (d.lines[0] && d.lines[0].name) || '',
       lines: d.lines, chargeTax: d.chargeTax, subtotal: t.subtotal, taxRate: t.taxRate, tax: t.tax, total: t.total,
-      notes: d.notes, validUntil: d.validUntil, companyName: companyName || '', lang: loginLang(),
+      notes: d.notes, validUntil: d.validUntil, companyName: companyName || '', lang: d.lang || loginLang(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     try {
@@ -233,7 +238,7 @@
         (q.title ? '<p><b>' + esc(q.title) + '</b></p>' : '') +
         '<table><thead><tr><th>' + esc(T('Trabajo', 'Work')) + '</th><th>' + esc(T('Cant.', 'Qty')) + '</th><th>' + esc(T('Precio', 'Price')) + '</th><th>Subtotal</th></tr></thead><tbody>' + rows + '</tbody></table>' +
         '<p style="text-align:right">Subtotal ' + money(q.subtotal) + '<br>' + esc(T('Impuesto', 'Tax')) + ' ' + money(q.tax) + '<br><b style="font-size:18px">Total ' + money(q.total) + '</b></p>' +
-        '<p class="muted">' + esc(T('Válida hasta', 'Valid until')) + ': ' + esc(q.validUntil || '') + '</p>' +
+        '<p class="muted">' + esc(T('Válida hasta', 'Valid until')) + ': ' + esc(q.validUntil || '') + ' · ' + esc(T('Idioma del cliente', 'Client language')) + ': ' + ((q.lang || loginLang()) === 'en' ? 'English' : 'Español') + '</p>' +
         (q.notes ? '<p style="white-space:pre-wrap">' + esc(q.notes) + '</p>' : '') +
       '</div>' +
       (q.viewToken && q.status !== 'draft' ? '<p class="muted">🔗 ' + esc(T('Enlace para el cliente', 'Client link')) + ': <a href="' + esc(link(id, q)) + '" target="_blank" rel="noopener">' + esc(T('abrir', 'open')) + '</a></p>' : '') +
