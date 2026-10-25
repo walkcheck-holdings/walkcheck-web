@@ -897,18 +897,23 @@
   window.openArchived = function () {
     closeMore();
     document.body.classList.add('view-archived');
-    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-billing', 'sites-open');
+    // Jobs/job/home views stay on top of this pane unless they are turned off too.
+    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-billing',
+      'view-jobs', 'view-job', 'view-home', 'view-search', 'view-payments', 'sites-open');
     if (typeof markNav === 'function') markNav('jobs');
     var pane = $('archivedPane');
     if (!pane) return;
+    var en = loginLang() === 'en';
     var list = jobs.filter(jobArchived).sort(function (a, b) { return jobTime(b) - jobTime(a); });
-    pane.innerHTML = '<div class="card"><h3>Archivados</h3><p class="muted">No se facturan y no se borran. El historial queda por si el cliente reclama.</p>' +
+    pane.innerHTML = '<div class="card"><h3>' + (en ? 'Archived' : 'Archivados') + '</h3><p class="muted">' +
+      (en ? 'Not billed and not deleted. The history stays in case the client complains.' : 'No se facturan y no se borran. El historial queda por si el cliente reclama.') + '</p>' +
       (list.map(function (j) {
-        return '<div class="inv-row"><div><b>' + esc(j.kind || 'Job') + '</b><div class="muted">' +
-          esc(j.archiveReason || '') + (j.archiveNote ? ' · ' + esc(j.archiveNote) : '') + '</div></div>' +
-          '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">Desarchivar</button></div>';
-      }).join('') || '<p class="muted">Nada archivado.</p>') +
-      '<button class="btn ghost" onclick="document.body.classList.remove(\'view-archived\');renderSchedule()">Volver</button></div>';
+        var when = j.date ? esc(j.date) + ' · ' : '';
+        return '<div class="inv-row"><div><b>' + esc(j.kind || 'Job') + '</b>' + (j.buildingName || j.client ? ' · ' + esc(j.buildingName || j.client) : '') +
+          '<div class="muted">' + when + esc(j.archiveReason || '') + (j.archiveNote ? ' · ' + esc(j.archiveNote) : '') + '</div></div>' +
+          '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">' + (en ? 'Unarchive' : 'Desarchivar') + '</button></div>';
+      }).join('') || '<p class="muted">' + (en ? 'Nothing archived.' : 'Nada archivado.') + '</p>') +
+      '<button class="btn ghost" onclick="openJobs()">' + (en ? '← Back' : '← Volver') + '</button></div>';
   };
   window.askArchiveJob = function (id) {
     if (!canAssign()) return;
