@@ -728,7 +728,7 @@
       '<div class="job-sec"><h3>' + esc(T('Envíos', 'Sends')) + '</h3>' + sends + '</div>' +
       '<div class="job-sec"><h3>' + esc(T('Notas', 'Notes')) + '</h3>' + notes +
       '<textarea id="invNote" rows="2"></textarea><button class="btn ghost" onclick="addInvoiceNote(\'' + id + '\')">' + esc(T('Agregar nota', 'Add note')) + '</button></div>';
-    $('billingPane')._inv = Object.assign({}, inv, { client: c.name, clientEmail: c.email, clientAddress: c.address || inv.clientAddress || '' });
+    $('billingPane')._inv = Object.assign({}, inv, { id: inv.id || id, client: c.name, clientEmail: c.email, clientAddress: c.address || inv.clientAddress || '' });
   };
   // One click: the formal PDF (same file that "Enviar al cliente" attaches).
   window.downloadInvoicePdf = function () {

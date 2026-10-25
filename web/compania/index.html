@@ -863,6 +863,22 @@ function applyPanelLang(){
   renderSchedule();
   renderMap();
   renderTeam();
+  // Redraw the screen that is open so it switches language too.
+  try {
+    const b = document.body.classList;
+    if (b.contains('view-billing')) {
+      const inv = $('billingPane') && $('billingPane')._inv;
+      if ($('invPaper') && inv && inv.id && typeof openInvoice === 'function') openInvoice(inv.id);
+      else if (typeof openBilling === 'function') openBilling();
+    } else if (b.contains('view-job') && $('jobPane') && $('jobPane').dataset.jid && typeof openJobDetail === 'function') openJobDetail($('jobPane').dataset.jid);
+    else if (b.contains('view-jobs') && typeof openJobs === 'function') openJobs();
+    else if (b.contains('view-home')) openHome();
+    else if (b.contains('view-hours')) openTimesheet();
+    else if (b.contains('view-reports')) openReports();
+    else if (b.contains('view-roles')) openRolesPane();
+    else if (b.contains('view-archived') && typeof openArchived === 'function') openArchived();
+    else if (b.contains('view-payments') && typeof openPayments === 'function') openPayments();
+  } catch(_){}
 }
 function applyLoginLang(){
   const cur = loginLang();
