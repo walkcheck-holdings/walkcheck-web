@@ -96,7 +96,7 @@ let profile = {};
 let companyType = 'property_management';
 let customs = [];
 function cid(){ return profile.companyId || ''; }
-function isSuper(){ return (auth.currentUser && auth.currentUser.email || '').toLowerCase() === 'maikelramirez55@gmail.com'; }
+function isSuper(){ return ['maikelramirez55@gmail.com', 'info@walkcheck.app'].includes((auth.currentUser && auth.currentUser.email || '').toLowerCase()); }
 let companyAdminUid = '';
 function canEdit(){
   const r = String(profile.role||'').toLowerCase();

@@ -3,7 +3,8 @@
   // The ONLY list of app owners for the web. compania/ and empleado/ read it
   // through WK_isSuperEmail. Keep it in sync with isSuperAdmin() in firestore.rules.
   var SUPER = {
-    'maikelramirez55@gmail.com': 1
+    'maikelramirez55@gmail.com': 1,
+    'info@walkcheck.app': 1
   };
   function normRole(r) {
     r = String(r || '').toLowerCase();

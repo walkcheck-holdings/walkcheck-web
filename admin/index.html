@@ -74,7 +74,8 @@
 </div>
 
 <script>
-const SUPER = 'maikelramirez55@gmail.com';
+const SUPER_LIST = ['maikelramirez55@gmail.com', 'info@walkcheck.app'];
+const SUPER = SUPER_LIST[0];
 const firebaseConfig = {
   apiKey: "AIzaSyAnAsnPirqkN-fRIx-9aQzuwLBoFaHggrU",
   authDomain: "walkcheck-a4f1e.firebaseapp.com",
@@ -98,7 +99,7 @@ $('btnLogin').onclick = async () => {
 $('btnLogout').onclick = () => auth.signOut();
 
 function isSuper(user){
-  return (user && user.email || '').toLowerCase() === SUPER;
+  return SUPER_LIST.includes((user && user.email || '').toLowerCase());
 }
 
 auth.onAuthStateChanged(async user => {
