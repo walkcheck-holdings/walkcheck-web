@@ -315,7 +315,8 @@
         '<button type="button" class="btn ghost" onclick="openInvoice(\'' + inv.id + '\')">' + esc(T('Abrir', 'Open')) + '</button>' +
         '</div>';
     }).join('') || '<p class="muted">' + esc(T('Todavía no hay facturas. Completa un trabajo y pulsa Nueva factura.', 'No invoices yet. Complete a job and press New invoice.')) + '</p>';
-    pane.innerHTML =
+    pane._quote = null;
+    pane.innerHTML = (window.billingTabsHtml ? billingTabsHtml('inv') : '') +
       '<div class="inv-kpis">' +
         '<div class="inv-kpi"><span>' + esc(T('Pagada', 'Paid')) + '</span><b>' + money(paid) + '</b></div>' +
         '<div class="inv-kpi"><span>' + esc(T('Pendiente', 'Pending')) + '</span><b>' + money(pend) + '</b></div>' +

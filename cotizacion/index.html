@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotización · WalkCheck</title>
+<meta name="robots" content="noindex">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background: #F5F8FC; color: #13243A; }
+  header { background: #0E2A47; color: #fff; padding: 14px 16px; font-weight: 800; position: relative; }
+  header small { font-size: 10px; letter-spacing: .18em; opacity: .8; }
+  .lang { position: absolute; right: 16px; top: 12px; color: #fff; font-size: 13px; text-decoration: none; border: 1px solid rgba(255,255,255,.4); border-radius: 8px; padding: 3px 9px; }
+  .wrap { max-width: 720px; margin: 24px auto; padding: 0 16px 48px; }
+  .paper { background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(14,42,71,.08); }
+  .top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  .top img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; }
+  h1 { margin: 0; font-size: 20px; }
+  .num { font-size: 20px; font-weight: 800; color: #166534; text-align: right; }
+  .muted { color: #5F7189; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 6px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+  th { font-size: 12px; color: #6B7280; text-transform: uppercase; }
+  td.r, th.r { text-align: right; }
+  .tot { text-align: right; font-size: 15px; }
+  .tot b { font-size: 20px; }
+  .box { background: #fff; border-radius: 16px; padding: 18px 22px; margin-top: 14px; box-shadow: 0 10px 30px rgba(14,42,71,.06); }
+  input, textarea { width: 100%; padding: 11px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 15px; margin: 6px 0 10px; font-family: inherit; }
+  .btn { display: inline-block; border: 0; border-radius: 12px; padding: 13px 22px; font-weight: 800; font-size: 15px; cursor: pointer; }
+  .ok { background: #16A34A; color: #fff; }
+  .no { background: #fff; color: #B91C1C; border: 1.5px solid #FCA5A5; }
+  .ghost { background: #F3F4F6; color: #111827; }
+  .state { border-radius: 12px; padding: 14px; font-weight: 700; }
+  .err { color: #B91C1C; font-size: 14px; }
+  @media print { header, .box, .noprint { display: none !important; } body { background: #fff; } .paper { box-shadow: none; } }
+</style>
+</head>
+<body>
+<header>WalkCheck <small>HOLDINGS LLC</small><a class="lang" href="#" id="lang">English</a></header>
+<!-- Client side of a quote: review, approve (typed name = signature) or
+     decline. Data comes from the quotePublic function with the link token. -->
+<div class="wrap">
+  <div class="paper" id="paper"><p class="muted" id="loading">…</p></div>
+  <div class="box" id="act" style="display:none"></div>
+</div>
+<script>
+var q = new URLSearchParams(location.search);
+var C = q.get('c') || '', Q = q.get('q') || '', TK = q.get('t') || '';
+var en = q.get('lang') ? q.get('lang') === 'en' : (navigator.language || '').toLowerCase().indexOf('es') !== 0;
+var FN = 'https://us-central1-walkcheck-a4f1e.cloudfunctions.net/quotePublic?c=' + encodeURIComponent(C) + '&q=' + encodeURIComponent(Q) + '&t=' + encodeURIComponent(TK);
+var data = null;
+function T(es, eng) { return en ? eng : es; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function money(n) { return '$' + Number(n || 0).toFixed(2); }
+function render() {
+  document.getElementById('lang').textContent = en ? 'Español' : 'English';
+  document.title = T('Cotización', 'Quote') + (data ? ' #' + data.number : '') + ' · WalkCheck';
+  var paper = document.getElementById('paper'), act = document.getElementById('act');
+  if (!data) return;
+  var d = data;
+  paper.innerHTML =
+    '<div class="top"><div style="display:flex;gap:10px;align-items:center">' + (d.company.logo ? '<img src="' + esc(d.company.logo) + '" alt="">' : '') +
+      '<div><h1>' + esc(d.company.name) + '</h1>' + (d.company.phone ? '<div class="muted">' + esc(d.company.phone) + '</div>' : '') + '</div></div>' +
+      '<div><div class="num">' + esc(T('COTIZACIÓN', 'QUOTE')) + ' #' + esc(d.number) + '</div><div class="muted" style="text-align:right">' + esc(T('Válida hasta', 'Valid until')) + ' ' + esc(d.validUntil) + '</div></div></div>' +
+    '<p><b>' + esc(T('Para', 'For')) + ':</b> ' + esc(d.client) + (d.clientAddress ? '<br><span class="muted">' + esc(d.clientAddress) + '</span>' : '') + '</p>' +
+    (d.title ? '<p><b>' + esc(d.title) + '</b></p>' : '') +
+    '<table><thead><tr><th>' + esc(T('Trabajo', 'Work')) + '</th><th class="r">' + esc(T('Cant.', 'Qty')) + '</th><th class="r">' + esc(T('Precio', 'Price')) + '</th><th class="r">Subtotal</th></tr></thead><tbody>' +
+    d.lines.map(function (l) { return '<tr><td><b>' + esc(l.name) + '</b>' + (l.desc ? '<div class="muted">' + esc(l.desc) + '</div>' : '') + '</td><td class="r">' + l.qty + '</td><td class="r">' + money(l.unitPrice) + '</td><td class="r">' + money(l.amount) + '</td></tr>'; }).join('') +
+    '</tbody></table>' +
+    '<div class="tot">Subtotal ' + money(d.subtotal) + '<br>' + esc(T('Impuesto', 'Tax')) + ' ' + money(d.tax) + '<br><b>Total ' + money(d.total) + '</b></div>' +
+    (d.notes ? '<p style="white-space:pre-wrap;margin-top:14px">' + esc(d.notes) + '</p>' : '') +
+    '<p class="noprint" style="margin-top:14px"><button class="btn ghost" onclick="window.print()">🖨 ' + esc(T('Imprimir / guardar PDF', 'Print / save PDF')) + '</button></p>';
+  act.style.display = '';
+  if (d.status === 'approved' || d.status === 'converted') {
+    act.innerHTML = '<div class="state" style="background:#F0FDF4;color:#166534">✅ ' + esc(T('Cotización aprobada', 'Quote approved')) + (d.approvedName ? ' · ' + esc(d.approvedName) : '') + '</div><p class="muted">' + esc(T('La compañía ya recibió su aprobación y le avisará para agendar el trabajo.', 'The company got your approval and will contact you to schedule the work.')) + '</p>';
+  } else if (d.status === 'declined') {
+    act.innerHTML = '<div class="state" style="background:#FEF2F2;color:#B91C1C">✖ ' + esc(T('Cotización rechazada', 'Quote declined')) + '</div>';
+  } else {
+    act.innerHTML =
+      '<h3 style="margin:0 0 6px">' + esc(T('¿Aprueba esta cotización?', 'Do you approve this quote?')) + '</h3>' +
+      '<label class="muted">' + esc(T('Escriba su nombre completo como firma', 'Type your full name as signature')) + '</label>' +
+      '<input id="nm" autocomplete="name">' +
+      '<label class="muted" style="display:flex;gap:8px;align-items:flex-start"><input id="ag" type="checkbox" style="width:auto;margin:3px 0 0"> <span>' +
+        esc(T('Acepto el trabajo y el precio de esta cotización (' + money(d.total) + ').', 'I accept the work and the price in this quote (' + money(d.total) + ').')) + '</span></label>' +
+      '<div class="err" id="er"></div>' +
+      '<button class="btn ok" onclick="answer(\'approve\')">✅ ' + esc(T('Aprobar cotización', 'Approve quote')) + '</button> ' +
+      '<button class="btn no" onclick="showDecline()">' + esc(T('Rechazar', 'Decline')) + '</button>' +
+      '<div id="dec" style="display:none;margin-top:12px"><label class="muted">' + esc(T('¿Por qué la rechaza? (opcional)', 'Why are you declining? (optional)')) + '</label><textarea id="rs" rows="2"></textarea>' +
+        '<button class="btn no" onclick="answer(\'decline\')">' + esc(T('Confirmar rechazo', 'Confirm decline')) + '</button></div>';
+  }
+}
+function showDecline() { document.getElementById('dec').style.display = ''; }
+async function answer(action) {
+  var er = document.getElementById('er'); er.textContent = '';
+  var body = { action: action };
+  if (action === 'approve') {
+    body.name = (document.getElementById('nm').value || '').trim();
+    if (body.name.length < 2) { er.textContent = T('Escriba su nombre.', 'Type your name.'); return; }
+    if (!document.getElementById('ag').checked) { er.textContent = T('Marque la casilla para aceptar.', 'Tick the box to accept.'); return; }
+  } else {
+    body.reason = (document.getElementById('rs').value || '').trim();
+  }
+  try {
+    var r = await fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var j = await r.json();
+    if (!r.ok) { er.textContent = j.error === 'expired' ? T('Esta cotización ya venció. Pida una nueva a la compañía.', 'This quote expired. Ask the company for a new one.') : T('No se pudo guardar. Inténtelo otra vez.', 'Could not save. Please try again.'); return; }
+    data = j; render();
+  } catch (e) { er.textContent = T('Sin conexión. Inténtelo otra vez.', 'No connection. Please try again.'); }
+}
+document.getElementById('lang').onclick = function (e) { e.preventDefault(); en = !en; render(); if (!data) load(); };
+async function load() {
+  var paper = document.getElementById('paper');
+  if (!C || !Q || !TK) { paper.innerHTML = '<p>⚠️ ' + esc(T('Enlace incompleto. Ábralo desde el correo de la cotización.', 'Incomplete link. Open it from the quote email.')) + '</p>'; return; }
+  try {
+    var r = await fetch(FN);
+    if (!r.ok) { paper.innerHTML = '<p>⚠️ ' + esc(T('Enlace no válido. Pida uno nuevo a la compañía.', 'Invalid link. Ask the company for a new one.')) + '</p>'; return; }
+    data = await r.json();
+    if (!q.get('lang') && data.lang) en = data.lang === 'en';
+    render();
+  } catch (e) { paper.innerHTML = '<p>⚠️ ' + esc(T('Sin conexión.', 'No connection.')) + '</p>'; }
+}
+load();
+</script>
+</body>
+</html>

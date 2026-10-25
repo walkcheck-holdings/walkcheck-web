@@ -868,7 +868,10 @@ function applyPanelLang(){
     const b = document.body.classList;
     if (b.contains('view-billing')) {
       const inv = $('billingPane') && $('billingPane')._inv;
-      if ($('invPaper') && inv && inv.id && typeof openInvoice === 'function') openInvoice(inv.id);
+      const qt = $('billingPane') && $('billingPane')._quote;
+      if (qt && qt.id && typeof openQuote === 'function') openQuote(qt.id);
+      else if (!inv && !qt && document.querySelector('#billingPane [onclick="openQuoteEditor()"]') && typeof openQuotes === 'function') openQuotes();
+      else if ($('invPaper') && inv && inv.id && typeof openInvoice === 'function') openInvoice(inv.id);
       else if (typeof openBilling === 'function') openBilling();
     } else if (b.contains('view-job') && $('jobPane') && $('jobPane').dataset.jid && typeof openJobDetail === 'function') openJobDetail($('jobPane').dataset.jid);
     else if (b.contains('view-jobs') && typeof openJobs === 'function') openJobs();
@@ -2127,6 +2130,7 @@ function navMore(){
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openReports()">${esc(uiT('reports'))}</button>`);
   if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openSubscription()">${esc(uiT('mySub'))}</button>`);
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openBilling()">${esc(uiT('money'))}</button>`);
+  if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openQuotes()">${esc(loginLang()==='en'?'Quotes':'Cotizaciones')}</button>`);
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
   if (wkPhone() && canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openArchived()">Archivados</button>`);
@@ -3665,6 +3669,7 @@ async function loadMonths(buildingId){
 }
 </script>
 <script src="/web/compania/billing.js"></script>
+<script src="/web/compania/quotes.js"></script>
 <script src="/web/compania/jobs.js"></script>
 </body>
 </html>
