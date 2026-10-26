@@ -15,7 +15,7 @@
     // ---------- Propiedades y mantenimiento ----------
     property_management: {
       group: 'props', sitesLabel: 'Edificios', unit: 'visita',
-      jobs: ['Walkthrough', 'SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE'],
+      jobs: ['Walkcheck', 'SEMI ANNUAL INSPECTION', 'Window inspection', 'Balcony walk', 'INSPECTION', 'MAINTENANCE'],
       steps: ['Revisar el área indicada', 'Documentar problemas con fotos', 'Hacer el trabajo o anotar lo que falta', 'Dejar el área limpia'],
       photos: { before: 'El problema o el área antes', after: 'Cómo quedó' },
       materials: ['Bombillos', 'Pintura de retoque', 'Silicón', 'Baterías detector de humo', 'Filtros de A/C', 'Tornillería']
@@ -43,7 +43,7 @@
     },
     inspections: {
       group: 'props', sitesLabel: 'Edificios', unit: 'visita',
-      jobs: ['Walkthrough', 'INSPECTION', 'SEMI ANNUAL INSPECTION', 'Window inspection'],
+      jobs: ['Walkcheck', 'INSPECTION', 'SEMI ANNUAL INSPECTION', 'Window inspection'],
       steps: ['Recorrer todas las áreas', 'Anotar cada problema con su ubicación', 'Fotos de cerca de cada problema', 'Marcar lo urgente'],
       photos: { before: 'Cada problema encontrado', after: 'Vista general de cada área' },
       materials: []

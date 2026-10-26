@@ -3284,7 +3284,7 @@ async function openJobView(id){
       <h2>${esc(j.title||j.kind||'Job')}${completed?' ✓':''}</h2>
     </div>
     <div class="view-tabs" style="margin:8px 12px;flex-wrap:wrap">
-      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="visitTab='walk';openJobView('${j.id}')">🚶 Walkthrough (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
+      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="visitTab='walk';openJobView('${j.id}')">🚶 Walkcheck (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
       <button type="button" class="${tab==='info'?'on':''}" onclick="visitTab='info';openJobView('${j.id}')">Info</button>
       <button type="button" class="${tab==='client'?'on':''}" onclick="visitTab='client';openJobView('${j.id}')">Client</button>
       <button type="button" class="${tab==='notes'?'on':''}" onclick="visitTab='notes';openJobView('${j.id}')">Notes (${notes})</button>

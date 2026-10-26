@@ -101,7 +101,7 @@
   // mobile app) shows the instructions even without the checklist UI.
   function instructionsText(l) {
     var en = (l || 'es') === 'en';
-    var out = [en ? 'MONTHLY WALKTHROUGH — work instructions' : 'WALKTHROUGH MENSUAL — instrucciones de trabajo', ''];
+    var out = [en ? 'MONTHLY WALKCHECK — work instructions' : 'WALKCHECK MENSUAL — instrucciones de trabajo', ''];
     out.push(en ? 'AREAS TO CHECK' : 'ÁREAS QUE DEBES REVISAR');
     AREAS.forEach(function (a) { out.push('• ' + (en ? a.en : a.es) + ': ' + (en ? a.lookEn : a.lookEs)); });
     RULES.forEach(function (r) {
@@ -114,7 +114,9 @@
 
   function isWalkthrough(job) {
     var k = String((job && (job.kind || job.type || job.jobType)) || '').toLowerCase().replace(/[^a-z]/g, '');
-    return k === 'walkthrough' || k === 'walkthroughmensual' || k === 'monthlywalkthrough';
+    // 'Walkcheck' is the visible name; 'Walkthrough' kept so older jobs still match.
+    return k === 'walkcheck' || k === 'walkcheckmensual' || k === 'monthlywalkcheck' ||
+      k === 'walkthrough' || k === 'walkthroughmensual' || k === 'monthlywalkthrough';
   }
 
   // Summary for headers/cards: how many areas checked, problems, dangers.
@@ -133,7 +135,7 @@
   }
 
   w.WK_WALKTHROUGH = {
-    typeName: 'Walkthrough',
+    typeName: 'Walkcheck',
     icon: '🚶',
     color: '#0E7C66',
     areas: AREAS,
