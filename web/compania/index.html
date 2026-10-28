@@ -1583,6 +1583,32 @@ function closeAvatar(){
   if (m) m.classList.remove('open');
 }
 let panelAlerts = [];
+/* Alerts already seen in the bell (per user, this browser). The red number
+   only counts new ones; the list keeps showing open alerts until resolved. */
+function seenAlertsKey(){
+  const u = auth.currentUser && auth.currentUser.uid;
+  return 'wk_seenAlerts_' + (u || '') + '_' + (cid() || '');
+}
+function loadSeenAlerts(){
+  try { return new Set(JSON.parse(localStorage.getItem(seenAlertsKey()) || '[]')); }
+  catch(_) { return new Set(); }
+}
+function saveSeenAlerts(set){
+  try { localStorage.setItem(seenAlertsKey(), JSON.stringify([...set].slice(-300))); } catch(_){}
+}
+function markAlertsSeen(){
+  const seen = loadSeenAlerts();
+  panelAlerts.forEach(a => {
+    if (a.key) seen.add(a.key);
+    // Personal notifications: mark read in Firestore so other devices clear too.
+    if (a.notifId && !a.read) {
+      a.read = true;
+      db.collection('notifications').doc(a.notifId).set({ read: true, readAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => {});
+    }
+  });
+  saveSeenAlerts(seen);
+  paintAlertBadge();
+}
 function closeAlerts(){
   const m = $('alertMenu');
   if (m) m.classList.remove('open');
@@ -1593,10 +1619,12 @@ function toggleAlerts(ev){
   const m = $('alertMenu');
   if (!m) return;
   if (m.classList.contains('open')) { m.classList.remove('open'); return; }
+  const seen = loadSeenAlerts();
   m.innerHTML = panelAlerts.length
-    ? panelAlerts.map(a => `<button type="button" onclick="closeAlerts();${a.go}">${esc(a.text)}</button>`).join('')
+    ? panelAlerts.map(a => `<button type="button" onclick="closeAlerts();${a.go}"${seen.has(a.key) ? '' : ' style="font-weight:800"'}>${esc(a.text)}</button>`).join('')
     : `<div class="avatar-who"><span>${loginLang()==='en'?'No open alerts.':'Sin alertas abiertas.'}</span></div>`;
   m.classList.add('open');
+  markAlertsSeen();
 }
 async function refreshAlerts(){
   panelAlerts = [];
@@ -1606,9 +1634,10 @@ async function refreshAlerts(){
     const snap = await db.collection('walkthroughs').where('companyId','==',id).limit(80).get();
     snap.forEach(d => {
       const finds = d.data().findings || [];
-      finds.forEach(f => {
+      finds.forEach((f, i) => {
         if (f.urgent && !findingIsResolved(f)) {
           panelAlerts.push({
+            key: 'walk:' + d.id + ':' + (f.id || i),
             text: '🚨 ' + (f.itemLabel || f.location || f.note || (loginLang()==='en'?'Urgent finding':'Hallazgo urgente')),
             go: 'openReports()'
           });
@@ -1623,6 +1652,7 @@ async function refreshAlerts(){
       const x = d.data() || {};
       const r = x.lastReschedule || {};
       panelAlerts.push({
+        key: 'resched:' + d.id + ':' + (r.at || (r.to && (r.to.date + ' ' + (r.to.start || ''))) || ''),
         text: '📅 ' + uiT('rescheduled') + ': ' + (x.title || x.kind || 'Job') + (r.to ? ' → ' + r.to.date + ' ' + (r.to.start || '') : ''),
         go: `openJobView('${d.id}')`
       });
@@ -1634,6 +1664,7 @@ async function refreshAlerts(){
     nr.forEach(d => {
       const x = d.data() || {};
       panelAlerts.push({
+        key: 'return:' + d.id + ':' + ((x.returnRequest && x.returnRequest.at) || ''),
         text: '↩ ' + uiT('needsReturn') + ': ' + (x.title || x.kind || 'Job'),
         go: `openJobView('${d.id}')`
       });
@@ -1648,6 +1679,8 @@ async function refreshAlerts(){
         if (x.read === true || x.seen === true) return;
         if (x.companyId && x.companyId !== id) return;
         panelAlerts.push({
+          key: 'notif:' + d.id,
+          notifId: d.id,
           text: x.title || x.body || x.message || (loginLang()==='en'?'Alert':'Alerta'),
           go: 'openReports()'
         });
@@ -1659,7 +1692,8 @@ async function refreshAlerts(){
 function paintAlertBadge(){
   const b = $('alertBadge');
   if (!b) return;
-  const n = panelAlerts.length;
+  const seen = loadSeenAlerts();
+  const n = panelAlerts.filter(a => !seen.has(a.key)).length;
   b.textContent = n > 9 ? '9+' : String(n);
   b.classList.toggle('hidden', n === 0);
 }

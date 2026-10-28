@@ -396,7 +396,8 @@
         '<button class="btn ghost" onclick="openJobs()">← ' + esc(loginLang() === 'en' ? 'Jobs' : 'Trabajos') + '</button>' +
         (moneyOk && !jobArchived(j) && !j.invoiceId ? '<button class="btn" onclick="openInvoiceEditor(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Create Invoice' : 'Crear factura') + '</button>' : '') +
         (moneyOk && j.invoiceId ? '<button class="btn" onclick="openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(uiT('money')) + '</button>' : '') +
-        (canAssign() && jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="reopenJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Reopen' : 'Reabrir') + '</button>' : '') +
+        (canAssign() && jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="reopenJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Reopen job' : 'Reabrir trabajo') + '</button>' : '') +
+        (canAssign() && !jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="closeJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Close job' : 'Cerrar trabajo') + '</button>' : '') +
         (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="askArchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Archive' : 'Archivar') + '</button>' : '') +
         (canAssign() && jobArchived(j) ? '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Unarchive' : 'Desarchivar') + '</button>' : '') +
       '</div>' +
@@ -563,13 +564,33 @@
       openJobDetail(jobId);
     } catch (e) { alert(e.message || e); }
   };
+  // Owner/office closes the whole job (same fields as the app's "Cerrar trabajo").
+  window.closeJob = async function (id) {
+    if (!canAssign()) return;
+    var en = loginLang() === 'en';
+    if (!confirm(en ? 'Close this job? You can reopen it anytime.' : '¿Cerrar este trabajo? Lo puedes reabrir cuando quieras.')) return;
+    try {
+      await db.collection('jobs').doc(id).set({
+        status: 'completed',
+        visitStatus: 'completed',
+        needsReturn: false,
+        closedByOffice: true,
+        closedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        closedBy: uid(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      openJobDetail(id);
+    } catch (e) { alert(e.message || e); }
+  };
   window.reopenJob = async function (id) {
     if (!canAssign()) return;
-    var j = jobs.find(function (x) { return x.id === id; }) || {};
+    var en = loginLang() === 'en';
+    if (!confirm(en ? 'Reopen this job?' : '¿Reabrir este trabajo?')) return;
     try {
       await db.collection('jobs').doc(id).set({
         status: 'open',
         visitStatus: 'open',
+        closedByOffice: false,
         reopenedAt: firebase.firestore.FieldValue.serverTimestamp(),
         reopenedBy: uid(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
