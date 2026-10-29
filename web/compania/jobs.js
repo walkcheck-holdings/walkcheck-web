@@ -564,6 +564,11 @@
       openJobDetail(jobId);
     } catch (e) { alert(e.message || e); }
   };
+  function jobSaveError(e) {
+    var en = loginLang() === 'en';
+    if (e && e.code === 'permission-denied') return en ? 'Your account does not have permission to change this job. Check your role in Team (owner, admin or manager).' : 'Tu cuenta no tiene permiso para cambiar este trabajo. Revisa tu rol en Equipo (dueño, admin o manager).';
+    return (en ? 'Could not save: ' : 'No se pudo guardar: ') + ((e && e.message) || e);
+  }
   // Owner/office closes the whole job (same fields as the app's "Cerrar trabajo").
   window.closeJob = async function (id) {
     if (!canAssign()) return;
@@ -579,8 +584,8 @@
         closedBy: uid(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
-      openJobDetail(id);
-    } catch (e) { alert(e.message || e); }
+      if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
+    } catch (e) { alert(jobSaveError(e)); }
   };
   window.reopenJob = async function (id) {
     if (!canAssign()) return;
@@ -595,8 +600,8 @@
         reopenedBy: uid(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
-      openJobDetail(id);
-    } catch (e) { alert(e.message || e); }
+      if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
+    } catch (e) { alert(jobSaveError(e)); }
   };
   window.openJobView = function (id) { return openJobDetail(id); };
 })();

@@ -1,0 +1,87 @@
+/* Job "Visit" window and assignments list (company panel). */
+.jv-backdrop { position: fixed; inset: 0; z-index: 900; background: rgba(17, 24, 39, .45); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.jv-backdrop.hidden { display: none; }
+body.jv-open { overflow: hidden; }
+.jv-box { position: relative; background: #fff; border-radius: 16px; width: 760px; max-width: 100%; max-height: calc(100dvh - 48px); overflow: auto; padding: 22px 24px 0; box-shadow: 0 20px 50px rgba(0, 0, 0, .25); color: #111827; }
+.jv-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #F3F4F6; font-size: 22px; line-height: 1; cursor: pointer; color: #374151; }
+.jv-x:hover { background: #E5E7EB; }
+.jv-head { display: flex; gap: 20px; justify-content: space-between; padding-right: 40px; flex-wrap: wrap; }
+.jv-head h2 { margin: 0 0 4px; font-size: 21px; line-height: 1.25; }
+.jv-head-main { flex: 1 1 300px; min-width: 0; }
+.jv-head-side { flex: 0 1 260px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.jv-client { font-weight: 700; margin-bottom: 2px; }
+.jv-meta a { color: #1B7A36; font-weight: 700; }
+.jv-status { margin: 14px 0 4px; }
+.jv-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+.jv-green { background: #DCFCE7; color: #166534; }
+.jv-amber { background: #FEF3C7; color: #92400E; }
+.jv-red { background: #FEE2E2; color: #991B1B; }
+.jv-gray { background: #F3F4F6; color: #4B5563; }
+.jv-tabs { position: sticky; top: -22px; z-index: 2; display: flex; gap: 4px; background: #fff; border-bottom: 1px solid #E5E7EB; margin: 10px -24px 0; padding: 0 24px; overflow-x: auto; }
+.jv-tab { border: 0; background: none; padding: 12px 12px 10px; font-weight: 700; font-size: 14px; color: #6B7280; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+.jv-tab.on { color: #111827; border-bottom-color: #16A34A; }
+.jv-count { display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #F3F4F6; color: #374151; font-size: 12px; font-weight: 800; text-align: center; }
+.jv-body { padding: 16px 0 8px; }
+.jv-sec { margin: 0 0 18px; }
+.jv-sec h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: #6B7280; }
+.jv-sec p { margin: 0 0 6px; }
+.jv-sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.jv-sec-head h3 { margin: 0; }
+.jv-pre { white-space: pre-wrap; word-break: break-word; }
+.jv-ins { font-size: 15px; line-height: 1.55; }
+.jv-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; border-top: 1px solid #F3F4F6; border-bottom: 1px solid #F3F4F6; padding: 14px 0 0; margin-bottom: 18px; }
+.jv-lines, .jv-list { list-style: none; margin: 0; padding: 0; }
+.jv-lines li, .jv-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+.jv-list li.jv-click { cursor: pointer; }
+.jv-list li.jv-click:hover { background: #F9FFF9; }
+.jv-list a { color: #1B7A36; font-weight: 700; white-space: nowrap; }
+.jv-right { text-align: right; flex-shrink: 0; }
+.jv-total { text-align: right; }
+.jv-actions { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; background: #fff; border-top: 1px solid #E5E7EB; margin: 0 -24px; padding: 12px 24px; }
+.jv-actions .btn, .jv-small { width: auto; margin: 0; }
+.jv-small { padding: 8px 12px; font-size: 14px; }
+.jv-label { font-weight: 700; display: block; margin-bottom: 6px; }
+.jv-newnote textarea { width: 100%; box-sizing: border-box; }
+.jv-noterow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.jv-noterow .jv-small:last-child { margin-left: auto; }
+.jv-file { cursor: pointer; }
+.jv-note { padding: 12px 0; border-bottom: 1px solid #F3F4F6; }
+.jv-note .muted { font-size: 12.5px; margin-bottom: 4px; }
+.jv-thumb { display: block; width: 96px; height: 96px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid #E5E7EB; }
+.jv-thumb.sm { width: 64px; height: 64px; margin: 0; }
+.jv-thumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.jv-field { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+.jv-field > span { color: #4B5563; flex: 1 1 50%; }
+.jv-field > b { text-align: right; flex: 1 1 50%; }
+.jv-insp-sec h4 { margin: 14px 0 2px; font-size: 14px; }
+.jv-group { margin: 0 0 20px; }
+.jv-group h3 { margin: 0 0 8px; font-size: 15px; }
+.jv-empty { background: #fff; border-radius: 12px; padding: 14px; margin: 0; }
+.jv-card { display: grid; grid-template-columns: 28px minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(120px, .8fr); gap: 12px; align-items: start; width: 100%; text-align: left; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px; margin: 0 0 8px; cursor: pointer; font: inherit; color: inherit; }
+.jv-card:hover { border-color: #86EFAC; background: #FBFFFB; }
+.jv-card:focus-visible { outline: 3px solid #16A34A; outline-offset: 2px; }
+.jv-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #D1D5DB; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; }
+.jv-check.on { background: #16A34A; border-color: #16A34A; }
+.jv-check.ret { background: #FEE2E2; border-color: #FCA5A5; color: #991B1B; }
+.jv-card-main { min-width: 0; }
+.jv-card-sub { display: block; font-size: 13px; color: #4B5563; margin-top: 2px; }
+.jv-card-sub.st-late { color: #C62828; }
+.jv-card-desc { font-size: 13.5px; line-height: 1.4; }
+.jv-card-right { font-size: 13px; text-align: right; }
+.jv-card-k { font-weight: 800; color: #374151; }
+
+@media (max-width: 700px) {
+  .jv-backdrop { padding: 0; align-items: stretch; }
+  .jv-box { width: 100%; max-height: 100dvh; border-radius: 0; padding: 16px 16px 0; }
+  .jv-tabs { top: -16px; margin: 10px -16px 0; padding: 0 16px; }
+  .jv-actions { margin: 0 -16px; padding: 10px 16px; }
+  .jv-actions .btn { flex: 1 1 calc(50% - 8px); }
+  .jv-head-side { flex: 1 1 100%; }
+  .jv-cols { grid-template-columns: 1fr; gap: 4px; }
+  .jv-field { flex-direction: column; gap: 4px; }
+  .jv-field > b, .jv-thumbs { text-align: left; justify-content: flex-start; }
+  .jv-card { grid-template-columns: 28px minmax(0, 1fr); }
+  .jv-card-desc, .jv-card-right { grid-column: 2; text-align: left; }
+}
+.jv-back { margin: 0 0 14px; }
+.jv-sec a { color: #1B7A36; font-weight: 700; }
