@@ -44,6 +44,7 @@
         out.push(Object.assign({}, j, {
           _visit: v,
           _visitId: v.id,
+          _jobStatus: j.status || '',
           scheduledDate: v.scheduledDate || j.scheduledDate,
           startClock: v.startClock || j.startClock,
           endClock: v.endClock || j.endClock,
@@ -569,13 +570,21 @@
     if (e && e.code === 'permission-denied') return en ? 'Your account does not have permission to change this job. Check your role in Team (owner, admin or manager).' : 'Tu cuenta no tiene permiso para cambiar este trabajo. Revisa tu rol en Equipo (dueño, admin o manager).';
     return (en ? 'Could not save: ' : 'No se pudo guardar: ') + ((e && e.message) || e);
   }
+  // The job's saved visits list (null when the job has none of its own).
+  async function savedVisits(id) {
+    try {
+      var d = await db.collection('jobs').doc(id).get();
+      var v = d.exists && d.data().visits;
+      return Array.isArray(v) && v.length ? v : null;
+    } catch (_) { return null; }
+  }
   // Owner/office closes the whole job (same fields as the app's "Cerrar trabajo").
   window.closeJob = async function (id) {
     if (!canAssign()) return;
     var en = loginLang() === 'en';
     if (!confirm(en ? 'Close this job? You can reopen it anytime.' : '¿Cerrar este trabajo? Lo puedes reabrir cuando quieras.')) return;
     try {
-      await db.collection('jobs').doc(id).set({
+      var patch = {
         status: 'completed',
         visitStatus: 'completed',
         needsReturn: false,
@@ -583,7 +592,11 @@
         closedAt: firebase.firestore.FieldValue.serverTimestamp(),
         closedBy: uid(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      };
+      // Every visit ends too, so the calendar does not keep showing "Pendiente".
+      var vs = await savedVisits(id);
+      if (vs) patch.visits = vs.map(function (v) { return Object.assign({}, v, { status: 'completed' }); });
+      await db.collection('jobs').doc(id).set(patch, { merge: true });
       if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
     } catch (e) { alert(jobSaveError(e)); }
   };
@@ -592,14 +605,22 @@
     var en = loginLang() === 'en';
     if (!confirm(en ? 'Reopen this job?' : '¿Reabrir este trabajo?')) return;
     try {
-      await db.collection('jobs').doc(id).set({
+      var patch = {
         status: 'open',
         visitStatus: 'open',
         closedByOffice: false,
         reopenedAt: firebase.firestore.FieldValue.serverTimestamp(),
         reopenedBy: uid(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      };
+      // The last visit opens again; earlier visits keep their real status.
+      var vs = await savedVisits(id);
+      if (vs && vs.length) {
+        var last = 0;
+        vs.forEach(function (v, i) { if (String(v.scheduledDate || '') >= String(vs[last].scheduledDate || '')) last = i; });
+        patch.visits = vs.map(function (v, i) { return i === last ? Object.assign({}, v, { status: 'open' }) : v; });
+      }
+      await db.collection('jobs').doc(id).set(patch, { merge: true });
       if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
     } catch (e) { alert(jobSaveError(e)); }
   };

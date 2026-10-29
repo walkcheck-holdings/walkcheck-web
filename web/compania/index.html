@@ -20,12 +20,12 @@
 <script src="/web/entrar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="/web/compania/base.css?v=20261029a">
-<link rel="stylesheet" href="/web/compania/pc.css?v=20261029a">
-<link rel="stylesheet" href="/web/compania/phone.css?v=20261029a">
-<link rel="stylesheet" href="/web/compania/billing.css?v=20261029a">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261029a">
-<link rel="stylesheet" href="/web/compania/jobview.css?v=20261029a">
+<link rel="stylesheet" href="/web/compania/base.css?v=20261029b">
+<link rel="stylesheet" href="/web/compania/pc.css?v=20261029b">
+<link rel="stylesheet" href="/web/compania/phone.css?v=20261029b">
+<link rel="stylesheet" href="/web/compania/billing.css?v=20261029b">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261029b">
+<link rel="stylesheet" href="/web/compania/jobview.css?v=20261029b">
 </head>
 <body class="tab-agenda">
 <header id="siteHdr">
@@ -1042,7 +1042,9 @@ function weekDayLong(){
 }
 function dayStamp(d){
   const ws = weekStart(d);
-  let i = Math.round((d.getTime() - ws.getTime()) / 86400000);
+  // Compare whole days: a time like 10 PM must not round up to the next day.
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let i = Math.round((day.getTime() - ws.getTime()) / 86400000);
   if (i < 0) i = 0;
   if (i > 6) i = 6;
   return weekDayLong()[i] + ' ' + d.getDate();
@@ -2742,6 +2744,11 @@ function assignmentPatch(uid){
 function jobDone(j){
   // "Necesita volver": the visit happened but the job is not finished.
   if (j && j.needsReturn === true) return false;
+  // The whole job was completed or closed (app "Completar visita", office
+  // "Cerrar trabajo"): its calendar cards show completed too, even if the
+  // visit itself was never marked.
+  const js = String((j && j._jobStatus) || '').toLowerCase();
+  if (j && j._visit && (js === 'completed' || js === 'closed' || js === 'done')) return true;
   const s = String((j._visit && j._visit.status) || j.status || j.visitStatus || '').toLowerCase();
   if (s === 'open' || s === 'reopened') return false;
   return !!(j.report && j.report.completed) || j.reportCompleted === true
@@ -3709,9 +3716,9 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261029a"></script>
-<script src="/web/compania/quotes.js?v=20261029a"></script>
-<script src="/web/compania/jobs.js?v=20261029a"></script>
-<script src="/web/compania/jobview.js?v=20261029a"></script>
+<script src="/web/compania/billing.js?v=20261029b"></script>
+<script src="/web/compania/quotes.js?v=20261029b"></script>
+<script src="/web/compania/jobs.js?v=20261029b"></script>
+<script src="/web/compania/jobview.js?v=20261029b"></script>
 </body>
 </html>
