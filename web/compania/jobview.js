@@ -158,7 +158,64 @@
       var ns = await db.collection('notes').where('companyId', '==', cid()).where('jobId', '==', j.id).limit(50).get();
       ns.forEach(function (d) { appNotes.push(Object.assign({ id: d.id }, d.data())); });
     } catch (_) {}
-    return { insp: insp, appNotes: appNotes };
+    // Worker photos live in several places depending on the app screen used.
+    var photos = [], lost = 0;
+    function add(src, url) {
+      url = String(url || '').trim();
+      if (!url) return;
+      if (!/^https?:/.test(url)) { lost++; return; } // phone path: never uploaded
+      if (!photos.some(function (p) { return p.url === url; })) photos.push({ src: src, url: url });
+    }
+    jobBeforePhotos(j).forEach(function (u) { add(L('Reporte del trabajo · antes', 'Job report · before'), u); });
+    jobAfterPhotos(j).forEach(function (u) { add(L('Reporte del trabajo · después', 'Job report · after'), u); });
+    try {
+      var jr = await db.collection('jobReports').where('companyId', '==', cid()).where('jobId', '==', j.id).limit(30).get();
+      jr.forEach(function (d) {
+        var x = d.data() || {};
+        var src = x.type === 'danger' ? L('Aviso de peligro', 'Danger alert') + (x.area ? ' · ' + x.area : '') : L('Reporte del trabajo', 'Job report');
+        add(src, x.photo);
+        (x.photos || []).forEach(function (u) { add(src, u); });
+        (x.beforePhotos || []).forEach(function (u) { add(src, u); });
+      });
+    } catch (_) {}
+    try {
+      var wt = await db.collection('walkthroughs').doc(j.id).get();
+      if (wt.exists) (wt.data().findings || []).forEach(function (f) {
+        var src = L('Recorrido', 'Walkthrough') + (f.itemLabel || f.location ? ' · ' + (f.itemLabel || f.location) : '');
+        (f.photoUrls || []).forEach(function (u) { add(src, u); });
+        if (!(f.photoUrls || []).length) (f.photos || []).forEach(function (u) { add(src, u); });
+      });
+    } catch (_) {}
+    try {
+      var ar = await db.collection('walkthroughs').doc(j.id).collection('areas').get();
+      ar.forEach(function (d) {
+        var x = d.data() || {};
+        (x.photos || []).forEach(function (u) { add(L('Área', 'Area') + ' · ' + (x.name || d.id), u); });
+      });
+    } catch (_) {}
+    if (insp) INSP.forEach(function (sec) {
+      sec[1].forEach(function (it) {
+        if (it[0] === 'p') (((insp.photos || {}).items || {})[it[1]] || []).forEach(function (u) { add(L('Inspección', 'Inspection') + ' · ' + it[2], u); });
+      });
+    });
+    (j.notesLog || []).forEach(function (n) { if (n.photo && !/\.pdf(\?|$)/i.test(n.photo)) add(L('Nota', 'Note'), n.photo); });
+    appNotes.forEach(function (n) { add(L('Nota', 'Note'), n.photo); });
+    return { insp: insp, appNotes: appNotes, photos: photos, lost: lost };
+  }
+
+  function photosHtml() {
+    var list = S.photos || [];
+    var lostMsg = S.lost ? '<p class="jv-warn">' + esc(L(
+      S.lost + (S.lost === 1 ? ' foto se quedó' : ' fotos se quedaron') + ' solo en el teléfono del trabajador: la versión de la app que tiene no las subía. Con la versión nueva de la app ya se suben solas.',
+      S.lost + (S.lost === 1 ? ' photo stayed' : ' photos stayed') + ' only on the worker\'s phone: their app version did not upload them. The new app version uploads them.')) + '</p>' : '';
+    if (!list.length) return lostMsg || '<p class="muted">' + esc(L('El trabajador todavía no ha subido fotos de este trabajo.', 'The worker has not uploaded photos for this job yet.')) + '</p>';
+    var groups = {};
+    list.forEach(function (p) { (groups[p.src] = groups[p.src] || []).push(p.url); });
+    return Object.keys(groups).map(function (k) {
+      return '<div class="jv-photo-grp"><div class="muted">' + esc(k) + '</div><div class="jv-gallery">' + groups[k].map(function (u) {
+        return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img class="jv-thumb" loading="lazy" src="' + esc(u) + '" alt="' + esc(k) + '"></a>';
+      }).join('') + '</div></div>';
+    }).join('') + lostMsg;
   }
 
   window.openJobVisit = async function (id, tab) {
@@ -174,7 +231,7 @@
     if (!j || S.id !== id) { if (!j) closeJobVisit(); return; }
     var ex = await loadExtras(j);
     if (S.id !== id) return;
-    S.job = j; S.insp = ex.insp; S.appNotes = ex.appNotes;
+    S.job = j; S.insp = ex.insp; S.appNotes = ex.appNotes; S.photos = ex.photos; S.lost = ex.lost;
     render();
   };
 
@@ -274,6 +331,7 @@
       : '<p class="muted">' + esc(L('Este trabajo no tiene líneas de producto o servicio.', 'This job has no product or service lines.')) + '</p>';
     return '<section class="jv-sec"><h3>' + esc(L('Instrucciones', 'Instructions')) + '</h3>' +
         (ins ? '<p class="jv-pre jv-ins">' + esc(ins) + '</p>' : '<p class="muted">' + esc(L('Este trabajo no tiene instrucciones.', 'This job has no instructions.')) + '</p>') + '</section>' +
+      '<section class="jv-sec"><h3>' + esc(L('Fotos del trabajo', 'Job photos')) + ' <span class="jv-count">' + (S.photos || []).length + '</span></h3>' + photosHtml() + '</section>' +
       '<div class="jv-cols">' +
         '<section class="jv-sec"><h3>' + esc(L('Trabajo', 'Job')) + '</h3><p>' + (j.jobNumber ? '<b>#' + esc(j.jobNumber) + '</b> · ' : '') + esc(j.title || j.kind || '') + '</p></section>' +
         '<section class="jv-sec"><h3>' + esc(L('Equipo', 'Team')) + '</h3>' +
