@@ -209,13 +209,10 @@
       S.lost + (S.lost === 1 ? ' foto se quedó' : ' fotos se quedaron') + ' solo en el teléfono del trabajador: la versión de la app que tiene no las subía. Con la versión nueva de la app ya se suben solas.',
       S.lost + (S.lost === 1 ? ' photo stayed' : ' photos stayed') + ' only on the worker\'s phone: their app version did not upload them. The new app version uploads them.')) + '</p>' : '';
     if (!list.length) return lostMsg || '<p class="muted">' + esc(L('El trabajador todavía no ha subido fotos de este trabajo.', 'The worker has not uploaded photos for this job yet.')) + '</p>';
-    var groups = {};
-    list.forEach(function (p) { (groups[p.src] = groups[p.src] || []).push(p.url); });
-    return Object.keys(groups).map(function (k) {
-      return '<div class="jv-photo-grp"><div class="muted">' + esc(k) + '</div><div class="jv-gallery">' + groups[k].map(function (u) {
-        return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img class="jv-thumb" loading="lazy" src="' + esc(u) + '" alt="' + esc(k) + '"></a>';
-      }).join('') + '</div></div>';
-    }).join('') + lostMsg;
+    return '<div class="jv-gallery">' + list.map(function (p) {
+      return '<a class="jv-tile" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="' + esc(p.src) + '">' +
+        '<img loading="lazy" src="' + esc(p.url) + '" alt="' + esc(p.src) + '"><span>' + esc(p.src) + '</span></a>';
+    }).join('') + '</div>' + lostMsg;
   }
 
   window.openJobVisit = async function (id, tab) {
