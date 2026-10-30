@@ -3254,11 +3254,11 @@ async function openJobView(id){
       <label class="muted">BEFORE photos</label>
       ${ph.before ? `<p class="muted" style="margin:0">📸 ${esc(ph.before)}</p>` : ''}
       <div class="thumbs" id="rpThumbs">${photos.map(u=>`<img src="${esc(u)}">`).join('')}</div>
-      <input id="rpBefore" type="file" accept="image/*" multiple>
+      <input id="rpBefore" type="file" accept="image/*" multiple onchange="saveJobReport('${j.id}', false)">
       <label class="muted">AFTER photos</label>
       ${ph.after ? `<p class="muted" style="margin:0">📸 ${esc(ph.after)}</p>` : ''}
       <div class="thumbs">${afters.map(u=>`<img src="${esc(u)}">`).join('')}</div>
-      <input id="rpAfter" type="file" accept="image/*" multiple>
+      <input id="rpAfter" type="file" accept="image/*" multiple onchange="saveJobReport('${j.id}', false)">
       <label class="muted">Was it solved?</label>
       <select id="rpSolved" onchange="$('rpRetBox').classList.toggle('hidden', this.value!=='return')"><option value="">—</option><option value="yes" ${r.outcome==='yes'||(!r.outcome&&r.solved===true)?'selected':''}>Yes</option><option value="no" ${r.outcome==='no'||(!r.outcome&&r.solved===false)?'selected':''}>No</option><option value="return" ${r.outcome==='return'?'selected':''}>${esc(loginLang()==='en'?'Need to return':'Necesita volver')}</option></select>
       <div id="rpRetBox" class="${r.outcome==='return'?'':'hidden'}">
@@ -3275,23 +3275,89 @@ async function openJobView(id){
       <label class="muted">Total</label><input id="feTotal" type="number" min="0" step="0.01">
       <button type="button" class="btn ghost" onclick="saveFieldExpense('${j.id}')">${esc(loginLang()==='en'?'Add expense':'Agregar gasto')}</button>
       <div class="err" id="rpErr"></div>
-      <button class="btn ghost" onclick="saveJobReport('${j.id}', false)">Save Progress</button>
-      <button class="btn" onclick="saveJobReport('${j.id}', true)">✓ Completed</button>`;
+      <p class="muted" id="rpSaved" aria-live="polite">${r.updatedAt && r.updatedAt.toDate ? esc((enL?'Saved ':'Guardado ') + r.updatedAt.toDate().toLocaleString()) : ''}</p>
+      <button class="btn ghost" id="rpSaveBtn" onclick="saveJobReport('${j.id}', false)">${esc(enL?'Save':'Guardar')}</button>
+      <button class="btn" id="rpDoneBtn" onclick="saveJobReport('${j.id}', true)">${esc(r.completed ? (enL?'✓ Completed · save changes':'✓ Completado · guardar cambios') : (enL?'✓ Complete':'✓ Completar'))}</button>`;
   const body = (tab==='walk' && isWt) ? wtWorkerHtml(j) : tab==='client' ? client : tab==='notes' ? (notesHtml + `<textarea id="jobNotes" rows="3"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(loginLang()==='en'?'Add note':'Agregar nota')}</button>`) : tab==='checks' ? checks : info;
   $('viewJobs').classList.remove('hidden');
   $('viewJobs').innerHTML = `<div class="jobhead">
-      <button class="back" onclick="closeJobView()">← ${esc(uiT('horario'))}</button>
+      <button class="back" onclick="(rpDirty?saveReportDraft('${j.id}'):Promise.resolve()).then(closeJobView)">← ${esc(uiT('horario'))}</button>
       <h2>${esc(j.title||j.kind||'Job')}${completed?' ✓':''}</h2>
     </div>
     <div class="view-tabs" style="margin:8px 12px;flex-wrap:wrap">
-      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="visitTab='walk';openJobView('${j.id}')">🚶 Walkcheck (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
-      <button type="button" class="${tab==='info'?'on':''}" onclick="visitTab='info';openJobView('${j.id}')">Info</button>
-      <button type="button" class="${tab==='client'?'on':''}" onclick="visitTab='client';openJobView('${j.id}')">Client</button>
-      <button type="button" class="${tab==='notes'?'on':''}" onclick="visitTab='notes';openJobView('${j.id}')">Notes (${notes})</button>
-      <button type="button" class="${tab==='checks'?'on':''}" onclick="visitTab='checks';openJobView('${j.id}')">Checklists (${cks})</button>
+      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="goVisitTab('walk','${j.id}')">🚶 Walkcheck (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
+      <button type="button" class="${tab==='info'?'on':''}" onclick="goVisitTab('info','${j.id}')">Info</button>
+      <button type="button" class="${tab==='client'?'on':''}" onclick="goVisitTab('client','${j.id}')">Client</button>
+      <button type="button" class="${tab==='notes'?'on':''}" onclick="goVisitTab('notes','${j.id}')">Notes (${notes})</button>
+      <button type="button" class="${tab==='checks'?'on':''}" onclick="goVisitTab('checks','${j.id}')">Checklists (${cks})</button>
     </div>
     <div class="card">${body}</div>`;
+  if (tab === 'checks') wireReportAutosave(j.id);
 }
+/* Job Report: typed text saves by itself a moment after the worker stops
+   typing, and before switching tab or leaving, so nothing is lost. */
+let rpDirty = false, rpTimer = null, rpJobId = '';
+function wireReportAutosave(id){
+  rpDirty = false; rpJobId = id;
+  const box = $('viewJobs');
+  if (!box) return;
+  const mark = (ev) => {
+    const t = ev.target;
+    if (!t || !t.id || t.type === 'file' || t.id === 'feItems' || t.id === 'feTotal') return;
+    if (!/^rp/.test(t.id) && !t.dataset.step) return;
+    rpDirty = true;
+    const s = $('rpSaved'); if (s) s.textContent = loginLang()==='en' ? 'Unsaved changes…' : 'Cambios sin guardar…';
+    clearTimeout(rpTimer);
+    rpTimer = setTimeout(() => saveReportDraft(id), 1500);
+  };
+  box.oninput = mark;
+  box.onchange = mark;
+}
+/* Saves what is typed in the Job Report without reloading the screen. */
+async function saveReportDraft(id){
+  clearTimeout(rpTimer);
+  if (!rpDirty || id !== rpJobId || !$('rpP')) return true;
+  const solvedVal = $('rpSolved') ? $('rpSolved').value : '';
+  const patch = {
+    'report.actualStart': ($('rpAS') && $('rpAS').value) || '',
+    'report.actualEnd': ($('rpAE') && $('rpAE').value) || '',
+    'report.problem': ($('rpP').value || '').trim(),
+    'report.solved': solvedVal === '' ? null : solvedVal === 'yes',
+    'report.outcome': solvedVal || null,
+    'report.returnReason': solvedVal === 'return' ? ((($('rpRet') && $('rpRet').value) || '').trim()) : '',
+    'report.solution': (($('rpS') && $('rpS').value) || '').trim(),
+    'report.finalNotes': (($('rpN') && $('rpN').value) || '').trim(),
+    'report.steps': [...document.querySelectorAll('#viewJobs [data-step]')].filter(c => c.checked).map(c => c.dataset.step),
+    'report.updatedAt': firebase.firestore.FieldValue.serverTimestamp(),
+    'report.updatedBy': (auth.currentUser && auth.currentUser.uid) || '',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try {
+    await db.collection('jobs').doc(id).update(patch);
+    rpDirty = false;
+    const s = $('rpSaved'); if (s) s.textContent = (loginLang()==='en' ? 'Saved ' : 'Guardado ') + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    return true;
+  } catch (e) {
+    const s = $('rpSaved'); if (s) s.textContent = '';
+    const err = $('rpErr'); if (err) err.textContent = reportSaveError(e);
+    return false;
+  }
+}
+function reportSaveError(e){
+  const en = loginLang()==='en';
+  if (e && e.code === 'permission-denied') return en ? 'Your account cannot save this job. Ask the office to check your access.' : 'Tu cuenta no puede guardar en este trabajo. Pide a la oficina que revise tu acceso.';
+  if (e && (e.code === 'unavailable' || /network|offline/i.test(e.message||''))) return en ? 'No internet. Try again when you have signal.' : 'Sin internet. Vuelve a intentarlo cuando tengas señal.';
+  return (en ? 'Could not save: ' : 'No se pudo guardar: ') + ((e && e.message) || e);
+}
+/* Switching tab inside the job saves the Job Report first. */
+async function goVisitTab(t, id){
+  if (rpDirty) await saveReportDraft(id);
+  visitTab = t;
+  openJobView(id);
+}
+window.addEventListener('beforeunload', (ev) => {
+  if (rpDirty) { saveReportDraft(rpJobId); ev.preventDefault(); ev.returnValue = ''; }
+});
 async function saveJobNotes(id){
   const text = (($('jobNotes')&&$('jobNotes').value) || '').trim();
   if (!text) return;
@@ -3339,6 +3405,14 @@ async function uploadJobFile(jobId, kind, file){
 async function saveJobReport(id, complete){
   const err = $('rpErr');
   if (err) err.textContent = '';
+  clearTimeout(rpTimer);
+  const enS = loginLang()==='en';
+  const btnS = $('rpSaveBtn'), btnD = $('rpDoneBtn');
+  if (btnS) btnS.disabled = true;
+  if (btnD) btnD.disabled = true;
+  const saved = $('rpSaved');
+  if (saved) saved.textContent = enS ? 'Saving…' : 'Guardando…';
+  const unlock = () => { if (btnS) btnS.disabled = false; if (btnD) btnD.disabled = false; };
   let j = jobs.find(x=>x.id===id) || {};
   try {
     const d = await db.collection('jobs').doc(id).get();
@@ -3350,17 +3424,23 @@ async function saveJobReport(id, complete){
   const bf = $('rpBefore') && $('rpBefore').files;
   try {
     if (bf && bf.length) {
-      for (let i=0;i<bf.length;i++) beforePhotos.push(await uploadJobFile(id, 'before', bf[i]));
+      for (let i=0;i<bf.length;i++) {
+        if (saved) saved.textContent = (enS ? 'Uploading photo ' : 'Subiendo foto ') + (i+1) + '/' + bf.length + '…';
+        beforePhotos.push(await uploadJobFile(id, 'before', bf[i]));
+      }
     }
-  } catch(e){ if (err) err.textContent = 'Foto: '+(e.message||e); return; }
+  } catch(e){ if (err) err.textContent = (enS?'Photo: ':'Foto: ')+reportSaveError(e); unlock(); return; }
   let afterPhotos = Array.isArray(prev.afterPhotos) ? prev.afterPhotos.slice() : [];
   if (prev.afterPhoto && !afterPhotos.includes(prev.afterPhoto)) afterPhotos.push(prev.afterPhoto);
   const af = $('rpAfter') && $('rpAfter').files;
   try {
     if (af && af.length) {
-      for (let i=0;i<af.length;i++) afterPhotos.push(await uploadJobFile(id, 'after', af[i]));
+      for (let i=0;i<af.length;i++) {
+        if (saved) saved.textContent = (enS ? 'Uploading photo ' : 'Subiendo foto ') + (i+1) + '/' + af.length + '…';
+        afterPhotos.push(await uploadJobFile(id, 'after', af[i]));
+      }
     }
-  } catch(e){ if (err) err.textContent = 'Foto: '+(e.message||e); return; }
+  } catch(e){ if (err) err.textContent = (enS?'Photo: ':'Foto: ')+reportSaveError(e); unlock(); return; }
   const solvedVal = $('rpSolved').value;
   const returnReason = (($('rpRet') && $('rpRet').value) || '').trim();
   const report = {
@@ -3375,26 +3455,37 @@ async function saveJobReport(id, complete){
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
     steps: [...document.querySelectorAll('#viewJobs [data-step]')].filter(c => c.checked).map(c => c.dataset.step),
-    draft: !complete,
-    completed: false,
+    // "Guardar" on a report that was already completed keeps it completed.
+    draft: prev.completed === true ? false : !complete,
+    completed: prev.completed === true,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     updatedBy: auth.currentUser && auth.currentUser.uid
   };
   const n = requiredReportCount(report);
   report.requiredDone = n;
   report.requiredTotal = 6;
-  if (complete) {
-    if (n < 6) { if (err) err.textContent = n+'/6. Pon horas y fotos de ANTES y DESPUÉS.'; return; }
-    if (solvedVal === 'return' && !returnReason) {
-      if (err) err.textContent = loginLang()==='en' ? 'Write what is missing to finish, so the office can schedule the return.' : 'Escribe qué falta para terminar, para que la oficina pueda agendar el regreso.';
-      return;
+  let missing = '';
+  if (complete && !report.completed) {
+    if (n < 6) {
+      const r6 = report, miss = [];
+      if (!r6.actualStart) miss.push(enS?'start time':'hora de inicio');
+      if (!r6.actualEnd) miss.push(enS?'end time':'hora de fin');
+      if (!beforePhotos.length) miss.push(enS?'BEFORE photo':'foto de ANTES');
+      if (!afterPhotos.length) miss.push(enS?'AFTER photo':'foto de DESPUÉS');
+      if (r6.solved !== true && r6.solved !== false) miss.push(enS?'was it solved?':'¿se resolvió?');
+      if (!r6.solution) miss.push(enS?'solution':'solución');
+      missing = (enS ? 'Saved. To complete, still missing: ' : 'Guardado. Para completar falta: ') + miss.join(', ') + '.';
+    } else if (solvedVal === 'return' && !returnReason) {
+      missing = enS ? 'Saved. Write what is missing to finish, so the office can schedule the return.' : 'Guardado. Escribe qué falta para terminar, para que la oficina pueda agendar el regreso.';
+    } else {
+      report.completed = true;
+      report.draft = false;
     }
-    report.completed = true;
-    report.draft = false;
   }
+  const justCompleted = report.completed && prev.completed !== true;
   try {
     const patch = { report, reportCompleted: !!report.completed, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-    if (report.completed) {
+    if (justCompleted) {
       const goBack = solvedVal === 'return';
       // Visit is done; if the job needs a return visit it stays open for the
       // office (company panel shows it in alerts with "Agendar regreso").
@@ -3416,7 +3507,8 @@ async function saveJobReport(id, complete){
       });
     }
     await db.collection('jobs').doc(id).set(patch, {merge:true});
-    if (report.completed) {
+    rpDirty = false;
+    if (justCompleted) {
       await db.collection('jobReports').add({
         jobId: id, companyId: cid(), workerId: assignedOf(j),
         actualStart: report.actualStart, actualEnd: report.actualEnd,
@@ -3427,9 +3519,15 @@ async function saveJobReport(id, complete){
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
-  } catch(e){ if (err) err.textContent = e.message||e; return; }
+  } catch(e){ if (err) err.textContent = reportSaveError(e); if (saved) saved.textContent = ''; unlock(); return; }
+  visitTab = 'checks';
   await loadBoard();
   await openJobView(id);
+  // Message after the screen reloads: what is still missing, or done.
+  const msg = missing || (justCompleted ? (enS ? '✓ Job Report completed.' : '✓ Job Report completado.') : '');
+  const e2 = $('rpErr');
+  if (missing && e2) { e2.textContent = missing; e2.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  else if (msg && $('rpSaved')) { $('rpSaved').textContent = msg; }
 }
 
 async function openMoney(){
