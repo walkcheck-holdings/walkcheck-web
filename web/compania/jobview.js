@@ -168,6 +168,7 @@
     }
     jobBeforePhotos(j).forEach(function (u) { add(L('Reporte del trabajo · antes', 'Job report · before'), u); });
     jobAfterPhotos(j).forEach(function (u) { add(L('Reporte del trabajo · después', 'Job report · after'), u); });
+    receiptPhotosOf(j).forEach(function (u) { add(L('Recibo', 'Receipt'), u); });
     try {
       var jr = await db.collection('jobReports').where('companyId', '==', cid()).where('jobId', '==', j.id).limit(30).get();
       jr.forEach(function (d) {
@@ -257,6 +258,7 @@
     var m = modalEl(), j = S.job;
     if (!m || !j) return;
     if (S.view === 'client') { m.innerHTML = '<div class="jv-box" role="dialog" aria-modal="true">' + clientProfileHtml(j) + '</div>'; return; }
+    if (S.view === 'jobreport') { m.innerHTML = '<div class="jv-box jv-report" role="dialog" aria-modal="true" aria-label="Job Report">' + jobReportFormHtml(j) + '</div>'; return; }
     var c = clientInfo(j);
     var v = jobVisits(j)[0] || {};
     var when = [ymdLabel(v.scheduledDate || j.scheduledDate), [fmtClock(v.startClock || j.startClock), fmtClock(v.endClock || j.endClock)].filter(Boolean).join(' – ')].filter(Boolean).join(', ');
@@ -509,28 +511,176 @@
   }
   window.jvMoreInsp = function () { S.showAllInsp = true; render(); };
 
+  function photoList(r, key, single) {
+    var list = (r && Array.isArray(r[key]) ? r[key] : []).filter(Boolean).slice();
+    if (r && r[single] && list.indexOf(r[single]) < 0) list.push(r[single]);
+    return list;
+  }
+  function receiptPhotosOf(j) { return photoList((j && j.report) || {}, 'receiptPhotos', 'receiptPhoto'); }
+  function costFilled(v) { return v != null && String(v).trim() !== '' && !isNaN(Number(v)); }
+  function reportFilled(r) {
+    r = r || {};
+    var solved = r.solved === true || r.solved === false || !!r.outcome;
+    return [
+      !!r.actualStart, !!r.actualEnd, !!(r.problem && String(r.problem).trim()),
+      photoList(r, 'beforePhotos', 'beforePhoto').length > 0, solved,
+      !!(r.solution && String(r.solution).trim()),
+      photoList(r, 'afterPhotos', 'afterPhoto').length > 0, costFilled(r.expensesTotal),
+      !!(r.supplier && String(r.supplier).trim()), receiptPhotosOf({ report: r }).length > 0
+    ].filter(Boolean).length;
+  }
   function jobReportHtml(j) {
     var r = j.report || {};
     var sent = !!(j.jobReport && j.jobReport.isCompleted) || r.completed === true;
-    var has = !!(r.problem || (r.beforePhotos || []).length || r.outcome || r.solution);
-    var pill = sent ? '<span class="jv-pill jv-green">✓ ' + esc(L('Completado', 'Completed')) + '</span>'
-      : has ? '<span class="jv-pill jv-amber">' + esc(L('Borrador guardado', 'Draft saved')) + '</span>'
-      : '<span class="jv-pill jv-amber">' + esc(L('Pendiente', 'Pending')) + '</span>';
-    var outcome = { yes: L('Sí, se resolvió', 'Yes, solved'), no: L('No se resolvió', 'Not solved'), 'return': L('Necesita volver', 'Needs return visit') }[r.outcome || ''] ||
-      (r.solved === true ? L('Sí, se resolvió', 'Yes, solved') : r.solved === false ? L('No se resolvió', 'Not solved') : '');
-    var photos = jobBeforePhotos(j).concat(jobAfterPhotos(j)).filter(function (u) { return /^https?:/.test(String(u)); });
-    var head = '<div class="jv-sec-head"><h3>' + esc(L('Reporte del trabajo', 'Job report')) + '</h3>' + pill + '</div>';
-    if (!has) return '<section class="jv-sec">' + head + '<p class="muted">' + esc(L('El trabajador todavía no ha llenado este reporte.', 'The worker has not filled this report yet.')) + '</p></section>';
-    return '<section class="jv-sec">' + head +
-      '<div class="jv-field"><span>' + esc(L('¿Qué se necesita reparar?', 'What needs repair?')) + '</span><b class="jv-pre">' + esc(r.problem || '—') + '</b></div>' +
-      (outcome ? '<div class="jv-field"><span>' + esc(L('¿Se resolvió?', 'Solved?')) + '</span><b>' + esc(outcome) + '</b></div>' : '') +
-      (r.returnReason ? '<div class="jv-field"><span>' + esc(L('Qué falta para terminar', 'What is missing')) + '</span><b class="jv-pre">' + esc(r.returnReason) + '</b></div>' : '') +
-      (r.solution ? '<div class="jv-field"><span>' + esc(L('Solución', 'Solution')) + '</span><b class="jv-pre">' + esc(r.solution) + '</b></div>' : '') +
-      (photos.length ? '<div class="jv-field"><span>' + esc(L('Fotos', 'Photos')) + '</span><div class="jv-thumbs">' + photos.map(function (u) {
-        return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img class="jv-thumb sm" src="' + esc(u) + '" alt="' + esc(L('Foto del reporte', 'Report photo')) + '"></a>';
-      }).join('') + '</div></div>' : '') +
-      '</section>';
+    var label = sent ? L('Completado', 'Completed') : L('No completado', 'Not completed');
+    return '<button type="button" class="jv-report-open" onclick="jvOpenReport()">' +
+      '<span><b>Job Report</b><span class="muted">' + reportFilled(r) + '/10 · ' + esc(label) + '</span></span>' +
+      '<span aria-hidden="true">›</span></button>';
   }
+  function jrWhen(ts) {
+    var d = toDate(ts);
+    return d ? fmtDateTime(d) : '-';
+  }
+  function jrThumbs(urls) {
+    return (urls || []).filter(function (u) { return /^https?:/.test(String(u)); }).map(function (u) {
+      return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt=""></a>';
+    }).join('');
+  }
+  function jobReportFormHtml(j) {
+    var r = j.report || {};
+    var before = photoList(r, 'beforePhotos', 'beforePhoto');
+    var after = photoList(r, 'afterPhotos', 'afterPhoto');
+    var receipts = receiptPhotosOf(j);
+    var n = reportFilled(r);
+    var solved = r.outcome || (r.solved === true ? 'yes' : (r.solved === false ? 'no' : ''));
+    var req = esc(L('Requerido', 'Required'));
+    var cam = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="#16A34A" stroke-width="1.8"/><circle cx="9" cy="10" r="1.6" fill="#16A34A"/><path d="M3 16l5-4 4 3 3-2 6 5" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    function mark(ok) {
+      return '<div class="' + (ok ? 'jr-ok' : 'jr-req') + '">' + (ok ? ('✓ ' + esc(L('Listo', 'Done'))) : req) + '</div>';
+    }
+    function slot(label, countId, box, inputId, ok) {
+      return '<div class="jr-photo-h"><span>' + label + '</span><span class="jr-n" id="' + countId + '">' + (box.split('<img').length - 1) + '/50</span></div>' +
+        '<div class="jr-thumbs">' + box + '</div>' +
+        '<button type="button" class="jr-cam" onclick="document.getElementById(\'' + inputId + '\').click()">' + cam + '</button>' +
+        '<input id="' + inputId + '" type="file" accept="image/*" multiple hidden>' +
+        mark(ok);
+    }
+    return '<div class="jr-top"><button type="button" class="jr-x" onclick="jvCloseReport()" aria-label="' + esc(L('Cerrar', 'Close')) + '">×</button><h2>Job Report</h2><span></span></div>' +
+      '<section class="jr-card"><div class="jr-bar"><i style="width:' + Math.round(n / 10 * 100) + '%"></i></div>' +
+        '<div class="jr-count">' + n + '/10 ' + esc(L('campos obligatorios completos', 'required fields completed')) + '</div>' +
+        '<div class="jr-meta">' + esc(L('Última actualización', 'Last update')) + '</div><div class="jr-meta-v">' + esc(jrWhen(r.updatedAt)) + '</div>' +
+        '<div class="jr-meta">' + esc(L('Enviado el', 'Sent on')) + '</div><div class="jr-meta-v">' + esc(r.completed ? jrWhen(r.completedAt) : '-') + '</div></section>' +
+      '<section class="jr-card"><h3>TIME OF COMPLETION</h3>' +
+        '<label for="rpAS">Start Time</label><input id="rpAS" type="time" value="' + esc(r.actualStart || '') + '">' + mark(!!r.actualStart) +
+        '<label for="rpAE">Ending Time</label><input id="rpAE" type="time" value="' + esc(r.actualEnd || '') + '">' + mark(!!r.actualEnd) + '</section>' +
+      '<section class="jr-card"><h3>PROBLEM DESCRIPTION</h3>' +
+        '<label for="rpP">Explain the current condition of the affected item</label><textarea id="rpP" rows="3">' + esc(r.problem || '') + '</textarea>' + mark(!!(r.problem && String(r.problem).trim())) +
+        slot('Attach BEFORE Pictures', 'jrBeforeN', jrThumbs(before), 'rpBefore', before.length > 0) + '</section>' +
+      '<section class="jr-card"><h3>SOLUTION DESCRIPTION</h3>' +
+        '<label for="rpSolved">Were you able to solve the problem?</label>' +
+        '<select id="rpSolved" onchange="var b=document.getElementById(\'rpRetBox\'); if(b) b.classList.toggle(\'hidden\', this.value!==\'return\')">' +
+          '<option value="">' + esc(L('Seleccione…', 'Select…')) + '</option>' +
+          '<option value="yes"' + (solved === 'yes' ? ' selected' : '') + '>Yes</option>' +
+          '<option value="no"' + (solved === 'no' ? ' selected' : '') + '>No</option>' +
+          '<option value="return"' + (solved === 'return' ? ' selected' : '') + '>' + esc(L('Necesita volver', 'Need to return')) + '</option></select>' +
+        mark(!!solved) +
+        '<div id="rpRetBox" class="' + (solved === 'return' ? '' : 'hidden') + '"><label for="rpRet">' + esc(L('¿Qué falta para terminar? (pieza, material, acceso…)', 'What is missing to finish? (part, material, access…)')) + '</label>' +
+          '<textarea id="rpRet" rows="2">' + esc(r.returnReason || '') + '</textarea></div>' +
+        '<label for="rpS">Describe the actions taken to complete the repair/ If not completed state why</label><textarea id="rpS" rows="3">' + esc(r.solution || '') + '</textarea>' + mark(!!(r.solution && String(r.solution).trim())) +
+        slot('Attach AFTER Pictures', 'jrAfterN', jrThumbs(after), 'rpAfter', after.length > 0) + '</section>' +
+      '<section class="jr-card"><h3>EXPENSES</h3>' +
+        '<label for="rpEx">Total Material Cost</label><input id="rpEx" type="number" min="0" step="0.01" value="' + (r.expensesTotal != null && r.expensesTotal !== '' ? esc(r.expensesTotal) : '') + '">' + mark(costFilled(r.expensesTotal)) +
+        '<label for="rpSup">Supplier</label><input id="rpSup" type="text" value="' + esc(r.supplier || '') + '">' + mark(!!(r.supplier && String(r.supplier).trim())) +
+        slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts), 'rpRec', receipts.length > 0) + '</section>' +
+      '<section class="jr-card"><h3>Final Notes</h3><textarea id="rpN" rows="3" aria-label="Final Notes">' + esc(r.finalNotes || '') + '</textarea>' +
+        '<div class="err" id="rpErr"></div><p class="muted" id="rpSaved"></p></section>' +
+      '<div class="jr-foot"><button type="button" class="jr-save" id="rpSaveBtn" onclick="jvSaveReport(false)">' + esc(L('Guardar progreso', 'Save progress')) + '</button>' +
+        '<div class="jr-more-wrap"><button type="button" class="jr-more" aria-label="' + esc(L('Más', 'More')) + '" onclick="var m=document.getElementById(\'jrMore\'); if(m) m.classList.toggle(\'hidden\')">⋯</button>' +
+          '<div id="jrMore" class="jr-menu hidden"><button type="button" onclick="jvSaveReport(true)">' + esc(r.completed ? L('Guardar reporte completado', 'Save completed report') : L('Completar', 'Complete')) + '</button></div></div></div>';
+  }
+  window.jvOpenReport = function () { S.view = 'jobreport'; render(); };
+  window.jvCloseReport = function () { S.view = 'job'; S.tab = 'checklists'; render(); };
+  async function uploadPicked(jobId, kind, input, list) {
+    var files = (input && input.files) ? Array.from(input.files) : [];
+    for (var i = 0; i < files.length && list.length < 50; i++) list.push(await uploadJobFile(jobId, kind, files[i]));
+    return list;
+  }
+  window.jvSaveReport = async function (complete) {
+    var j = S.job; if (!j || !$('rpP')) return;
+    var err = $('rpErr'), btn = $('rpSaveBtn'), saved = $('rpSaved');
+    if (err) err.textContent = '';
+    if (btn) btn.disabled = true;
+    if (saved) saved.textContent = L('Guardando…', 'Saving…');
+    var prev = j.report || {};
+    try {
+      var before = await uploadPicked(j.id, 'before', $('rpBefore'), photoList(prev, 'beforePhotos', 'beforePhoto'));
+      var after = await uploadPicked(j.id, 'after', $('rpAfter'), photoList(prev, 'afterPhotos', 'afterPhoto'));
+      var receipts = await uploadPicked(j.id, 'receipt', $('rpRec'), receiptPhotosOf(j));
+      var solvedVal = $('rpSolved').value;
+      var costRaw = String(($('rpEx') && $('rpEx').value) || '');
+      var report = {
+        actualStart: $('rpAS').value || '', actualEnd: $('rpAE').value || '',
+        problem: ($('rpP').value || '').trim(), beforePhotos: before, afterPhotos: after,
+        receiptPhotos: receipts, receiptPhoto: receipts[0] || '',
+        expensesTotal: costRaw.trim() === '' ? null : Number(costRaw),
+        supplier: (($('rpSup') && $('rpSup').value) || '').trim(),
+        solved: solvedVal === '' ? null : solvedVal === 'yes',
+        outcome: solvedVal || null,
+        returnReason: solvedVal === 'return' ? (($('rpRet') && $('rpRet').value) || '').trim() : '',
+        solution: (($('rpS') && $('rpS').value) || '').trim(),
+        finalNotes: (($('rpN') && $('rpN').value) || '').trim(),
+        steps: Array.isArray(prev.steps) ? prev.steps : [],
+        draft: prev.completed === true ? false : !complete,
+        completed: prev.completed === true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: uid()
+      };
+      if (prev.completedAt) report.completedAt = prev.completedAt;
+      var miss = [];
+      if (complete && !report.completed) {
+        if (!report.actualStart) miss.push(L('hora de inicio', 'start time'));
+        if (!report.actualEnd) miss.push(L('hora de fin', 'ending time'));
+        if (!report.problem) miss.push(L('descripción del problema', 'problem description'));
+        if (!before.length) miss.push(L('fotos de ANTES', 'BEFORE pictures'));
+        if (report.solved !== true && report.solved !== false) miss.push(L('¿se resolvió?', 'was it solved?'));
+        if (!report.solution) miss.push(L('acciones hechas', 'actions taken'));
+        if (!after.length) miss.push(L('fotos de DESPUÉS', 'AFTER pictures'));
+        if (!costFilled(report.expensesTotal)) miss.push(L('costo de materiales', 'material cost'));
+        if (!report.supplier) miss.push(L('proveedor', 'supplier'));
+        if (!receipts.length) miss.push(L('foto del recibo', 'receipt picture'));
+        var why = report.returnReason;
+        if (!miss.length && solvedVal === 'return' && !why) miss.push(L('qué falta para terminar', 'what is missing to finish'));
+        if (!miss.length) {
+          report.completed = true; report.draft = false;
+          report.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+      }
+      var justCompleted = report.completed && prev.completed !== true;
+      var patch = { report: report, reportCompleted: !!report.completed, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (justCompleted) {
+        var goBack = solvedVal === 'return';
+        patch.status = goBack ? 'needs_return' : 'completed';
+        patch.needsReturn = goBack;
+        patch.visitStatus = 'completed';
+        if (goBack) patch.returnRequest = { reason: report.returnReason, byUid: uid(), byName: who(), at: new Date().toISOString() };
+      }
+      await db.collection('jobs').doc(j.id).set(patch, { merge: true });
+      var fresh = await loadJob(j.id);
+      if (fresh) { S.job = fresh; j = fresh; }
+      S.view = 'jobreport';
+      render();
+      var msg = miss.length
+        ? (L('Guardado. Para completar falta: ', 'Saved. To complete, still missing: ') + miss.join(', ') + '.')
+        : (justCompleted ? L('✓ Job Report completado.', '✓ Job Report completed.') : L('Guardado.', 'Saved.'));
+      var box = $('rpErr');
+      if (miss.length && box) box.textContent = msg;
+      else if ($('rpSaved')) $('rpSaved').textContent = msg;
+    } catch (e) {
+      if (err) err.textContent = L('No se pudo guardar: ', 'Could not save: ') + (e.message || e);
+      if (saved) saved.textContent = '';
+      if (btn) btn.disabled = false;
+    }
+  };
 
   /* Inspection report as a clean page: print / save as PDF. */
   function inspReportHtml(j) {

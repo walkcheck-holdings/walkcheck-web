@@ -292,6 +292,43 @@
   .prog { background: #E8F8EC; border-radius: 12px; padding: 12px; font-weight: 800; margin: 12px 0; }
   .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
   .thumbs img { width: 88px; height: 88px; object-fit: cover; border-radius: 10px; }
+  #viewJobs.jr-on { padding: 0; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; background: #F6F7F9; }
+  #viewJobs.jr-on .jr-top, #viewJobs.jr-on .jr-scroll, #viewJobs.jr-on .jr-foot { width: 100%; align-self: stretch; }
+  body.jr-on #empNav, body.jr-on #bottomNav { display: none !important; }
+  .jr-top { background: #fff; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: 8px 10px; padding-top: max(8px, env(safe-area-inset-top)); border-bottom: 1px solid #E5E7EB; }
+  .jr-top h2 { margin: 0; text-align: center; font-size: 18px; color: #16324F; }
+  .jr-x { width: 36px; height: 36px; border-radius: 50%; border: none; background: #F3F4F6; color: #111; font-size: 22px; line-height: 1; cursor: pointer; }
+  .jr-scroll { flex: 1; overflow: auto; padding-bottom: 12px; }
+  .jr-card { background: #fff; padding: 16px; margin-bottom: 10px; }
+  .jr-card h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .04em; color: #16324F; font-weight: 800; }
+  .jr-card label { display: block; margin-top: 12px; font-size: 15px; font-weight: 600; color: #111827; }
+  .jr-card input, .jr-card select, .jr-card textarea { margin: 6px 0 4px; background: #fff; }
+  .jr-bar { height: 8px; border-radius: 8px; background: #E5E7EB; overflow: hidden; }
+  .jr-bar i { display: block; height: 100%; width: 0; background: #16A34A; border-radius: 8px; }
+  .jr-count { margin-top: 8px; font-weight: 800; color: #111827; }
+  .jr-meta { margin-top: 12px; color: #6B7280; font-size: 14px; }
+  .jr-meta-v { color: #111827; font-size: 15px; }
+  .jr-req { color: #DC2626; font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .jr-ok { color: #16A34A; font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .jr-photo-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-top: 14px; font-weight: 600; }
+  .jr-n { color: #6B7280; font-size: 13px; font-weight: 700; }
+  .jr-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .jr-thumb { position: relative; width: 64px; height: 64px; }
+  .jr-thumb img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; display: block; }
+  .jr-thumb-x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border: none; border-radius: 50%; background: #111; color: #fff; font-size: 14px; line-height: 1; cursor: pointer; }
+  .jr-cam { width: 64px; height: 64px; border-radius: 12px; border: 1.5px solid #16A34A; background: #DCFCE7; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  .jr-hint { color: #6B7280; font-size: 13px; margin: 4px 0 0; }
+  .jr-foot { background: #fff; border-top: 1px solid #E5E7EB; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 10px; align-items: center; }
+  .jr-save { flex: 1; min-height: 48px; border-radius: 10px; border: 1.5px solid #16A34A; background: #fff; color: #16A34A; font-weight: 800; font-size: 16px; cursor: pointer; }
+  .jr-save:disabled { opacity: .55; }
+  .jr-more-wrap { position: relative; }
+  .jr-more { width: 48px; height: 48px; border-radius: 10px; border: 1.5px solid #D1D5DB; background: #fff; font-size: 22px; font-weight: 800; cursor: pointer; color: #374151; }
+  .jr-menu { position: absolute; right: 0; bottom: 54px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.16); min-width: 220px; padding: 6px; z-index: 2; }
+  .jr-menu button { width: 100%; text-align: left; border: none; background: #fff; min-height: 44px; font-weight: 700; cursor: pointer; border-radius: 8px; padding: 8px 10px; }
+  .jr-menu button:hover { background: #F3F4F6; }
+  .jr-row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; border: 1.5px solid #E5E7EB; background: #fff; border-radius: 12px; padding: 12px; margin-top: 12px; cursor: pointer; font-size: 16px; }
+  .jr-row b { display: block; }
+  .jr-row-sub { color: #6B7280; font-size: 13px; font-weight: 600; }
   .done-mark { font-weight: 900; }
   .card { background: #fff; border-radius: 12px; padding: 16px; margin: 12px; }
   .back { background: none; border: none; color: #2E7D32; font-size: 15px; cursor: pointer; }
@@ -2991,17 +3028,30 @@ async function saveAssign(){
   await loadBoard();
 }
 
+function reportPhotoList(r, key, single){
+  r = r || {};
+  const list = Array.isArray(r[key]) ? r[key].filter(Boolean).slice() : [];
+  if (r[single] && !list.includes(r[single])) list.push(r[single]);
+  return list;
+}
+function reportCostFilled(v){
+  if (v == null) return false;
+  const s = String(v).trim();
+  return s !== '' && !isNaN(Number(s));
+}
 function requiredReportCount(r){
   r = r || {};
-  const before = Array.isArray(r.beforePhotos) ? r.beforePhotos.length>0 : !!(r.beforePhoto);
-  const after = Array.isArray(r.afterPhotos) ? r.afterPhotos.length>0 : !!(r.afterPhoto);
   const checks = [
     !!(r.actualStart),
     !!(r.actualEnd),
-    before,
-    after,
-    r.solved === true || r.solved === false,
-    !!(r.solution && String(r.solution).trim())
+    !!(r.problem && String(r.problem).trim()),
+    reportPhotoList(r, 'beforePhotos', 'beforePhoto').length > 0,
+    r.solved === true || r.solved === false || !!r.outcome,
+    !!(r.solution && String(r.solution).trim()),
+    reportPhotoList(r, 'afterPhotos', 'afterPhoto').length > 0,
+    reportCostFilled(r.expensesTotal),
+    !!(r.supplier && String(r.supplier).trim()),
+    reportPhotoList(r, 'receiptPhotos', 'receiptPhoto').length > 0
   ];
   return checks.filter(Boolean).length;
 }
@@ -3090,6 +3140,8 @@ async function saveReschedule(id){
 }
 function closeJobView(){
   $('viewJobs').classList.add('hidden');
+  $('viewJobs').classList.remove('jr-on');
+  document.body.classList.remove('jr-on');
   $('viewJobs').innerHTML = '';
   visitTab = '';
 }
@@ -3199,6 +3251,225 @@ async function wtSaveArea(jobId, areaId){
     await openJobView(jobId);
   } catch (e) { alert(e.message || e); }
 }
+let jrFrom = 'info';
+function jrWhen(ts){
+  if (!ts) return '-';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return isNaN(d.getTime()) ? '-' : d.toLocaleString(loginLang()==='en' ? 'en-US' : 'es-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+}
+function jrThumbs(urls, kind, jobId){
+  return (urls || []).map((u, i) => `<span class="jr-thumb"><a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt=""></a><button type="button" class="jr-thumb-x" onclick="removeReportPhoto('${jobId}','${kind}',${i})" aria-label="×">×</button></span>`).join('');
+}
+function jrCam(){
+  return '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="#16A34A" stroke-width="1.8"/><circle cx="9" cy="10" r="1.6" fill="#16A34A"/><path d="M3 16l5-4 4 3 3-2 6 5" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+}
+function jobReportScreenHtml(j){
+  const r = j.report || {};
+  const enL = loginLang() === 'en';
+  const before = reportPhotoList(r, 'beforePhotos', 'beforePhoto');
+  const after = reportPhotoList(r, 'afterPhotos', 'afterPhoto');
+  const receipts = reportPhotoList(r, 'receiptPhotos', 'receiptPhoto');
+  const n = requiredReportCount(r);
+  const req = enL ? 'Required' : 'Requerido';
+  const tp = (window.tradePack ? tradePack(companyType) : {}) || {};
+  const ph = tp.photos || {};
+  const mats = tp.materials || [];
+  const fieldEx = (j.expenses || []).filter(e => e.source === 'worker');
+  const solved = r.outcome || (r.solved === true ? 'yes' : r.solved === false ? 'no' : '');
+  const sent = r.completedAt || (j.jobReport && j.jobReport.completedAt);
+  return `<div class="jr-top">
+      <button type="button" class="jr-x" onclick="closeJobReport('${j.id}')" aria-label="${esc(enL?'Close':'Cerrar')}">×</button>
+      <h2>Job Report</h2><span></span>
+    </div>
+    <div class="jr-scroll">
+      <section class="jr-card">
+        <div class="jr-bar"><i id="jrBar" style="width:${Math.round(n/10*100)}%"></i></div>
+        <div class="jr-count" id="jrCount">${n}/10 ${esc(enL?'required fields completed':'campos obligatorios completos')}</div>
+        <div class="jr-meta">${esc(enL?'Last update':'Última actualización')}</div>
+        <div class="jr-meta-v" id="jrUpdated">${esc(jrWhen(r.updatedAt))}</div>
+        <div class="jr-meta">${esc(enL?'Sent on':'Enviado el')}</div>
+        <div class="jr-meta-v" id="jrSent">${esc(r.completed ? jrWhen(sent) : '-')}</div>
+      </section>
+      <section class="jr-card">
+        <h3>TIME OF COMPLETION</h3>
+        <label for="rpAS">Start Time</label>
+        <input id="rpAS" type="time" value="${esc(r.actualStart||'')}">
+        <div class="jr-req" data-jr="start">${req}</div>
+        <label for="rpAE">Ending Time</label>
+        <input id="rpAE" type="time" value="${esc(r.actualEnd||'')}">
+        <div class="jr-req" data-jr="end">${req}</div>
+      </section>
+      <section class="jr-card">
+        <h3>PROBLEM DESCRIPTION</h3>
+        <label for="rpP">Explain the current condition of the affected item</label>
+        <textarea id="rpP" rows="3">${esc(r.problem||'')}</textarea>
+        <div class="jr-req" data-jr="problem">${req}</div>
+        <div class="jr-photo-h"><span>Attach BEFORE Pictures</span><span class="jr-n" id="jrBeforeN">${before.length}/50</span></div>
+        ${ph.before ? `<p class="jr-hint">📸 ${esc(ph.before)}</p>` : ''}
+        <div class="jr-thumbs" id="rpBeforeThumbs">${jrThumbs(before,'before',j.id)}</div>
+        <button type="button" class="jr-cam" onclick="$('rpBefore').click()" aria-label="Attach BEFORE Pictures">${jrCam()}</button>
+        <input id="rpBefore" type="file" accept="image/*" multiple hidden onchange="jrOnFiles('before')">
+        <div class="jr-req" data-jr="before">${req}</div>
+      </section>
+      <section class="jr-card">
+        <h3>SOLUTION DESCRIPTION</h3>
+        <label for="rpSolved">Were you able to solve the problem?</label>
+        <select id="rpSolved" onchange="$('rpRetBox').classList.toggle('hidden', this.value!=='return');jrMeter()">
+          <option value="">${esc(enL?'Select…':'Seleccione…')}</option>
+          <option value="yes" ${solved==='yes'?'selected':''}>Yes</option>
+          <option value="no" ${solved==='no'?'selected':''}>No</option>
+          <option value="return" ${solved==='return'?'selected':''}>${esc(enL?'Need to return':'Necesita volver')}</option>
+        </select>
+        <div class="jr-req" data-jr="solved">${req}</div>
+        <div id="rpRetBox" class="${solved==='return'?'':'hidden'}">
+          <label for="rpRet">${esc(enL?'What is missing to finish? (part, material, access…)':'¿Qué falta para terminar? (pieza, material, acceso…)')}</label>
+          <textarea id="rpRet" rows="2">${esc(r.returnReason||'')}</textarea>
+        </div>
+        <label for="rpS">Describe the actions taken to complete the repair/ If not completed state why</label>
+        <textarea id="rpS" rows="3">${esc(r.solution||'')}</textarea>
+        <div class="jr-req" data-jr="solution">${req}</div>
+        <div class="jr-photo-h"><span>Attach AFTER Pictures</span><span class="jr-n" id="jrAfterN">${after.length}/50</span></div>
+        ${ph.after ? `<p class="jr-hint">📸 ${esc(ph.after)}</p>` : ''}
+        <div class="jr-thumbs" id="rpAfterThumbs">${jrThumbs(after,'after',j.id)}</div>
+        <button type="button" class="jr-cam" onclick="$('rpAfter').click()" aria-label="Attach AFTER Pictures">${jrCam()}</button>
+        <input id="rpAfter" type="file" accept="image/*" multiple hidden onchange="jrOnFiles('after')">
+        <div class="jr-req" data-jr="after">${req}</div>
+      </section>
+      <section class="jr-card">
+        <h3>EXPENSES</h3>
+        <label for="rpEx">Total Material Cost</label>
+        <input id="rpEx" type="number" min="0" step="0.01" inputmode="decimal" value="${r.expensesTotal!=null&&r.expensesTotal!==''?esc(r.expensesTotal):''}">
+        <div class="jr-req" data-jr="cost">${req}</div>
+        <label for="rpSup">Supplier</label>
+        <input id="rpSup" type="text" value="${esc(r.supplier||'')}">
+        <div class="jr-req" data-jr="supplier">${req}</div>
+        <div class="jr-photo-h"><span>Attach Picture of Receipt</span><span class="jr-n" id="jrRecN">${receipts.length}/50</span></div>
+        <div class="jr-thumbs" id="rpRecThumbs">${jrThumbs(receipts,'receipt',j.id)}</div>
+        <button type="button" class="jr-cam" onclick="$('rpRec').click()" aria-label="Attach Picture of Receipt">${jrCam()}</button>
+        <input id="rpRec" type="file" accept="image/*" multiple hidden onchange="jrOnFiles('receipt')">
+        <div class="jr-req" data-jr="receipt">${req}</div>
+      </section>
+      <section class="jr-card">
+        <h3>Final Notes</h3>
+        <textarea id="rpN" rows="3" aria-label="Final Notes">${esc(r.finalNotes||'')}</textarea>
+        <h3 style="margin-top:18px">${esc(enL?'Field expenses':'Gastos de campo')}</h3>
+        ${fieldEx.map(e => `<p class="muted">${esc(e.items||e.vendor||'')} · $${Number(e.total||0).toFixed(2)}</p>`).join('') || ''}
+        <label for="feItems">${esc(enL?'What you bought':'Qué compraste')}</label>
+        ${mats.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px">${mats.map(m => `<button type="button" class="btn ghost" style="width:auto;padding:6px 10px;font-size:13px;min-height:0;margin:0" onclick="var i=$('feItems');i.value=i.value?(i.value+', '+this.textContent):this.textContent">${esc(m)}</button>`).join('')}</div>` : ''}
+        <input id="feItems" type="text">
+        <label for="feTotal">Total</label>
+        <input id="feTotal" type="number" min="0" step="0.01">
+        <button type="button" class="btn ghost" onclick="saveFieldExpense('${j.id}')">${esc(enL?'Add expense':'Agregar gasto')}</button>
+        <div class="err" id="rpErr"></div>
+        <p class="muted" id="rpSaved" aria-live="polite"></p>
+      </section>
+    </div>
+    <div class="jr-foot">
+      <button type="button" class="jr-save" id="rpSaveBtn" onclick="saveJobReport('${j.id}', false)">${esc(enL?'Save progress':'Guardar progreso')}</button>
+      <div class="jr-more-wrap">
+        <button type="button" class="jr-more" aria-label="${esc(enL?'More':'Más')}" onclick="jrToggleMore(event)">⋯</button>
+        <div id="jrMore" class="jr-menu hidden">
+          <button type="button" id="rpDoneBtn" onclick="jrToggleMore();saveJobReport('${j.id}', true)">${esc(r.completed ? (enL?'Save completed report':'Guardar reporte completado') : (enL?'Complete':'Completar'))}</button>
+        </div>
+      </div>
+    </div>`;
+}
+function openJobReport(id){ goVisitTab('jobreport', id); }
+async function closeJobReport(id){
+  const back = (jrFrom && jrFrom !== 'jobreport') ? jrFrom : 'info';
+  if (jrPendingFiles() || rpDirty) { await saveJobReport(id, false, { stay: back }); return; }
+  goVisitTab(back, id);
+}
+function jrToggleMore(ev){
+  if (ev && ev.stopPropagation) ev.stopPropagation();
+  const m = $('jrMore'); if (!m) return;
+  m.classList.toggle('hidden');
+}
+function jrPendingFiles(){
+  return ['rpBefore','rpAfter','rpRec'].some(id => $(id) && $(id).files && $(id).files.length);
+}
+function jrOnFiles(kind){
+  const inputId = kind==='after' ? 'rpAfter' : kind==='receipt' ? 'rpRec' : 'rpBefore';
+  const boxId = kind==='after' ? 'rpAfterThumbs' : kind==='receipt' ? 'rpRecThumbs' : 'rpBeforeThumbs';
+  const input = $(inputId), box = $(boxId);
+  if (!input || !box) return;
+  const saved = box.querySelectorAll('img:not(.jr-pending)').length;
+  let files = Array.from(input.files || []);
+  const en = loginLang()==='en';
+  if (saved + files.length > 50) {
+    alert(en ? 'Maximum 50 pictures.' : 'Máximo 50 fotos.');
+    input.value = '';
+    files = [];
+  }
+  box.querySelectorAll('.jr-pending').forEach(n => n.remove());
+  files.forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'jr-pending';
+    img.alt = '';
+    img.src = URL.createObjectURL(f);
+    const wrap = document.createElement('span');
+    wrap.className = 'jr-thumb jr-pending';
+    wrap.appendChild(img);
+    box.appendChild(wrap);
+  });
+  if (files.length) {
+    rpDirty = true;
+    const s = $('rpSaved'); if (s) s.textContent = en ? 'Press Save progress to upload the pictures.' : 'Pulsa Guardar progreso para subir las fotos.';
+  }
+  jrMeter();
+}
+function jrMeter(){
+  if (!$('jrCount')) return;
+  const en = loginLang()==='en';
+  const pics = (id) => $(id) ? $(id).querySelectorAll('img').length : 0;
+  const solvedVal = $('rpSolved') ? $('rpSolved').value : '';
+  const flags = {
+    start: !!($('rpAS') && $('rpAS').value),
+    end: !!($('rpAE') && $('rpAE').value),
+    problem: !!($('rpP') && $('rpP').value.trim()),
+    before: pics('rpBeforeThumbs') > 0,
+    solved: solvedVal === 'yes' || solvedVal === 'no' || solvedVal === 'return',
+    solution: !!($('rpS') && $('rpS').value.trim()),
+    after: pics('rpAfterThumbs') > 0,
+    cost: reportCostFilled($('rpEx') && $('rpEx').value),
+    supplier: !!($('rpSup') && $('rpSup').value.trim()),
+    receipt: pics('rpRecThumbs') > 0
+  };
+  let n = 0;
+  Object.keys(flags).forEach(k => {
+    if (flags[k]) n++;
+    const el = document.querySelector('[data-jr="'+k+'"]');
+    if (!el) return;
+    el.textContent = flags[k] ? (en ? '✓ Done' : '✓ Listo') : (en ? 'Required' : 'Requerido');
+    el.className = flags[k] ? 'jr-ok' : 'jr-req';
+  });
+  $('jrCount').textContent = n + '/10 ' + (en ? 'required fields completed' : 'campos obligatorios completos');
+  const bar = $('jrBar'); if (bar) bar.style.width = (n/10*100) + '%';
+  const bn = $('jrBeforeN'); if (bn) bn.textContent = pics('rpBeforeThumbs') + '/50';
+  const an = $('jrAfterN'); if (an) an.textContent = pics('rpAfterThumbs') + '/50';
+  const rn = $('jrRecN'); if (rn) rn.textContent = pics('rpRecThumbs') + '/50';
+}
+async function removeReportPhoto(id, kind, index){
+  let data = {};
+  try {
+    const d = await db.collection('jobs').doc(id).get();
+    if (d.exists) data = d.data() || {};
+  } catch (e) { alert(e.message || e); return; }
+  const r = data.report || {};
+  const key = kind==='after' ? 'afterPhotos' : kind==='receipt' ? 'receiptPhotos' : 'beforePhotos';
+  const single = kind==='after' ? 'afterPhoto' : kind==='receipt' ? 'receiptPhoto' : 'beforePhoto';
+  const list = reportPhotoList(r, key, single);
+  if (index < 0 || index >= list.length) return;
+  list.splice(index, 1);
+  const patch = {};
+  patch['report.'+key] = list;
+  patch['report.'+single] = kind==='receipt' ? (list[0] || firebase.firestore.FieldValue.delete()) : firebase.firestore.FieldValue.delete();
+  patch['report.updatedAt'] = firebase.firestore.FieldValue.serverTimestamp();
+  try { await db.collection('jobs').doc(id).update(patch); }
+  catch (e) { alert(e.message || e); return; }
+  visitTab = 'jobreport';
+  await openJobView(id);
+}
 async function openJobView(id){
   let j = jobs.find(x=>x.id===id);
   try {
@@ -3210,8 +3481,6 @@ async function openJobView(id){
   const st = jobTime(j), en = jobEnd(j, st);
   const phone = j.contactPhone || '';
   const done = requiredReportCount(r);
-  const photos = (r.beforePhotos||[]).concat(r.beforePhoto?[r.beforePhoto]:[]);
-  const afters = (r.afterPhotos||[]).concat(r.afterPhoto?[r.afterPhoto]:[]);
   const phoneHtml = phone
     ? `<a class="phone" href="tel:${esc(phone.replace(/[^\d+]/g,''))}">${esc(phone)}</a>`
     : '<span class="muted">Sin teléfono</span>';
@@ -3221,6 +3490,18 @@ async function openJobView(id){
   const completed = jobDone(j);
   const isWt = !!(window.WK_WALKTHROUGH && WK_WALKTHROUGH.isWalkthrough(j));
   const tab = visitTab || (isWt ? 'walk' : 'info');
+  if (tab === 'jobreport') {
+    document.body.classList.add('jr-on');
+    $('viewJobs').classList.add('jr-on');
+    $('viewJobs').classList.remove('hidden');
+    $('viewJobs').innerHTML = jobReportScreenHtml(j);
+    wireReportAutosave(j.id);
+    jrMeter();
+    return;
+  }
+  document.body.classList.remove('jr-on');
+  $('viewJobs').classList.remove('jr-on');
+  jrFrom = tab;
   const info = `<p><b>${esc(j.title || j.kind || 'Job')}</b> · ${esc(j.clientName || j.contactName || '')}</p>
       <p class="t">${esc(j.scheduledDate || ymd(selectedDay))} · ${fmt(st)} – ${fmt(en)}</p>
       <p>${esc(j.address || '')}</p>
@@ -3234,50 +3515,14 @@ async function openJobView(id){
   const client = `<p><b>${esc(j.clientName || j.contactName || '—')}</b></p><p>${esc(j.address || '')}</p><p>${phoneHtml}</p>`;
   const notesHtml = (j.notesLog || []).map(n => `<div class="note-item"><div class="muted">${esc(n.authorName||'')}</div>${esc(n.text||'')}</div>`).join('')
     || (j.notes ? `<p>${esc(j.notes)}</p>` : '<p class="muted">Sin notas</p>');
-  const fieldEx = (j.expenses || []).filter(e => e.source === 'worker');
-  // Trade pack: steps to check off, what each photo should show and common
-  // materials, all from the company's trade (js/jobTemplates.js).
-  const tp = (window.tradePack ? tradePack(companyType) : {}) || {};
   const tSteps = window.tradeSteps ? tradeSteps(companyType, j.kind || j.title || '') : [];
   const stepsDone = Array.isArray(r.steps) ? r.steps : [];
   const enL = loginLang() === 'en';
   const stepsHtml = tSteps.length ? `<h3>${esc(enL ? 'Job steps' : 'Pasos del trabajo')} <span class="muted" style="font-weight:400">(${stepsDone.filter(s => tSteps.includes(s)).length}/${tSteps.length})</span></h3>
       <div class="trade-steps">${tSteps.map(s => `<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #EEF1F5;font-size:15px"><input type="checkbox" data-step="${esc(s)}" ${stepsDone.includes(s)?'checked':''} style="width:22px;height:22px;flex:none"> ${esc(s)}</label>`).join('')}</div>` : '';
-  const ph = tp.photos || {};
-  const mats = (tp.materials || []);
-  const checks = `${stepsHtml}<div class="prog" id="repProg">${done}/6</div>
-      <label class="muted">Inspection Report / Job Report</label>
-      <p class="muted">${esc(loginLang()==='en'?'Type your start and end. They are not filled in for you.':'Pon tu hora de inicio y fin. No se llenan solas.')}</p>
-      <label class="muted">Actual start</label><input id="rpAS" type="time" value="${esc(r.actualStart||'')}">
-      <label class="muted">Actual end</label><input id="rpAE" type="time" value="${esc(r.actualEnd||'')}">
-      <label class="muted">Problem Description</label><textarea id="rpP" rows="3">${esc(r.problem||'')}</textarea>
-      <label class="muted">BEFORE photos</label>
-      ${ph.before ? `<p class="muted" style="margin:0">📸 ${esc(ph.before)}</p>` : ''}
-      <div class="thumbs" id="rpThumbs">${photos.map(u=>`<img src="${esc(u)}">`).join('')}</div>
-      <input id="rpBefore" type="file" accept="image/*" multiple onchange="saveJobReport('${j.id}', false)">
-      <label class="muted">AFTER photos</label>
-      ${ph.after ? `<p class="muted" style="margin:0">📸 ${esc(ph.after)}</p>` : ''}
-      <div class="thumbs">${afters.map(u=>`<img src="${esc(u)}">`).join('')}</div>
-      <input id="rpAfter" type="file" accept="image/*" multiple onchange="saveJobReport('${j.id}', false)">
-      <label class="muted">Was it solved?</label>
-      <select id="rpSolved" onchange="$('rpRetBox').classList.toggle('hidden', this.value!=='return')"><option value="">—</option><option value="yes" ${r.outcome==='yes'||(!r.outcome&&r.solved===true)?'selected':''}>Yes</option><option value="no" ${r.outcome==='no'||(!r.outcome&&r.solved===false)?'selected':''}>No</option><option value="return" ${r.outcome==='return'?'selected':''}>${esc(loginLang()==='en'?'Need to return':'Necesita volver')}</option></select>
-      <div id="rpRetBox" class="${r.outcome==='return'?'':'hidden'}">
-        <label class="muted">${esc(loginLang()==='en'?'What is missing to finish? (part, material, access…)':'¿Qué falta para terminar? (pieza, material, acceso…)')}</label>
-        <textarea id="rpRet" rows="2">${esc(r.returnReason||'')}</textarea>
-      </div>
-      <label class="muted">Solution / what was done</label><textarea id="rpS" rows="3">${esc(r.solution||'')}</textarea>
-      <label class="muted">Final Notes / Recommendations</label><textarea id="rpN" rows="3">${esc(r.finalNotes||'')}</textarea>
-      <h3>${esc(loginLang()==='en'?'Field expense':'Gasto de campo')}</h3>
-      ${fieldEx.map(e => `<p class="muted">${esc(e.items||e.vendor||'')} · $${Number(e.total||0).toFixed(2)}</p>`).join('') || ''}
-      <label class="muted">${esc(loginLang()==='en'?'What you bought':'Qué compraste')}</label>
-      ${mats.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px">${mats.map(m => `<button type="button" class="btn ghost" style="width:auto;padding:6px 10px;font-size:13px;min-height:0;margin:0" onclick="var i=$('feItems');i.value=i.value?(i.value+', '+this.textContent):this.textContent">${esc(m)}</button>`).join('')}</div>` : ''}
-      <input id="feItems" type="text">
-      <label class="muted">Total</label><input id="feTotal" type="number" min="0" step="0.01">
-      <button type="button" class="btn ghost" onclick="saveFieldExpense('${j.id}')">${esc(loginLang()==='en'?'Add expense':'Agregar gasto')}</button>
-      <div class="err" id="rpErr"></div>
-      <p class="muted" id="rpSaved" aria-live="polite">${r.updatedAt && r.updatedAt.toDate ? esc((enL?'Saved ':'Guardado ') + r.updatedAt.toDate().toLocaleString()) : ''}</p>
-      <button class="btn ghost" id="rpSaveBtn" onclick="saveJobReport('${j.id}', false)">${esc(enL?'Save':'Guardar')}</button>
-      <button class="btn" id="rpDoneBtn" onclick="saveJobReport('${j.id}', true)">${esc(r.completed ? (enL?'✓ Completed · save changes':'✓ Completado · guardar cambios') : (enL?'✓ Complete':'✓ Completar'))}</button>`;
+  const jrState = r.completed ? (enL ? 'Completed' : 'Completado') : (enL ? 'Not completed' : 'No completado');
+  const jrBtn = `<button type="button" class="jr-row" onclick="openJobReport('${j.id}')"><span><b>Job Report</b><span class="jr-row-sub">${done}/10 · ${esc(jrState)}</span></span><span aria-hidden="true">›</span></button>`;
+  const checks = `${stepsHtml}${jrBtn}`;
   const body = (tab==='walk' && isWt) ? wtWorkerHtml(j) : tab==='client' ? client : tab==='notes' ? (notesHtml + `<textarea id="jobNotes" rows="3"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(loginLang()==='en'?'Add note':'Agregar nota')}</button>`) : tab==='checks' ? checks : info;
   $('viewJobs').classList.remove('hidden');
   $('viewJobs').innerHTML = `<div class="jobhead">
@@ -3290,6 +3535,7 @@ async function openJobView(id){
       <button type="button" class="${tab==='client'?'on':''}" onclick="goVisitTab('client','${j.id}')">Client</button>
       <button type="button" class="${tab==='notes'?'on':''}" onclick="goVisitTab('notes','${j.id}')">Notes (${notes})</button>
       <button type="button" class="${tab==='checks'?'on':''}" onclick="goVisitTab('checks','${j.id}')">Checklists (${cks})</button>
+      <button type="button" onclick="openJobReport('${j.id}')">Job Report</button>
     </div>
     <div class="card">${body}</div>`;
   if (tab === 'checks') wireReportAutosave(j.id);
@@ -3302,9 +3548,11 @@ function wireReportAutosave(id){
   const box = $('viewJobs');
   if (!box) return;
   const mark = (ev) => {
+    jrMeter();
     const t = ev.target;
-    if (!t || !t.id || t.type === 'file' || t.id === 'feItems' || t.id === 'feTotal') return;
-    if (!/^rp/.test(t.id) && !t.dataset.step) return;
+    if (!t || t.type === 'file' || t.id === 'feItems' || t.id === 'feTotal') return;
+    const step = !!(t.dataset && t.dataset.step);
+    if (!step && !/^rp/.test(t.id || '')) return;
     rpDirty = true;
     const s = $('rpSaved'); if (s) s.textContent = loginLang()==='en' ? 'Unsaved changes…' : 'Cambios sin guardar…';
     clearTimeout(rpTimer);
@@ -3316,22 +3564,30 @@ function wireReportAutosave(id){
 /* Saves what is typed in the Job Report without reloading the screen. */
 async function saveReportDraft(id){
   clearTimeout(rpTimer);
-  if (!rpDirty || id !== rpJobId || !$('rpP')) return true;
-  const solvedVal = $('rpSolved') ? $('rpSolved').value : '';
+  if (!rpDirty || id !== rpJobId) return true;
+  const onForm = !!$('rpP');
+  const stepEls = [...document.querySelectorAll('#viewJobs [data-step]')];
+  if (!onForm && !stepEls.length) return true;
   const patch = {
-    'report.actualStart': ($('rpAS') && $('rpAS').value) || '',
-    'report.actualEnd': ($('rpAE') && $('rpAE').value) || '',
-    'report.problem': ($('rpP').value || '').trim(),
-    'report.solved': solvedVal === '' ? null : solvedVal === 'yes',
-    'report.outcome': solvedVal || null,
-    'report.returnReason': solvedVal === 'return' ? ((($('rpRet') && $('rpRet').value) || '').trim()) : '',
-    'report.solution': (($('rpS') && $('rpS').value) || '').trim(),
-    'report.finalNotes': (($('rpN') && $('rpN').value) || '').trim(),
-    'report.steps': [...document.querySelectorAll('#viewJobs [data-step]')].filter(c => c.checked).map(c => c.dataset.step),
     'report.updatedAt': firebase.firestore.FieldValue.serverTimestamp(),
     'report.updatedBy': (auth.currentUser && auth.currentUser.uid) || '',
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
+  if (onForm) {
+    const solvedVal = $('rpSolved') ? $('rpSolved').value : '';
+    const costRaw = $('rpEx') ? String($('rpEx').value || '') : '';
+    patch['report.actualStart'] = ($('rpAS') && $('rpAS').value) || '';
+    patch['report.actualEnd'] = ($('rpAE') && $('rpAE').value) || '';
+    patch['report.problem'] = ($('rpP').value || '').trim();
+    patch['report.solved'] = solvedVal === '' ? null : solvedVal === 'yes';
+    patch['report.outcome'] = solvedVal || null;
+    patch['report.returnReason'] = solvedVal === 'return' ? ((($('rpRet') && $('rpRet').value) || '').trim()) : '';
+    patch['report.solution'] = (($('rpS') && $('rpS').value) || '').trim();
+    patch['report.finalNotes'] = (($('rpN') && $('rpN').value) || '').trim();
+    patch['report.expensesTotal'] = costRaw.trim() === '' ? null : Number(costRaw);
+    patch['report.supplier'] = (($('rpSup') && $('rpSup').value) || '').trim();
+  }
+  if (stepEls.length) patch['report.steps'] = stepEls.filter(c => c.checked).map(c => c.dataset.step);
   try {
     await db.collection('jobs').doc(id).update(patch);
     rpDirty = false;
@@ -3351,6 +3607,7 @@ function reportSaveError(e){
 }
 /* Switching tab inside the job saves the Job Report first. */
 async function goVisitTab(t, id){
+  if (jrPendingFiles()) { await saveJobReport(id, false, { stay: t }); return; }
   if (rpDirty) await saveReportDraft(id);
   visitTab = t;
   openJobView(id);
@@ -3392,7 +3649,7 @@ async function saveFieldExpense(id){
   });
   try {
     await db.collection('jobs').doc(id).set({ expenses: list, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    visitTab = 'checks';
+    visitTab = visitTab === 'jobreport' ? 'jobreport' : 'checks';
     openJobView(id);
   } catch (e) { alert(e.message || e); }
 }
@@ -3402,7 +3659,7 @@ async function uploadJobFile(jobId, kind, file){
   await ref.put(file);
   return await ref.getDownloadURL();
 }
-async function saveJobReport(id, complete){
+async function saveJobReport(id, complete, opt){
   const err = $('rpErr');
   if (err) err.textContent = '';
   clearTimeout(rpTimer);
@@ -3441,45 +3698,69 @@ async function saveJobReport(id, complete){
       }
     }
   } catch(e){ if (err) err.textContent = (enS?'Photo: ':'Foto: ')+reportSaveError(e); unlock(); return; }
+  let receiptPhotos = Array.isArray(prev.receiptPhotos) ? prev.receiptPhotos.slice() : [];
+  if (prev.receiptPhoto && !receiptPhotos.includes(prev.receiptPhoto)) receiptPhotos.unshift(prev.receiptPhoto);
+  const rf = $('rpRec') && $('rpRec').files;
+  try {
+    if (rf && rf.length) {
+      for (let i=0;i<rf.length && receiptPhotos.length<50;i++) {
+        if (saved) saved.textContent = (enS ? 'Uploading photo ' : 'Subiendo foto ') + (i+1) + '/' + rf.length + '…';
+        receiptPhotos.push(await uploadJobFile(id, 'receipt', rf[i]));
+      }
+    }
+  } catch(e){ if (err) err.textContent = (enS?'Photo: ':'Foto: ')+reportSaveError(e); unlock(); return; }
+  if (!$('rpSolved') || !$('rpAS')) { unlock(); return; }
   const solvedVal = $('rpSolved').value;
   const returnReason = (($('rpRet') && $('rpRet').value) || '').trim();
+  const costRaw = $('rpEx') ? String($('rpEx').value || '') : '';
+  const stepEls = [...document.querySelectorAll('#viewJobs [data-step]')];
   const report = {
     actualStart: $('rpAS').value || '',
     actualEnd: $('rpAE').value || '',
     problem: ($('rpP').value||'').trim(),
     beforePhotos,
     afterPhotos,
+    receiptPhotos,
+    receiptPhoto: receiptPhotos[0] || '',
+    expensesTotal: costRaw.trim()==='' ? null : Number(costRaw),
+    supplier: (($('rpSup') && $('rpSup').value) || '').trim(),
     solved: solvedVal==='' ? null : solvedVal==='yes',
     outcome: solvedVal || null,          // 'yes' | 'no' | 'return'
     returnReason: solvedVal==='return' ? returnReason : '',
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
-    steps: [...document.querySelectorAll('#viewJobs [data-step]')].filter(c => c.checked).map(c => c.dataset.step),
-    // "Guardar" on a report that was already completed keeps it completed.
+    steps: stepEls.length ? stepEls.filter(c => c.checked).map(c => c.dataset.step) : (Array.isArray(prev.steps) ? prev.steps : []),
+    // "Guardar progreso" on a report that was already completed keeps it completed.
     draft: prev.completed === true ? false : !complete,
     completed: prev.completed === true,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     updatedBy: auth.currentUser && auth.currentUser.uid
   };
+  if (prev.completedAt) report.completedAt = prev.completedAt;
   const n = requiredReportCount(report);
   report.requiredDone = n;
-  report.requiredTotal = 6;
+  report.requiredTotal = 10;
   let missing = '';
   if (complete && !report.completed) {
-    if (n < 6) {
-      const r6 = report, miss = [];
-      if (!r6.actualStart) miss.push(enS?'start time':'hora de inicio');
-      if (!r6.actualEnd) miss.push(enS?'end time':'hora de fin');
-      if (!beforePhotos.length) miss.push(enS?'BEFORE photo':'foto de ANTES');
-      if (!afterPhotos.length) miss.push(enS?'AFTER photo':'foto de DESPUÉS');
-      if (r6.solved !== true && r6.solved !== false) miss.push(enS?'was it solved?':'¿se resolvió?');
-      if (!r6.solution) miss.push(enS?'solution':'solución');
+    const miss = [];
+    if (!report.actualStart) miss.push(enS?'start time':'hora de inicio');
+    if (!report.actualEnd) miss.push(enS?'ending time':'hora de fin');
+    if (!report.problem) miss.push(enS?'problem description':'descripción del problema');
+    if (!beforePhotos.length) miss.push(enS?'BEFORE pictures':'fotos de ANTES');
+    if (report.solved !== true && report.solved !== false) miss.push(enS?'was it solved?':'¿se resolvió?');
+    if (!report.solution) miss.push(enS?'actions taken':'acciones hechas');
+    if (!afterPhotos.length) miss.push(enS?'AFTER pictures':'fotos de DESPUÉS');
+    if (!reportCostFilled(report.expensesTotal)) miss.push(enS?'material cost':'costo de materiales');
+    if (!report.supplier) miss.push(enS?'supplier':'proveedor');
+    if (!receiptPhotos.length) miss.push(enS?'receipt picture':'foto del recibo');
+    if (miss.length) {
       missing = (enS ? 'Saved. To complete, still missing: ' : 'Guardado. Para completar falta: ') + miss.join(', ') + '.';
     } else if (solvedVal === 'return' && !returnReason) {
       missing = enS ? 'Saved. Write what is missing to finish, so the office can schedule the return.' : 'Guardado. Escribe qué falta para terminar, para que la oficina pueda agendar el regreso.';
     } else {
       report.completed = true;
       report.draft = false;
+      report.completedAt = firebase.firestore.FieldValue.serverTimestamp();
     }
   }
   const justCompleted = report.completed && prev.completed !== true;
@@ -3514,13 +3795,14 @@ async function saveJobReport(id, complete){
         actualStart: report.actualStart, actualEnd: report.actualEnd,
         problem: report.problem, solution: report.solution, solved: report.solved,
         expensesTotal: report.expensesTotal, supplier: report.supplier,
-        beforePhotos: report.beforePhotos, receiptPhoto: report.receiptPhoto,
+        beforePhotos: report.beforePhotos, afterPhotos: report.afterPhotos,
+        receiptPhoto: report.receiptPhoto, receiptPhotos: report.receiptPhotos,
         finalNotes: report.finalNotes, status: 'completed',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
   } catch(e){ if (err) err.textContent = reportSaveError(e); if (saved) saved.textContent = ''; unlock(); return; }
-  visitTab = 'checks';
+  visitTab = (opt && opt.stay) || 'jobreport';
   await loadBoard();
   await openJobView(id);
   // Message after the screen reloads: what is still missing, or done.
