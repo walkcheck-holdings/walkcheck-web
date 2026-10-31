@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261029c">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261029c">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261030b">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261030a">
 </head>
 <body class="tab-agenda">
@@ -182,13 +182,29 @@
 <div id="board">
   <nav id="appRail" aria-label="Menu">
     <div class="rail-scroll">
-      <button type="button" class="rail-item" id="railCreate" onclick="openCreateJob()">
+      <button type="button" class="rail-item" id="railCreate" onclick="openCreateMenu(event)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         <span class="rail-label" data-i18n="railCreate">Crear</span>
+      </button>
+      <button type="button" class="rail-item" id="railHome" onclick="navHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>
+        <span class="rail-label" data-i18n="home">Inicio</span>
       </button>
       <button type="button" class="rail-item" id="railHorario" onclick="navHorario()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/></svg>
         <span class="rail-label" data-i18n="horario">Horario</span>
+      </button>
+      <button type="button" class="rail-item" id="railClients" onclick="openClients()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M17 11v6M14 14h6"/></svg>
+        <span class="rail-label" data-i18n="clientsMenu">Clientes</span>
+      </button>
+      <button type="button" class="rail-item" id="railRequests" onclick="openRequests()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-4-2-3 2-3-2-4 2V6a2 2 0 0 1 2-2z"/></svg>
+        <span class="rail-label" data-i18n="requestsMenu">Solicitudes</span>
+      </button>
+      <button type="button" class="rail-item" id="railQuotes" onclick="openQuotes()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2z"/><path d="M9 9h6M9 13h4"/></svg>
+        <span class="rail-label" data-i18n="quotesMenu">Cotizaciones</span>
       </button>
       <button type="button" class="rail-item" id="railJobs" onclick="openJobs()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5h6V6H9zM9 11h6M9 15h4"/></svg>
@@ -197,6 +213,10 @@
       <button type="button" class="rail-item" id="railMoney" onclick="openBilling()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
         <span class="rail-label" data-i18n="money">Facturación</span>
+      </button>
+      <button type="button" class="rail-item" id="railPayments" onclick="openPayments()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+        <span class="rail-label" data-i18n="paymentsMenu">Pagos</span>
       </button>
       <button type="button" class="rail-item" id="railReports" onclick="openReports()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-4.5M12 16V8M16 16v-2.5"/></svg>
@@ -289,6 +309,7 @@
     <div id="searchPane"></div>
     <div id="reportsPane"></div>
     <div id="jobsPane"></div>
+    <div id="officePane"></div>
     <div id="jobPane"></div>
     <div id="billingPane"></div>
     <div id="archivedPane"></div>
@@ -309,6 +330,7 @@
   <button type="button" id="navMore" onclick="navMore()"><svg class="nav-ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg><span data-i18n="more">Más</span></button>
 </nav>
 <div id="moreSheet" role="menu"></div>
+<div id="createMenu" class="create-menu hidden" role="menu"></div>
 
 <div id="viewJobs" class="hidden"></div>
 <div id="viewMonths" class="hidden" style="padding:16px"></div>
@@ -662,6 +684,11 @@ function canSeeMoney(){
   if (!['owner','admin'].includes(normRole()) && !isCompanyCreatorLike()) return false;
   return !!cid();
 }
+/* Clients and payments stay with the office. A field worker never sees them. */
+function canSeeClients(){
+  if (isWorker() || !cid()) return false;
+  return ['owner','admin','manager'].includes(normRole()) || isCompanyCreatorLike();
+}
 function isCompanyCreatorLike(){
   const uid = auth.currentUser && auth.currentUser.uid;
   return !!(uid && companyAdminUid && uid === companyAdminUid && cid() === profile.companyId);
@@ -741,7 +768,7 @@ const UI_I18N = {
     createJob:'+ Crear trabajo',
     todaySummary:'Resumen de hoy', upcoming:'Próximos',
     allBuildings:'Todos los edificios', newInvoice:'Nueva factura', invoices:'Facturas',
-    jobsMenu:'Trabajos', paymentsMenu:'Pagos',
+    jobsMenu:'Trabajos', paymentsMenu:'Pagos', clientsMenu:'Clientes', requestsMenu:'Solicitudes', quotesMenu:'Cotizaciones',
     jobsToday:'Trabajos hoy', completedLbl:'Completados', pendingLbl:'Pendientes',
     jobsScheduled:'trabajos', completedOne:'completado', pendingOne:'pendiente',
     noJobsCol:'Sin trabajos', freeDay:'Este trabajador está libre hoy.',
@@ -805,7 +832,7 @@ const UI_I18N = {
     createJob:'+ Create job',
     todaySummary:"Today's summary", upcoming:'Upcoming',
     allBuildings:'All buildings', newInvoice:'New invoice', invoices:'Invoices',
-    jobsMenu:'Jobs', paymentsMenu:'Payments',
+    jobsMenu:'Jobs', paymentsMenu:'Payments', clientsMenu:'Clients', requestsMenu:'Requests', quotesMenu:'Quotes',
     jobsToday:'Jobs today', completedLbl:'Completed', pendingLbl:'Pending',
     jobsScheduled:'jobs scheduled', completedOne:'completed', pendingOne:'pending',
     noJobsCol:'No jobs scheduled', freeDay:'This worker has a free day.',
@@ -888,6 +915,8 @@ function applyPanelLang(){
     else if (b.contains('view-roles')) openRolesPane();
     else if (b.contains('view-archived') && typeof openArchived === 'function') openArchived();
     else if (b.contains('view-payments') && typeof openPayments === 'function') openPayments();
+    else if (b.contains('view-clients') && typeof openClients === 'function') openClients();
+    else if (b.contains('view-requests') && typeof openRequests === 'function') openRequests();
   } catch(_){}
 }
 function applyLoginLang(){
@@ -2010,8 +2039,31 @@ function closeMore(){
   if (sh) sh.classList.remove('open');
 }
 function closeExtraViews(){
-  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-home', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'sites-open');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-home', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'view-clients', 'view-requests', 'view-quotes', 'sites-open');
   closeMore();
+  closeCreate();
+}
+function closeCreate(){
+  const m = $('createMenu');
+  if (m) m.classList.add('hidden');
+}
+function openCreateMenu(ev){
+  if (ev) ev.stopPropagation();
+  const m = $('createMenu');
+  const btn = $('railCreate');
+  if (!m || !btn) return;
+  if (!m.classList.contains('hidden')) { closeCreate(); return; }
+  const en = loginLang() === 'en';
+  const items = [];
+  if (canAssign()) items.push(`<button type="button" onclick="closeCreate();openCreateJob()">${esc(en ? 'Job' : 'Trabajo')}</button>`);
+  if (canAssign()) items.push(`<button type="button" onclick="closeCreate();openRequestEditor()">${esc(en ? 'Request' : 'Solicitud')}</button>`);
+  if (canSeeMoney()) items.push(`<button type="button" onclick="closeCreate();openQuoteEditor()">${esc(en ? 'Quote' : 'Cotización')}</button>`);
+  if (!items.length) return;
+  m.innerHTML = items.join('');
+  const r = btn.getBoundingClientRect();
+  m.style.left = Math.min(r.left, window.innerWidth - 220) + 'px';
+  m.style.top = (r.bottom + 6) + 'px';
+  m.classList.remove('hidden');
 }
 function navHome(){
   closeExtraViews();
@@ -2077,12 +2129,20 @@ function homeAttentionHtml(){
 }
 function openHome(){
   document.body.classList.add('view-home');
-  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'sites-open');
+  document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-search', 'view-jobs', 'view-job', 'view-payments', 'view-clients', 'view-requests', 'view-quotes', 'sites-open');
   const pane = $('homePane');
   if (!pane) return;
+  const en = loginLang() === 'en';
+  const buckets = (typeof jobBuckets === 'function') ? jobBuckets() : { late: [], open: [], all: [] };
   const list = todayJobs().sort((a,b) => jobTime(a) - jobTime(b));
   const done = list.filter(jobDone).length;
-  const shownList = homeFilter === 'done' ? list.filter(jobDone) : homeFilter === 'pend' ? list.filter(j => !jobDone(j)) : list;
+  const lateN = (buckets.late || []).length;
+  const openN = (buckets.open || []).length;
+  const shownList = homeFilter === 'done' ? list.filter(jobDone)
+    : homeFilter === 'pend' ? list.filter(j => !jobDone(j))
+    : homeFilter === 'late' ? (buckets.late || [])
+    : homeFilter === 'open' ? (buckets.open || [])
+    : list;
   const cards = shownList.map(j => {
     const st = jobTime(j), en = jobEnd(j, st);
     return `<button type="button" class="daycard" onclick="openJobView('${j.id}')">
@@ -2091,13 +2151,15 @@ function openHome(){
       <div class="daycard-a">${esc(cardAddr(j))}</div>
       <div class="daycard-w">${esc(workerNameOf(j))}</div>
     </button>`;
-  }).join('') || `<div class="day-empty">${esc(uiT('noJobsDay'))}${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"><button class="btn" style="width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`;
+  }).join('') || `<div class="day-empty">${esc(homeFilter==='all' || homeFilter==='done' || homeFilter==='pend' ? uiT('noJobsDay') : (en ? 'No jobs' : 'Sin trabajos'))}${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"><button class="btn" style="width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`;
   pane.innerHTML = `<div id="dayList">
     <h2 style="margin:4px 0 8px">${esc(uiT('homeHello'))}</h2>
     <div class="view-tabs" style="margin:0 0 10px;flex-wrap:wrap">
       <button type="button" class="${homeFilter==='all'?'on':''}" onclick="homeFilter='all';openHome()">${esc(uiT('jobsToday'))} (${list.length})</button>
       <button type="button" class="${homeFilter==='done'?'on':''}" onclick="homeFilter='done';openHome()">${esc(uiT('completedLbl'))} (${done})</button>
       <button type="button" class="${homeFilter==='pend'?'on':''}" onclick="homeFilter='pend';openHome()">${esc(uiT('pendingLbl'))} (${list.length-done})</button>
+      <button type="button" class="${homeFilter==='late'?'on':''}" onclick="homeFilter='late';openHome()">${esc(en?'Late':'Atrasados')} (${lateN})</button>
+      <button type="button" class="${homeFilter==='open'?'on':''}" onclick="homeFilter='open';openHome()">${esc(en?'Unscheduled':'Sin programar')} (${openN})</button>
     </div>
     ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
     ${homeAttentionHtml()}
@@ -2174,7 +2236,9 @@ function navMore(){
   if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openSubscription()">${esc(uiT('mySub'))}</button>`);
   if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openBilling()">${esc(uiT('money'))}</button>`);
   if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openQuotes()">${esc(loginLang()==='en'?'Quotes':'Cotizaciones')}</button>`);
-  if (wkPhone() && canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
+  if (canSeeMoney()) items.push(`<button type="button" onclick="closeMore();openPayments()">${esc(uiT('paymentsMenu'))}</button>`);
+  if (canSeeClients()) items.push(`<button type="button" onclick="closeMore();openClients()">${esc(loginLang()==='en'?'Clients':'Clientes')}</button>`);
+  if (canAssign()) items.push(`<button type="button" onclick="closeMore();openRequests()">${esc(loginLang()==='en'?'Requests':'Solicitudes')}</button>`);
   if (wkPhone() && canManageTypes()) items.push(`<button type="button" onclick="location.href='/app/settings/job-types/'">${esc(uiT('types'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openArchived()">Archivados</button>`);
   if (canManageRoles()) items.push(`<button type="button" onclick="closeMore();openRolesPane()">${esc(uiT('teamRoles'))}</button>`);
@@ -2197,12 +2261,17 @@ function markNav(which){
   });
   const body = document.body.classList;
   let rail = 'horario';
-  if (body.contains('view-jobs') || body.contains('view-job') || body.contains('view-archived')) rail = 'jobs';
-  else if (body.contains('view-billing') || body.contains('view-payments')) rail = 'money';
+  if (body.contains('view-home')) rail = 'home';
+  else if (body.contains('view-clients')) rail = 'clients';
+  else if (body.contains('view-requests')) rail = 'requests';
+  else if (body.contains('view-jobs') || body.contains('view-job') || body.contains('view-archived')) rail = 'jobs';
+  else if (body.contains('view-quotes')) rail = 'quotes';
+  else if (body.contains('view-billing')) rail = 'money';
+  else if (body.contains('view-payments')) rail = 'payments';
   else if (body.contains('view-reports')) rail = 'reports';
   else if (body.contains('view-hours')) rail = 'hours';
-  else if (body.contains('view-home') || body.contains('view-search') || body.contains('view-roles') || body.contains('view-companies') || body.contains('view-worker')) rail = '';
-  const railMap = { horario:'railHorario', jobs:'railJobs', money:'railMoney', reports:'railReports', hours:'railHours' };
+  else if (body.contains('view-search') || body.contains('view-roles') || body.contains('view-companies') || body.contains('view-worker')) rail = '';
+  const railMap = { home:'railHome', horario:'railHorario', clients:'railClients', requests:'railRequests', quotes:'railQuotes', jobs:'railJobs', money:'railMoney', payments:'railPayments', reports:'railReports', hours:'railHours' };
   Object.keys(railMap).forEach(k => {
     const el = $(railMap[k]);
     if (el) el.classList.toggle('on', k === rail);
@@ -2221,9 +2290,13 @@ function syncChrome(){
   if ($('createWorkerBtn')) { $('createWorkerBtn').classList.toggle('hidden', !canCreateWorkers()); $('createWorkerBtn').textContent = loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador'; }
   if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
   if ($('jobsBtn')) $('jobsBtn').classList.toggle('hidden', isWorker());
-  if ($('railCreate')) $('railCreate').classList.toggle('hidden', !canAssign());
+  if ($('railCreate')) $('railCreate').classList.toggle('hidden', !(canAssign() || canSeeMoney()));
   if ($('railJobs')) $('railJobs').classList.toggle('hidden', isWorker());
+  if ($('railClients')) $('railClients').classList.toggle('hidden', !canSeeClients());
+  if ($('railRequests')) $('railRequests').classList.toggle('hidden', !canAssign());
+  if ($('railQuotes')) $('railQuotes').classList.toggle('hidden', !canSeeMoney());
   if ($('railMoney')) $('railMoney').classList.toggle('hidden', !canSeeMoney());
+  if ($('railPayments')) $('railPayments').classList.toggle('hidden', !canSeeMoney());
   if ($('railReports')) $('railReports').classList.toggle('hidden', isWorker());
   if ($('railHours')) $('railHours').classList.toggle('hidden', !canSeeTimesheet());
   fillCompanyHeader();
@@ -2233,6 +2306,7 @@ document.addEventListener('click', e => {
   closeMore();
   if (!e.target.closest('.avatar-wrap')) closeAvatar();
   if (!e.target.closest('.alert-wrap')) closeAlerts();
+  if (!e.target.closest('#createMenu') && !e.target.closest('#railCreate')) closeCreate();
   if (!e.target.closest('#typesBox')) {
     const tb = $('typesBox');
     if (tb) tb.classList.remove('open');
@@ -2757,7 +2831,7 @@ function jobDone(j){
 function listenCompanyJobs(id){
   if (jobsUnsub) { try { jobsUnsub(); } catch(_){} jobsUnsub = null; }
   if (!id) return;
-  jobsUnsub = db.collection('jobs').where('companyId','==',id).limit(200).onSnapshot(snap => {
+  jobsUnsub = db.collection('jobs').where('companyId','==',id).limit(1000).onSnapshot(snap => {
     const jDocs = [];
     snap.forEach(d => {
       const row = {id:d.id, ...d.data()};
@@ -3716,9 +3790,10 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261029c"></script>
-<script src="/web/compania/quotes.js?v=20261029c"></script>
-<script src="/web/compania/jobs.js?v=20261029c"></script>
+<script src="/web/compania/billing.js?v=20261030b"></script>
+<script src="/web/compania/quotes.js?v=20261030b"></script>
+<script src="/web/compania/jobs.js?v=20261030b"></script>
+<script src="/web/compania/sections.js?v=20261030b"></script>
 <script src="/web/compania/jobview.js?v=20261030a"></script>
 </body>
 </html>

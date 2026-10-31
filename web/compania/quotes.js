@@ -38,8 +38,8 @@
   window.openQuotes = async function () {
     if (!canSeeMoney()) return;
     if (typeof closeMore === 'function') closeMore();
-    document.body.classList.add('view-billing');
-    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-archived', 'sites-open');
+    document.body.classList.add('view-billing', 'view-quotes');
+    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-archived', 'sites-open', 'view-jobs', 'view-job', 'view-home', 'view-search', 'view-payments', 'view-clients', 'view-requests');
     if (typeof markNav === 'function') markNav('money');
     var pane = $('billingPane');
     if (!pane) return;
@@ -47,11 +47,25 @@
     pane.innerHTML = tabs('quo') + '<p class="muted">' + esc(T('Cargando…', 'Loading…')) + '</p>';
     var list = [];
     try {
-      var s = await ref().limit(150).get();
+      var s = await ref().limit(500).get();
       s.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
     } catch (e) { pane.innerHTML = tabs('quo') + '<p class="err">' + esc(e.message || e) + '</p>'; return; }
     list.sort(function (a, b) { return String(b.number || '').localeCompare(String(a.number || ''), undefined, { numeric: true }); });
+    function quoteExpired(q) {
+      return (q.status === 'sent' || q.status === 'draft') && q.validUntil && q.validUntil < today();
+    }
+    window.quoteUi = window.quoteUi || { status: 'all' };
+    var shown = list.filter(function (q) {
+      var f = window.quoteUi.status;
+      if (f === 'all') return true;
+      if (f === 'expired') return quoteExpired(q);
+      if (f === 'sent') return q.status === 'sent' && !quoteExpired(q);
+      return q.status === f;
+    });
     var count = function (s) { return list.filter(function (q) { return q.status === s; }).length; };
+    var qChip = function (key, label, n) {
+      return '<button type="button" class="btn ' + (window.quoteUi.status === key ? '' : 'ghost') + '" onclick="quoteUi.status=\'' + key + '\';openQuotes()">' + esc(label) + ' (' + n + ')</button>';
+    };;
     pane.innerHTML = tabs('quo') +
       '<div class="inv-kpis">' +
         '<div class="inv-kpi"><span>' + esc(T('Enviadas', 'Sent')) + '</span><b>' + count('sent') + '</b></div>' +
@@ -62,12 +76,19 @@
         '<h3 style="margin:0">' + esc(T('Cotizaciones', 'Quotes')) + '</h3>' +
         '<button class="btn" style="width:auto" onclick="openQuoteEditor()">' + esc(T('+ Nueva cotización', '+ New quote')) + '</button></div>' +
         '<p class="muted">' + esc(T('Envía el precio antes de hacer el trabajo. El cliente lo aprueba en línea y lo conviertes en trabajo con un toque.', 'Send the price before doing the work. The client approves online and you turn it into a job in one tap.')) + '</p>' +
-        (list.map(function (q) {
+        '<div class="chip-row">' +
+          qChip('sent', T('Enviada', 'Sent'), list.filter(function (q) { return q.status === 'sent' && !quoteExpired(q); }).length) +
+          qChip('approved', T('Aceptada', 'Accepted'), count('approved')) +
+          qChip('declined', T('Rechazada', 'Declined'), count('declined')) +
+          qChip('expired', T('Vencida', 'Expired'), list.filter(quoteExpired).length) +
+          qChip('all', T('Todas', 'All'), list.length) +
+        '</div>' +
+        (shown.map(function (q) {
           return '<div class="inv-row"><div><b>#' + esc(q.number || '') + '</b> · ' + money(q.total) +
             '<div class="muted">' + esc(q.client || T('Sin cliente', 'No client')) + ' · ' + esc(q.title || '') + '</div></div>' +
             stPill(q.status) +
             '<button type="button" class="btn ghost" onclick="openQuote(\'' + q.id + '\')">' + esc(T('Abrir', 'Open')) + '</button></div>';
-        }).join('') || '<p class="muted">' + esc(T('Todavía no hay cotizaciones.', 'No quotes yet.')) + '</p>') +
+        }).join('') || '<p class="muted">' + esc(list.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin cotizaciones.', 'No quotes.')) + '</p>') +
       '</div>';
   };
 

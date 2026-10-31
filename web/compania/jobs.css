@@ -9,11 +9,24 @@ body.view-job #homePane, body.view-job #searchPane, body.view-job #billingPane,
 body.view-job #archivedPane, body.view-job #jobsPane { display: none; }
 body.view-job .weekbar { display: none; }
 body.view-job #jobPane { display: block; }
+#officePane { display: none; flex: 1; overflow: auto; background: #F2F2F7; padding: 12px; }
+body.view-clients #staffMain, body.view-clients #hoursPane, body.view-clients #reportsPane,
+body.view-clients #homePane, body.view-clients #searchPane, body.view-clients #billingPane,
+body.view-clients #jobsPane, body.view-clients #jobPane,
+body.view-requests #staffMain, body.view-requests #hoursPane, body.view-requests #reportsPane,
+body.view-requests #homePane, body.view-requests #searchPane, body.view-requests #billingPane,
+body.view-requests #jobsPane, body.view-requests #jobPane,
 body.view-payments #staffMain, body.view-payments #hoursPane, body.view-payments #reportsPane,
-body.view-payments #homePane, body.view-payments #searchPane, body.view-payments #jobsPane,
-body.view-payments #jobPane { display: none; }
-body.view-payments .weekbar { display: none; }
-body.view-payments #billingPane { display: block; }
+body.view-payments #homePane, body.view-payments #searchPane, body.view-payments #billingPane,
+body.view-payments #jobsPane, body.view-payments #jobPane { display: none; }
+body.view-clients .weekbar, body.view-requests .weekbar, body.view-payments .weekbar { display: none; }
+body.view-clients #officePane, body.view-requests #officePane, body.view-payments #officePane { display: block; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.chip-row .btn { width: auto; }
+.create-menu { position: fixed; z-index: 50; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.16); min-width: 200px; padding: 6px; }
+.create-menu button { display: block; width: 100%; text-align: left; border: 0; background: #fff; min-height: 44px; font-weight: 700; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.create-menu button:hover { background: #F3F4F6; }
+.jobs-toolbar select { width: auto; min-width: 140px; margin: 0; }
 
 .jobs-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .jobs-toolbar h2 { margin: 0; flex: 1; font-size: 22px; }

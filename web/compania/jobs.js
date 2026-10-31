@@ -156,7 +156,7 @@
   }
   function enterJobsView(which) {
     closeMore();
-    document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-home', 'view-search', 'sites-open', 'view-jobs', 'view-job', 'view-payments');
+    document.body.classList.remove('view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived', 'view-home', 'view-search', 'sites-open', 'view-jobs', 'view-job', 'view-payments', 'view-clients', 'view-requests', 'view-quotes');
     document.body.classList.add(which);
   }
   function readLinesFromForm() {
@@ -186,38 +186,130 @@
     }).join('') + '<button type="button" class="btn ghost" onclick="addJobLineRow()">+ ' + esc(loginLang() === 'en' ? 'Line' : 'Línea') + '</button>';
   }
 
-  window.openJobs = function (q) {
+  function jobDay(j) {
+    return firstVisitDate(j) || '';
+  }
+  function jobUnscheduled(j) {
+    return !jobArchived(j) && !jobDay(j);
+  }
+  function jobSoon(j) {
+    if (jobArchived(j) || jobDone(j) || jobUnscheduled(j)) return false;
+    var today = ymd(new Date());
+    var end = ymd(new Date(Date.now() + 30 * 86400000));
+    var d = jobDay(j);
+    return d >= today && d <= end;
+  }
+  function jobAction(j) {
+    if (jobArchived(j) || jobDone(j)) return false;
+    if (j.needsReturn === true) return true;
+    if (!accountUidOf(j)) return true;
+    if (j.lastReschedule && j.lastReschedule.seen !== true) return true;
+    return false;
+  }
+  function jobNeedsInvoice(j) {
+    return !jobArchived(j) && jobDone(j) && !j.invoiceId;
+  }
+  window.jobBuckets = function () {
+    var live = (jobs || []).filter(function (j) { return !jobArchived(j); });
+    return {
+      all: live,
+      soon: live.filter(jobSoon),
+      late: live.filter(jobIsLate),
+      invoice: live.filter(jobNeedsInvoice),
+      action: live.filter(jobAction),
+      open: live.filter(jobUnscheduled)
+    };
+  };
+  window.jobUi = window.jobUi || { q: '', bucket: 'all', type: '', client: '' };
+  function buildingName(j) {
+    var b = (buildings || []).find(function (x) { return x.id === j.buildingId; });
+    return (b && b.name) || j.buildingName || '';
+  }
+  function clientLabel(j) {
+    return j.clientName || j.contactName || buildingName(j) || '';
+  }
+  window.openJobs = function () {
     if (isWorker()) return;
     enterJobsView('view-jobs');
     if (typeof markNav === 'function') markNav('jobs');
     var pane = $('jobsPane');
     if (!pane) return;
-    var query = (q != null ? q : (($('jobSearch') && $('jobSearch').value) || '')).toLowerCase();
-    var list = (jobs || []).filter(function (j) {
-      if (jobArchived(j)) return false;
+    var en = loginLang() === 'en';
+    var ui = window.jobUi;
+    var buckets = window.jobBuckets();
+    var query = String(ui.q || '').toLowerCase();
+    var list = (buckets[ui.bucket] || buckets.all).filter(function (j) {
+      if (ui.type && String(j.kind || j.title || '') !== ui.type) return false;
+      if (ui.client && clientLabel(j) !== ui.client) return false;
       if (!query) return true;
-      var blob = [j.jobNumber, j.title, j.kind, j.clientName, j.contactName, j.address, cardAddr(j)].join(' ').toLowerCase();
+      var blob = [j.jobNumber, j.title, j.kind, clientLabel(j), j.address, cardAddr(j), buildingName(j)].join(' ').toLowerCase();
       return blob.indexOf(query) >= 0;
     }).sort(function (a, b) {
-      return String(firstVisitDate(b)).localeCompare(String(firstVisitDate(a)));
+      return String(jobDay(b)).localeCompare(String(jobDay(a)));
     });
+    var money = canSeeMoney();
+    var chip = function (key, label) {
+      return '<button type="button" class="btn ' + (ui.bucket === key ? '' : 'ghost') + '" onclick="jobUi.bucket=\'' + key + '\';openJobs()">' +
+        esc(label) + ' (' + (buckets[key] || []).length + ')</button>';
+    };
+    var types = {};
+    var clients = {};
+    buckets.all.forEach(function (j) {
+      var t = j.kind || j.title || '';
+      if (t) types[t] = 1;
+      var c = clientLabel(j);
+      if (c) clients[c] = 1;
+    });
+    var typeOpts = '<option value="">' + esc(en ? 'Job type' : 'Tipo de trabajo') + '</option>' +
+      Object.keys(types).sort().map(function (t) {
+        return '<option' + (ui.type === t ? ' selected' : '') + '>' + esc(t) + '</option>';
+      }).join('');
+    var clientOpts = '<option value="">' + esc(en ? 'Client' : 'Cliente') + '</option>' +
+      Object.keys(clients).sort().map(function (c) {
+        return '<option' + (ui.client === c ? ' selected' : '') + '>' + esc(c) + '</option>';
+      }).join('');
     var rows = list.map(function (j) {
-      return '<tr onclick="openJobDetail(\'' + j.id + '\')">' +
-        '<td>' + esc(firstVisitDate(j) || '—') + '</td>' +
+      var when = jobDay(j);
+      var clock = (jobVisits(j)[0] && (jobVisits(j)[0].startClock || '')) || j.startClock || '';
+      return '<tr onclick="openJobView(\'' + j.id + '\')">' +
+        '<td>' + esc(clientLabel(j) || '—') + '</td>' +
+        '<td>' + esc(j.jobNumber ? '#' + j.jobNumber : '—') + '</td>' +
+        '<td>' + esc(buildingName(j) || '—') + '</td>' +
+        '<td>' + esc(when ? (when + (clock ? ' ' + clock : '')) : (en ? 'Unscheduled' : 'Sin programar')) + '</td>' +
         '<td class="' + statusClass(j) + '">' + esc(statusWord(j)) + '</td>' +
-        '<td>' + (canSeeMoney() ? usd(jobLineTotal(j)) : '—') + '</td>' +
-        '<td><b>' + esc(j.title || j.kind || 'Job') + '</b><div class="muted">' +
-        esc((j.jobNumber ? '#' + j.jobNumber + ' · ' : '') + (j.clientName || j.contactName || cardAddr(j) || '')) +
-        '</div></td></tr>';
-    }).join('') || '<tr><td colspan="4" class="muted">' + esc(loginLang() === 'en' ? 'No jobs' : 'Sin trabajos') + '</td></tr>';
+        '<td>' + (money ? usd(jobLineTotal(j)) : '') + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="muted">' + esc(en ? 'No jobs' : 'Sin trabajos') + '</td></tr>';
     pane.innerHTML =
-      '<div class="jobs-toolbar">' +
-        '<h2>' + esc(loginLang() === 'en' ? 'Jobs' : 'Trabajos') + '</h2>' +
+      '<div class="jobs-toolbar"><h2>' + esc(en ? 'Jobs' : 'Trabajos') + '</h2>' +
         (canAssign() ? '<button class="btn" onclick="openCreateJob()">' + esc(uiT('createJob')) + '</button>' : '') +
-        '<button class="btn ghost" onclick="openArchived()">' + esc(loginLang() === 'en' ? 'Archived' : 'Archivados') + '</button>' +
+        '<button class="btn ghost" onclick="openArchived()">' + esc(en ? 'Archived' : 'Archivados') + '</button></div>' +
+      '<div class="chip-row">' +
+        chip('soon', en ? 'Ending within 30 days' : 'Por vencer en 30 días') +
+        chip('late', en ? 'Late' : 'Atrasados') +
+        (money ? chip('invoice', en ? 'Requires invoicing' : 'Requiere facturación') : '') +
+        chip('action', en ? 'Action required' : 'Requiere acción') +
+        chip('open', en ? 'Unscheduled' : 'Sin programar') +
+        chip('all', en ? 'All' : 'Todos') +
       '</div>' +
-      '<div class="jobs-toolbar"><input id="jobSearch" type="search" placeholder="' + esc(loginLang() === 'en' ? 'Search jobs…' : 'Buscar trabajos…') + '" value="' + esc(query) + '" oninput="openJobs(this.value)"></div>' +
-      '<table class="jobs-table"><thead><tr><th>Schedule</th><th>Status</th><th>Total</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+      '<div class="jobs-toolbar">' +
+        '<select onchange="jobUi.type=this.value;openJobs()">' + typeOpts + '</select>' +
+        '<select onchange="jobUi.client=this.value;openJobs()">' + clientOpts + '</select>' +
+        '<input id="jobSearch" type="search" placeholder="' + esc(en ? 'Search jobs…' : 'Buscar trabajos…') + '" value="' + esc(ui.q || '') + '" oninput="jobUi.q=this.value;openJobs()">' +
+      '</div>' +
+      '<table class="jobs-table"><thead><tr>' +
+        '<th>' + esc(en ? 'Client' : 'Cliente') + '</th>' +
+        '<th>' + esc(en ? 'Job #' : 'N.º') + '</th>' +
+        '<th>' + esc(en ? 'Building' : 'Edificio') + '</th>' +
+        '<th>' + esc(en ? 'Date and time' : 'Fecha y hora') + '</th>' +
+        '<th>' + esc(en ? 'Status' : 'Estado') + '</th>' +
+        (money ? '<th>Total</th>' : '<th></th>') +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+    var box = $('jobSearch');
+    if (box && document.activeElement && document.activeElement.id === 'jobSearch') {
+      var pos = ui.q.length;
+      box.focus();
+      try { box.setSelectionRange(pos, pos); } catch (_) {}
+    }
   };
 
   window.openCreateJob = function () {

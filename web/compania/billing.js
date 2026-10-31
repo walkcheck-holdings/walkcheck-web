@@ -80,6 +80,9 @@
     if (s === 'overdue') return T('Vencida', 'Overdue');
     return T('Pendiente', 'Pending');
   }
+  window.invoicePayStatus = payStatus;
+  window.invoicePayLabel = payStatusLabel;
+  window.invoiceMoney = money;
   function fmtDay(iso) {
     if (!iso) return '—';
     var d = new Date(iso + 'T12:00:00');
@@ -278,14 +281,14 @@
     if (!canSeeMoney()) { alert('El dinero de cada compañía es privado.'); return; }
     closeMore();
     document.body.classList.add('view-billing');
-    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-archived', 'sites-open');
+    document.body.classList.remove('view-hours', 'view-roles', 'view-worker', 'view-companies', 'view-reports', 'view-archived', 'sites-open', 'view-jobs', 'view-job', 'view-home', 'view-search', 'view-payments', 'view-clients', 'view-requests', 'view-quotes');
     if (typeof markNav === 'function') markNav('money');
     var pane = $('billingPane');
     if (!pane) return;
     pane.innerHTML = '<p class="muted">Cargando…</p>';
     var invoices = [];
     try {
-      var snap = await db.collection('companies').doc(cid()).collection('invoices').limit(120).get();
+      var snap = await db.collection('companies').doc(cid()).collection('invoices').limit(500).get();
       snap.forEach(function (d) { invoices.push(Object.assign({ id: d.id }, d.data())); });
     } catch (e) {
       pane.innerHTML = '<div class="card"><h3>' + esc(uiT('money')) + '</h3><p class="err">' + esc(e.message || e) + '</p></div>';
@@ -306,15 +309,40 @@
         '<input type="number" min="0" step="0.01" value="' + (amt || '') + '" data-kind="' + esc(t.name) + '">' +
         '</div>';
     }).join('');
-    var list = invoices.map(function (inv) {
+    window.invUi = window.invUi || { status: 'all' };
+    var invShown = invoices.filter(function (inv) {
+      var f = window.invUi.status;
+      if (f === 'all') return true;
+      return payStatus(inv) === f;
+    });
+    var invChip = function (key, label, n) {
+      return '<button type="button" class="btn ' + (window.invUi.status === key ? '' : 'ghost') + '" onclick="invUi.status=\'' + key + '\';openBilling()">' + esc(label) + ' (' + n + ')</button>';
+    };
+    var invRows = invShown.map(function (inv) {
       var ps = payStatus(inv);
-      return '<div class="inv-row">' +
-        '<div><b>#' + esc(inv.number) + '</b> · ' + money(inv.total) +
-        '<div class="muted">' + esc(inv.client || T('Sin cliente', 'No client')) + ' · ' + esc(inv.building || '') + ' · ' + esc(fmtDay(inv.issueDate)) + '</div></div>' +
-        '<span class="st-pill ' + (ps === 'paid' ? 'on' : 'off') + '">' + esc(payStatusLabel(ps)) + '</span>' +
-        '<button type="button" class="btn ghost" onclick="openInvoice(\'' + inv.id + '\')">' + esc(T('Abrir', 'Open')) + '</button>' +
-        '</div>';
-    }).join('') || '<p class="muted">' + esc(T('Todavía no hay facturas. Completa un trabajo y pulsa Nueva factura.', 'No invoices yet. Complete a job and press New invoice.')) + '</p>';
+      var job = (jobs || []).find(function (j) { return j.id === inv.jobId; });
+      return '<tr>' +
+        '<td>' + esc(inv.client || T('Sin cliente', 'No client')) + '</td>' +
+        '<td>#' + esc(inv.number || '') + '</td>' +
+        '<td>' + esc(job && job.jobNumber ? '#' + job.jobNumber : (inv.jobNumber || '—')) + '</td>' +
+        '<td>' + esc(fmtDay(inv.issueDate)) + '</td>' +
+        '<td>' + esc(fmtDay(inv.dueDate || inv.issueDate)) + '</td>' +
+        '<td>' + money(inv.total) + '</td>' +
+        '<td><span class="st-pill ' + (ps === 'paid' ? 'on' : 'off') + '">' + esc(payStatusLabel(ps)) + '</span></td>' +
+        '<td><button type="button" class="btn ghost" onclick="openInvoice(\'' + inv.id + '\')">' + esc(T('Abrir', 'Open')) + '</button> ' +
+          '<button type="button" class="btn ghost" onclick="invoicePdf(\'' + inv.id + '\')">' + esc(T('Descargar PDF', 'Download PDF')) + '</button> ' +
+          '<button type="button" class="btn ghost" onclick="invoiceSend(\'' + inv.id + '\')">' + esc(T('Enviar al cliente', 'Send to client')) + '</button></td>' +
+        '</tr>';
+    }).join('');
+    var list = '<div class="chip-row">' +
+        invChip('paid', T('Pagada', 'Paid'), invoices.filter(function (i) { return payStatus(i) === 'paid'; }).length) +
+        invChip('pending', T('Pendiente', 'Pending'), invoices.filter(function (i) { return payStatus(i) === 'pending'; }).length) +
+        invChip('overdue', T('Vencida', 'Overdue'), invoices.filter(function (i) { return payStatus(i) === 'overdue'; }).length) +
+        invChip('all', T('Todas', 'All'), invoices.length) +
+      '</div>' +
+      (invRows
+        ? '<table class="jobs-table"><thead><tr><th>' + esc(T('Facturar a', 'Bill to')) + '</th><th>' + esc(T('N.º', '#')) + '</th><th>' + esc(T('Trabajo', 'Job')) + '</th><th>' + esc(T('Emisión', 'Issued')) + '</th><th>' + esc(T('Vence', 'Due')) + '</th><th>Total</th><th>' + esc(T('Estado', 'Status')) + '</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table>'
+        : '<p class="muted">' + esc(invoices.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin facturas.', 'No invoices.')) + '</p>');
     pane._quote = null;
     pane.innerHTML = (window.billingTabsHtml ? billingTabsHtml('inv') : '') +
       '<div class="inv-kpis">' +
@@ -732,6 +760,14 @@
     $('billingPane')._inv = Object.assign({}, inv, { id: inv.id || id, client: c.name, clientEmail: c.email, clientAddress: c.address || inv.clientAddress || '' });
   };
   // One click: the formal PDF (same file that "Enviar al cliente" attaches).
+  window.invoicePdf = async function (id) {
+    await openInvoice(id);
+    downloadInvoicePdf();
+  };
+  window.invoiceSend = async function (id) {
+    await openInvoice(id);
+    openEmailInvoice(id);
+  };
   window.downloadInvoicePdf = function () {
     var inv = $('billingPane')._inv || {};
     try { buildInvoicePdf(inv).save(pdfName(inv)); }
