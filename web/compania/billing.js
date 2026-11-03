@@ -404,7 +404,7 @@
     var box = $('payState');
     if (box) box.textContent = T('Abriendo Stripe…', 'Opening Stripe…');
     try { var j = await connectCall(''); location.href = j.url; }
-    catch (e) { if (box) box.textContent = T('No se pudo abrir Stripe: ', 'Could not open Stripe: ') + (e.message || e); }
+    catch (e) { var msg = T('No se pudo abrir Stripe: ', 'Could not open Stripe: ') + (e.message || e); if (box) box.textContent = msg; else alert(msg); }
   };
   // Back from Stripe onboarding → open Billing to show the new state.
   if (/[?&]connect=(done|refresh)/.test(location.search)) {
@@ -749,10 +749,7 @@
         '<p class="muted">' + esc(T('Términos de pago', 'Payment terms')) + ': ' + esc(termsLabel(inv.paymentTerms)) + ' · ' + esc(T('Saldo', 'Balance due')) + ': ' + money(dueAmt) + '</p>' +
       '</div>' +
       '<div class="job-sec"><h3>' + esc(T('Pagos', 'Payments')) + '</h3>' + pays +
-      (inv.payToken && st !== 'paid'
-        ? '<p class="muted">💳 ' + esc(T('Enlace para pagar con tarjeta', 'Card payment link')) + ': <a href="' + esc(payLink(id, inv.payToken)) + '" target="_blank" rel="noopener">' + esc(T('abrir', 'open')) + '</a> · ' +
-          '<a href="#" onclick="navigator.clipboard.writeText(\'' + esc(payLink(id, inv.payToken)) + '\');this.textContent=\'' + esc(T('copiado', 'copied')) + '\';return false">' + esc(T('copiar', 'copy')) + '</a></p>'
-        : '') +
+      (st !== 'paid' ? '<div id="invCardBox" class="inv-card-box">💳 ' + esc(T('Revisando pago con tarjeta…', 'Checking card payments…')) + '</div>' : '') +
       (st !== 'paid' ? '<label class="muted">' + esc(T('Monto', 'Amount')) + '</label><input id="payAmt" type="number" min="0" step="0.01">' +
         '<label class="muted">' + esc(T('Fecha', 'Date')) + '</label><input id="payDate" type="date" value="' + ymd(new Date()) + '">' +
         '<label class="muted">' + esc(T('Método', 'Method')) + '</label><input id="payMethod" type="text">' +
@@ -762,7 +759,44 @@
       '<div class="job-sec"><h3>' + esc(T('Notas', 'Notes')) + '</h3>' + notes +
       '<textarea id="invNote" rows="2"></textarea><button class="btn ghost" onclick="addInvoiceNote(\'' + id + '\')">' + esc(T('Agregar nota', 'Add note')) + '</button></div>';
     $('billingPane')._inv = Object.assign({}, inv, { id: inv.id || id, client: c.name, clientEmail: c.email, clientAddress: c.address || inv.clientAddress || '' });
+    if (st !== 'paid') fillInvoiceCardBox(id, inv, dueAmt);
   };
+  // "Cobrar con tarjeta" inside the invoice: the link the client opens to pay.
+  // Needs the company's Stripe connected; if not, the button to connect it.
+  async function fillInvoiceCardBox(id, inv, dueAmt) {
+    try { var s = await connectCall('status'); window.companyCanTakeCards = !!s.chargesEnabled; window._payConnected = !!s.connected; } catch (e) { window._payErr = e.message || String(e); }
+    var box = $('invCardBox'); if (!box) return;
+    if (!window.companyCanTakeCards) {
+      box.className = 'inv-card-box off';
+      box.innerHTML = '<b>💳 ' + esc(T('Cobrar con tarjeta: todavía no está activo', 'Card payments: not active yet')) + '</b>' +
+        '<p>' + esc(window._payConnected
+          ? T('Tu Stripe está conectado pero falta terminar los datos (banco, identidad).', 'Your Stripe is connected but needs your bank / identity details.')
+          : T('Conecta tu Stripe y tus clientes podrán pagar con tarjeta desde la factura. El dinero va directo a tu banco y la factura se marca Pagada sola.', 'Connect your Stripe and clients can pay invoices by card. Money goes straight to your bank and the invoice is marked Paid by itself.')) + '</p>' +
+        (canManageRoles()
+          ? '<button type="button" class="btn" onclick="startConnect()">' + esc(window._payConnected ? T('Terminar en Stripe', 'Finish in Stripe') : T('Conectar mi Stripe', 'Connect my Stripe')) + '</button>'
+          : '<p class="muted">' + esc(T('Solo el dueño de la compañía puede conectarlo.', 'Only the company owner can connect it.')) + '</p>');
+      return;
+    }
+    var tok = inv.payToken;
+    if (!tok) {
+      tok = randToken();
+      try {
+        await db.collection('companies').doc(cid()).collection('invoices').doc(id).set({ payToken: tok, lang: loginLang() }, { merge: true });
+        inv.payToken = tok; if ($('billingPane')._inv) $('billingPane')._inv.payToken = tok;
+      } catch (e) { box.textContent = e.message || e; return; }
+    }
+    var link = payLink(id, tok);
+    window._invPayLink = link;
+    box = $('invCardBox'); if (!box) return;
+    box.className = 'inv-card-box on';
+    box.innerHTML = '<b>💳 ' + esc(T('El cliente puede pagar con tarjeta', 'The client can pay by card')) + ' · ' + money(dueAmt) + '</b>' +
+      '<p class="muted">' + esc(T('Va en el correo cuando envías la factura. También puedes copiar el enlace o mandarlo por WhatsApp.', 'It goes in the email when you send the invoice. You can also copy the link or send it by WhatsApp.')) + '</p>' +
+      '<div class="inv-card-btns">' +
+        '<a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(T('Abrir pago', 'Open payment')) + '</a>' +
+        '<button type="button" class="btn ghost" onclick="navigator.clipboard.writeText(window._invPayLink);this.textContent=\'' + esc(T('¡Copiado!', 'Copied!')) + '\'">' + esc(T('Copiar enlace', 'Copy link')) + '</button>' +
+        '<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(T('Factura #', 'Invoice #') + (inv.number || '') + ' — ' + money(dueAmt) + '. ' + T('Pagar con tarjeta: ', 'Pay by card: ') + link) + '">WhatsApp</a>' +
+      '</div>';
+  }
   // Florida sales tax: the company's rate from Billing; if none is set,
   // Miami-Dade's 7% (6% state + 1% county surtax).
   var FL_DEFAULT_TAX = 0.07;
