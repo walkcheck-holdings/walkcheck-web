@@ -1,0 +1,40 @@
+/* Trabajos: list of all jobs (company panel) */
+.jl-top { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin: 0 0 16px; }
+.jl-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px 16px; }
+.jl-card h3 { margin: 0 0 4px; font-size: 16px; }
+.jl-big { display: block; font-size: 34px; margin-top: 8px; }
+.jl-ov-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 3px 4px; border-radius: 6px; font: inherit; font-size: 14px; color: inherit; cursor: pointer; }
+.jl-ov-item:hover, .jl-ov-item.on { background: #F0FDF4; }
+.jl-ov-item.on { font-weight: 700; }
+.jl-ov-item i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+.jl-ov-item span { color: #6B7280; }
+.jl-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+.jl-head h3 { margin: 0; font-size: 20px; }
+.jl-head input[type="search"] { width: 260px; max-width: 100%; margin: 0; }
+.jl-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.jl-fpill { display: inline-flex; align-items: center; gap: 6px; background: #F3F4F6; border-radius: 999px; padding: 4px 6px 4px 14px; font-size: 14px; font-weight: 600; }
+.jl-fpill select { border: 0; background: transparent; margin: 0; padding: 4px 6px; width: auto; min-width: 0; font-weight: 600; color: #166534; }
+.jl-sort { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; cursor: pointer; white-space: nowrap; }
+.jl-sort span { opacity: .45; font-size: 11px; }
+.jl-sort.on, .jl-sort.on span { opacity: 1; color: #111827; }
+.jl-table td { vertical-align: top; }
+.jl-table .muted { font-size: 13px; }
+.jl-done { font-size: 12px; font-weight: 700; color: #6B7280; letter-spacing: .02em; }
+.jl-tot { font-weight: 700; white-space: nowrap; }
+.jl-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.jl-pill i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.jl-pill.red { background: #FEE2E2; color: #B91C1C; }
+.jl-pill.amber { background: #FEF3C7; color: #92400E; }
+.jl-pill.gold { background: #FEF9C3; color: #854D0E; }
+.jl-pill.green { background: #DCFCE7; color: #166534; }
+.jl-pill.blue { background: #DBEAFE; color: #1E40AF; }
+.jl-pill.gray { background: #F3F4F6; color: #4B5563; }
+.jl-more { width: 100%; margin-top: 10px; }
+@media (max-width: 760px) {
+  .jl-top { grid-template-columns: 1fr 1fr; }
+  .jl-ov { grid-column: 1 / -1; }
+  .jl-big { font-size: 26px; }
+  .jl-head input[type="search"] { width: 100%; }
+  .jl-table td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; color: #9CA3AF; text-transform: uppercase; }
+  .jl-table td { padding: 3px 0; }
+}

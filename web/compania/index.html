@@ -18,14 +18,16 @@
 <script src="/js/paymentLinks.js"></script>
 <script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="/web/compania/base.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/jobs.css?v=20261030b">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261030a">
+<link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
+<link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
 </head>
 <body class="tab-agenda">
 <header id="siteHdr">
@@ -982,10 +984,11 @@ auth.onAuthStateChanged(async user => {
   // Temporary password from the company (managers/supervisors too) → create your own first.
   if (profile.mustChangePassword === true) { location.replace('/web/compartido/cambiar-clave.html'); return; }
   try {
-    if (doc.exists) await db.collection('users').doc(user.uid).set({
+    // Small profile touch-up: no need to wait for it before showing the panel.
+    if (doc.exists) db.collection('users').doc(user.uid).set({
       uid: user.uid,
       email: (user.email || '').toLowerCase()
-    }, {merge:true});
+    }, {merge:true}).catch(()=>{});
     profile.uid = user.uid;
     if (user.email) profile.email = user.email.toLowerCase();
   } catch(_){}
@@ -1219,8 +1222,15 @@ async function loadBoard(){
     $('rows').innerHTML = `<div class="card muted">${esc(uiT('pickCompany'))}</div>`;
     return;
   }
+  // Start every read at once (they don't depend on each other).
+  const coP = db.collection('companies').doc(id).get();
+  const b1P = colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
+  const b2P = colGet(db.collection('companies').doc(id).collection('buildings').limit(50).get());
+  const usP = colGet(db.collection('users').where('companyId','==',id).limit(50).get());
+  const ctP = colGet(db.collection('companies').doc(id).collection('customJobTypes').limit(50).get());
+  const tpP = (typeof loadTypePrices === 'function') ? loadTypePrices() : null;
   try {
-    const co = await db.collection('companies').doc(id).get();
+    const co = await coP;
     companyName = (co.exists && co.data().name) || '';
     companyLogo = (co.exists && (co.data().logoUrl || co.data().logo || '')) || '';
     companyPhone = (co.exists && (co.data().phone || '')) || '';
@@ -1246,15 +1256,15 @@ async function loadBoard(){
   if ($('bSearch')) $('bSearch').placeholder = siteT('search');
   $('addbox').classList.toggle('hidden', !canAssign());
   const bDocs = [];
-  let s = await colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
+  let s = await b1P;
   if (s) s.forEach(d => bDocs.push({id:d.id, ...d.data()}));
-  s = await colGet(db.collection('companies').doc(id).collection('buildings').limit(50).get());
+  s = await b2P;
   if (s) s.forEach(d => { if (!bDocs.some(x=>x.id===d.id)) bDocs.push({id:d.id, ...d.data()}); });
   bDocs.sort((a,b)=> String(a.name||'').localeCompare(String(b.name||'')));
   buildings = bDocs.slice(0,50);
 
   const tDocs = [];
-  s = await colGet(db.collection('users').where('companyId','==',id).limit(50).get());
+  s = await usP;
   if (s) s.forEach(d => {
     const u = d.data() || {};
     tDocs.push({
@@ -1276,11 +1286,9 @@ async function loadBoard(){
   techs = tDocs;
   listenCompanyJobs(id);
   customTypes = [];
-  try {
-    const ts = await db.collection('companies').doc(id).collection('customJobTypes').limit(50).get();
-    ts.forEach(d => customTypes.push({id:d.id, ...d.data()}));
-  } catch(_){}
-  if (typeof loadTypePrices === 'function') await loadTypePrices();
+  const ts = await ctP;
+  if (ts) ts.forEach(d => customTypes.push({id:d.id, ...d.data()}));
+  if (tpP) await tpP;
   fillCompanyHeader();
   renderTypesBox();
   renderBuildings();
@@ -2154,6 +2162,7 @@ function openHome(){
   }).join('') || `<div class="day-empty">${esc(homeFilter==='all' || homeFilter==='done' || homeFilter==='pend' ? uiT('noJobsDay') : (en ? 'No jobs' : 'Sin trabajos'))}${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"><button class="btn" style="width:auto" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>`:''}</div>`;
   pane.innerHTML = `<div id="dayList">
     <h2 style="margin:4px 0 8px">${esc(uiT('homeHello'))}</h2>
+    ${canSeeMoney()?'<div id="homeDash"></div>':''}
     <div class="view-tabs" style="margin:0 0 10px;flex-wrap:wrap">
       <button type="button" class="${homeFilter==='all'?'on':''}" onclick="homeFilter='all';openHome()">${esc(uiT('jobsToday'))} (${list.length})</button>
       <button type="button" class="${homeFilter==='done'?'on':''}" onclick="homeFilter='done';openHome()">${esc(uiT('completedLbl'))} (${done})</button>
@@ -2165,6 +2174,7 @@ function openHome(){
     ${homeAttentionHtml()}
     ${cards}
   </div>`;
+  if (typeof renderHomeDash === 'function') renderHomeDash();
   markNav('home');
 }
 function openSearch(){
@@ -3790,10 +3800,12 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261030b"></script>
+<script src="/web/compania/billing.js?v=20261102a"></script>
 <script src="/web/compania/quotes.js?v=20261030b"></script>
 <script src="/web/compania/jobs.js?v=20261030b"></script>
 <script src="/web/compania/sections.js?v=20261030b"></script>
 <script src="/web/compania/jobview.js?v=20261030a"></script>
+<script src="/web/compania/dashboard.js?v=20261102a"></script>
+<script src="/web/compania/jobslist.js?v=20261102a"></script>
 </body>
 </html>

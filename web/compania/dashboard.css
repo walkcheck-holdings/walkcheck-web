@@ -1,0 +1,36 @@
+/* Inicio dashboard (company panel only) */
+#homeDash { margin: 0 0 14px; }
+.dash-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 16px; }
+.dash-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.dash-head h3 { margin: 0; font-size: 22px; }
+.dash-nav { display: flex; gap: 6px; }
+.dash-nav .btn { width: 38px; min-width: 0; padding: 6px 0; font-size: 18px; }
+.dash-nav .btn[disabled] { opacity: .35; cursor: default; }
+.dash-grid { display: grid; grid-template-columns: minmax(240px, 1fr) 1.4fr; gap: 16px; }
+.dash-left { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.dash-donut { width: 190px; height: 190px; }
+.dash-dl { font-size: 11px; fill: #6B7280; }
+.dash-dv { font-size: 20px; font-weight: 800; }
+.dash-legend { display: flex; gap: 16px; font-size: 13px; }
+.dash-legend i, .dash-tile i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.dash-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.dash-tile { border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px; text-align: center; }
+.dash-tile b { display: block; font-size: 18px; margin: 4px 0; }
+.dash-tile .muted { font-size: 12px; }
+.dash-right { border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.dash-th { display: flex; justify-content: space-between; align-items: center; }
+.dash-th h4 { margin: 4px 0 8px; font-size: 15px; }
+.dash-th a { color: #16A34A; font-size: 13px; text-decoration: none; }
+.dash-row { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; align-items: center; width: 100%; padding: 10px 0; border: 0; border-top: 1px solid #F1F5F9; background: none; text-align: left; font: inherit; font-size: 13px; cursor: pointer; color: inherit; }
+.dash-row:hover { background: #F8FAFC; }
+.dash-hdr { cursor: default; color: #6B7280; font-size: 12px; border-top: 0; padding-top: 0; }
+.dash-hdr:hover { background: none; }
+.dash-c { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-a { font-weight: 700; text-align: right; white-space: nowrap; }
+.dash-a.in { color: #16A34A; }
+.dash-a.out { color: #DC2626; }
+.dash-foot { font-size: 12px; margin: 10px 0 0; }
+@media (max-width: 760px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-row { grid-template-columns: 56px 1fr auto; }
+}
