@@ -717,17 +717,17 @@
     var ps = payStatus(inv);
     var sendBlock = !hasClient
       ? '<p class="muted" style="color:#9A5B00">' + esc(T('Para enviarla falta el cliente que paga.', 'To send it, add the paying client.')) + '</p>'
-      : '<button class="btn" onclick="openEmailInvoice(\'' + id + '\')">' + esc(T('Enviar al cliente', 'Send to client')) + '</button>';
+      : '<button class="btn ia-send" onclick="openEmailInvoice(\'' + id + '\')">✉️ ' + esc(T('Enviar al cliente', 'Send to client')) + '</button>';
     sends = (inv.sends || []).map(function (s) {
       return '<div class="muted">' + esc(s.channel === 'email' ? T('Correo', 'Email') : s.channel) + ' · ' + esc(s.to || '') + ' · ' + esc(String(s.at || '').slice(0, 16).replace('T', ' ')) + '</div>';
     }).join('') || '<p class="muted">' + esc(T('Todavía no se ha enviado.', 'Not sent yet.')) + '</p>';
     $('billingPane').innerHTML =
       '<div class="inv-actions">' +
-        '<button class="btn ghost" onclick="openBilling()">← ' + esc(uiT('money')) + '</button>' +
-        (inv.jobId ? '<button class="btn ghost" onclick="openJobDetail(\'' + inv.jobId + '\')">' + esc(T('Trabajo #', 'Job #') + (inv.jobNumber || '')) + '</button>' : '') +
-        '<button class="btn" onclick="downloadInvoicePdf()">' + esc(T('Descargar PDF', 'Download PDF')) + '</button>' +
+        '<button class="btn ghost ia-nav" onclick="openBilling()">← ' + esc(uiT('money')) + '</button>' +
+        (inv.jobId ? '<button class="btn ghost ia-nav" onclick="openJobDetail(\'' + inv.jobId + '\')">' + esc(T('Trabajo #', 'Job #') + (inv.jobNumber || '')) + '</button>' : '') +
+        '<button class="btn ghost ia-pdf" onclick="downloadInvoicePdf()">📄 ' + esc(T('Descargar PDF', 'Download PDF')) + '</button>' +
         (st !== 'paid'
-          ? '<button class="btn ghost" onclick="toggleInvoiceTax(\'' + id + '\')">' + esc(Number(inv.tax || 0) > 0
+          ? '<button class="btn ghost ia-tax" onclick="toggleInvoiceTax(\'' + id + '\')">' + esc(Number(inv.tax || 0) > 0
               ? T('Quitar taxes de Florida', 'Remove Florida tax')
               : T('Poner taxes de Florida (' + flTaxPct() + '%)', 'Add Florida tax (' + flTaxPct() + '%)')) + '</button>'
           : '') +
@@ -811,6 +811,48 @@
         : ('Hola ' + (inv.client || '') + ',\nGracias por su confianza. Adjuntamos la factura #' + (inv.number || '') + ' por ' + tot + '. Términos de pago: ' + terms + ' (vence el ' + fmtDay(inv.dueDate) + ').\n\n' + co))
     };
   }
+  // Branded invoice email: the company's logo, name and colors, a summary
+  // card, the "Pagar con tarjeta" button (Stripe connected) and the PDF.
+  function invoiceEmailHtml(inv, body, pdfUrl, payUrl) {
+    var co = inv.companyName || companyName || '';
+    var green = '#166534';
+    var logo = /^https?:\/\//.test(companyLogo || '')
+      ? '<img src="' + esc(companyLogo) + '" alt="' + esc(co) + '" width="48" height="48" style="display:block;width:48px;height:48px;border-radius:10px;object-fit:contain;background:#fff">'
+      : '<div style="width:48px;height:48px;border-radius:10px;background:#fff;color:' + green + ';font:800 24px/48px Arial,sans-serif;text-align:center">' + esc(String(co || 'W').charAt(0).toUpperCase()) + '</div>';
+    var paid = paidSum(inv);
+    var due = Math.max(0, Number(inv.total || 0) - paid);
+    var row = function (k, v, strong) {
+      return '<tr><td style="padding:6px 0;color:#6B7280;font-size:14px">' + esc(k) + '</td><td align="right" style="padding:6px 0;font-size:' + (strong ? '20px;font-weight:800;color:#111827' : '14px;color:#111827') + '">' + v + '</td></tr>';
+    };
+    var btn = function (href, label, primary) {
+      return '<tr><td style="padding:6px 0"><a href="' + href + '" style="display:block;text-align:center;text-decoration:none;font:700 16px Arial,sans-serif;padding:14px 18px;border-radius:12px;' +
+        (primary ? 'background:#16A34A;color:#ffffff' : 'background:#ffffff;color:' + green + ';border:2px solid #16A34A') + '">' + label + '</a></td></tr>';
+    };
+    var phone = String(companyPhone || '').trim();
+    return '<!doctype html><html><body style="margin:0;padding:0;background:#F3F4F6">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;padding:24px 12px"><tr><td align="center">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;font-family:Arial,Helvetica,sans-serif">' +
+        '<tr><td style="background:' + green + ';padding:20px 24px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+          '<td>' + logo + '</td><td style="padding-left:14px;color:#ffffff;font:800 20px Arial,sans-serif">' + esc(co) + '</td></tr></table></td></tr>' +
+        '<tr><td style="padding:24px 24px 8px;color:#111827;font-size:15px;line-height:1.55">' + esc(body).replace(/\n/g, '<br>') + '</td></tr>' +
+        '<tr><td style="padding:8px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:12px 16px">' +
+          row(T('Factura', 'Invoice'), '#' + esc(inv.number || '')) +
+          row(T('Vence', 'Due'), esc(fmtDay(inv.dueDate || inv.issueDate))) +
+          (paid > 0 ? row(T('Pagado', 'Paid'), money(paid)) : '') +
+          row(T('Total a pagar', 'Amount due'), money(due), true) +
+        '</table></td></tr>' +
+        '<tr><td style="padding:12px 24px 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' +
+          (payUrl ? btn(payUrl, '💳 ' + esc(T('Pagar con tarjeta', 'Pay by card')) + ' · ' + money(due), true) : '') +
+          btn(pdfUrl, '📄 ' + esc(T('Ver factura (PDF)', 'View invoice (PDF)')), !payUrl) +
+        '</table></td></tr>' +
+        (payUrl ? '<tr><td style="padding:4px 24px 0;color:#6B7280;font-size:12px;text-align:center">' + esc(T('Pago seguro con Stripe.', 'Secure payment by Stripe.')) + '</td></tr>' : '') +
+        '<tr><td style="padding:20px 24px 24px;color:#6B7280;font-size:13px;border-top:1px solid #E5E7EB">' +
+          '<b style="color:#111827">' + esc(co) + '</b>' + (phone ? '<br>📞 <a href="tel:' + esc(phone.replace(/[^\d+]/g, '')) + '" style="color:' + green + '">' + esc(phone) + '</a>' : '') +
+          '<br>' + esc(T('¿Preguntas? Responda a este correo.', 'Questions? Just reply to this email.')) + '</td></tr>' +
+      '</table>' +
+      '<div style="color:#9CA3AF;font:12px Arial,sans-serif;padding:14px">' + esc(T('Enviado con WalkCheck', 'Sent with WalkCheck')) + '</div>' +
+      '</td></tr></table></body></html>';
+  }
   window.openEmailInvoice = function (id) {
     var inv = $('billingPane')._inv || {};
     var j = jobs.find(function (x) { return x.id === inv.jobId; }) || {};
@@ -882,13 +924,10 @@
         }
         payUrl = payLink(id || inv.id, tok);
       }
-      var payBtn = payUrl
-        ? '<p style="margin:18px 0"><a href="' + payUrl + '" style="background:#16A34A;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;display:inline-block">' +
-          esc(T('Pagar en línea', 'Pay online')) + ' · ' + money(inv.total) + '</a></p>'
-        : '';
-      var html = '<p>' + esc(body).replace(/\n/g, '<br>') + '</p>' + payBtn + '<p><a href="' + url + '">' + esc(T('Descargar la factura en PDF', 'Download the invoice PDF')) + '</a></p>';
+      var html = invoiceEmailHtml(inv, body, url, payUrl);
       if (payUrl) body = body + '\n\n' + T('Pagar en línea con tarjeta: ', 'Pay online by card: ') + payUrl;
-      await db.collection('mail').add({
+      var replyTo = (auth.currentUser && auth.currentUser.email) || '';
+      var mailDoc = {
         to: [to],
         companyId: cid(),
         invoiceId: id || inv.id,
@@ -899,7 +938,10 @@
           attachments: [{ filename: pdfName(inv), path: url, contentType: 'application/pdf' }]
         },
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      };
+      // The client's reply goes to the company, not to WalkCheck.
+      if (replyTo) mailDoc.replyTo = replyTo;
+      await db.collection('mail').add(mailDoc);
       var sends = (inv.sends || []).slice();
       sends.push({ channel: 'email', to: to, at: new Date().toISOString(), pdfUrl: url });
       await db.collection('companies').doc(cid()).collection('invoices').doc(id || inv.id).set({

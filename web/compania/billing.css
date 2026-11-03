@@ -33,3 +33,19 @@ body.view-archived #archivedPane { display: block; }
   .inv-line input[data-lqty]::before { content: ''; }
 }
 
+
+/* Invoice actions on phones: back + job on one row, then one big button per
+   line (Enviar first) so nothing gets cut off. */
+@media (max-width: 640px) {
+  .inv-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .inv-actions .btn { width: 100%; min-width: 0; padding: 12px 10px; font-size: 15px; line-height: 1.2; white-space: normal; }
+  .inv-actions .ia-nav { padding: 9px 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inv-actions .ia-send, .inv-actions .ia-pdf, .inv-actions .ia-tax, .inv-actions > p { grid-column: 1 / -1; }
+  .inv-actions .ia-send { order: 1; font-size: 16px; padding: 14px 10px; }
+  .inv-actions .ia-pdf { order: 2; }
+  .inv-actions .ia-tax { order: 3; }
+  .inv-actions > p { order: 4; margin: 0; }
+  .inv-parties { grid-template-columns: 1fr !important; }
+  .inv-paper h2 { font-size: 20px; }
+  .inv-paper th, .inv-paper td { font-size: 13px; padding: 6px 4px 6px 0; }
+}
