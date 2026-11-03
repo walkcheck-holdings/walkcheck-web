@@ -574,7 +574,7 @@
       '<label class="muted">' + esc(T('Fecha de emisión', 'Issue date')) + '</label><input id="invIssue" type="date" value="' + esc(draft.issueDate || ymd(new Date())) + '">' +
       '<label><input type="checkbox" id="invTax"' + (draft.chargeTax ? ' checked' : '') + '> ' +
         esc(T('Cobrar impuesto (' + Math.round(Number(companyTaxRate || 0) * 10000) / 100 + '% — se cambia en Facturación)', 'Charge tax (' + Math.round(Number(companyTaxRate || 0) * 10000) / 100 + '% — set in Billing)')) + '</label>' +
-      '<p class="muted">' + esc(T('Se guarda como Pendiente. Para enviarla al cliente hacen falta fotos de antes y después del trabajo.', 'Saved as Pending. Sending it to the client needs before and after work photos.')) + '</p>' +
+      '<p class="muted">' + esc(T('Se guarda como Pendiente. Después la puedes enviar al cliente.', 'Saved as Pending. You can send it to the client afterwards.')) + '</p>' +
       '<div class="err" id="invErr"></div>' +
       (ok
         ? '<button class="btn" onclick="saveInvoiceFromEditor(\'' + esc(jobId) + '\',' + (existing && existing.id ? '\'' + existing.id + '\'' : 'null') + ')">' + esc(T('Guardar factura', 'Save invoice')) + '</button>'
@@ -678,8 +678,9 @@
     var after = typeof jobAfterPhotos === 'function' ? jobAfterPhotos(j) : [];
     return before.concat(after);
   }
-  function canSendInvoice(j) {
-    return typeof jobHasWorkPhotos === 'function' ? jobHasWorkPhotos(j) : (jobPhotos(j).length > 0);
+  // Invoices can be sent with or without job photos (owner decision, Nov 2026).
+  function canSendInvoice() {
+    return true;
   }
   window.openInvoice = async function (id) {
     if (!canSeeMoney()) return;
@@ -716,9 +717,7 @@
     var ps = payStatus(inv);
     var sendBlock = !hasClient
       ? '<p class="muted" style="color:#9A5B00">' + esc(T('Para enviarla falta el cliente que paga.', 'To send it, add the paying client.')) + '</p>'
-      : !photosOk
-        ? '<p class="muted">' + esc(T('Para enviarla, sube fotos de ANTES y DESPUÉS del trabajo.', 'To send it, upload BEFORE and AFTER job photos.')) + '</p>'
-        : '<button class="btn" onclick="openEmailInvoice(\'' + id + '\')">' + esc(T('Enviar al cliente', 'Send to client')) + '</button>';
+      : '<button class="btn" onclick="openEmailInvoice(\'' + id + '\')">' + esc(T('Enviar al cliente', 'Send to client')) + '</button>';
     sends = (inv.sends || []).map(function (s) {
       return '<div class="muted">' + esc(s.channel === 'email' ? T('Correo', 'Email') : s.channel) + ' · ' + esc(s.to || '') + ' · ' + esc(String(s.at || '').slice(0, 16).replace('T', ' ')) + '</div>';
     }).join('') || '<p class="muted">' + esc(T('Todavía no se ha enviado.', 'Not sent yet.')) + '</p>';
@@ -727,6 +726,11 @@
         '<button class="btn ghost" onclick="openBilling()">← ' + esc(uiT('money')) + '</button>' +
         (inv.jobId ? '<button class="btn ghost" onclick="openJobDetail(\'' + inv.jobId + '\')">' + esc(T('Trabajo #', 'Job #') + (inv.jobNumber || '')) + '</button>' : '') +
         '<button class="btn" onclick="downloadInvoicePdf()">' + esc(T('Descargar PDF', 'Download PDF')) + '</button>' +
+        (st !== 'paid'
+          ? '<button class="btn ghost" onclick="toggleInvoiceTax(\'' + id + '\')">' + esc(Number(inv.tax || 0) > 0
+              ? T('Quitar taxes de Florida', 'Remove Florida tax')
+              : T('Poner taxes de Florida (' + flTaxPct() + '%)', 'Add Florida tax (' + flTaxPct() + '%)')) + '</button>'
+          : '') +
         sendBlock +
       '</div>' +
       '<div class="inv-paper" id="invPaper">' +
@@ -758,6 +762,26 @@
       '<div class="job-sec"><h3>' + esc(T('Notas', 'Notes')) + '</h3>' + notes +
       '<textarea id="invNote" rows="2"></textarea><button class="btn ghost" onclick="addInvoiceNote(\'' + id + '\')">' + esc(T('Agregar nota', 'Add note')) + '</button></div>';
     $('billingPane')._inv = Object.assign({}, inv, { id: inv.id || id, client: c.name, clientEmail: c.email, clientAddress: c.address || inv.clientAddress || '' });
+  };
+  // Florida sales tax: the company's rate from Billing; if none is set,
+  // Miami-Dade's 7% (6% state + 1% county surtax).
+  var FL_DEFAULT_TAX = 0.07;
+  function flTaxRate() { return Number(companyTaxRate || 0) > 0 ? Number(companyTaxRate) : FL_DEFAULT_TAX; }
+  function flTaxPct() { return Math.round(flTaxRate() * 10000) / 100; }
+  // Adds or removes the tax on a saved invoice and recalculates the total.
+  window.toggleInvoiceTax = async function (id) {
+    if (!canSeeMoney()) return;
+    var inv = $('billingPane')._inv || {};
+    var sub = Number(inv.subtotal || 0);
+    var on = !(Number(inv.tax || 0) > 0);
+    var rate = on ? flTaxRate() : 0;
+    var tax = +(sub * rate).toFixed(2);
+    try {
+      await db.collection('companies').doc(cid()).collection('invoices').doc(id).set({
+        chargeTax: on, taxRate: rate, tax: tax, total: +(sub + tax).toFixed(2)
+      }, { merge: true });
+    } catch (e) { alert(e.message || e); return; }
+    openInvoice(id);
   };
   // One click: the formal PDF (same file that "Enviar al cliente" attaches).
   window.invoicePdf = async function (id) {
