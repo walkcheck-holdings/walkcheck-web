@@ -124,3 +124,15 @@ body.jv-open { overflow: hidden; }
 .jr-more { width: 48px; height: 48px; border-radius: 10px; border: 1.5px solid #D1D5DB; background: #fff; font-size: 22px; font-weight: 800; cursor: pointer; color: #374151; }
 .jr-menu { position: absolute; right: 0; bottom: 54px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.16); min-width: 220px; padding: 6px; }
 .jr-menu button { width: 100%; text-align: left; border: none; background: #fff; min-height: 44px; font-weight: 700; cursor: pointer; border-radius: 8px; }
+
+/* "Formulario completado" bottom sheet + big complete button (Job Report) */
+.jr-done-main { flex: 1; min-height: 48px; border-radius: 10px; border: 0; background: #16A34A; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
+.jr-done-main:disabled { opacity: .55; }
+.jr-sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 9998; display: flex; align-items: flex-end; justify-content: center; }
+.jr-sheet { background: #fff; width: 100%; max-width: 520px; border-radius: 22px 22px 0 0; padding: 12px 24px calc(24px + env(safe-area-inset-bottom)); text-align: center; animation: jrUp .2s ease-out; }
+.jr-sheet .grab { width: 44px; height: 5px; border-radius: 3px; background: #E5E7EB; margin: 0 auto 18px; }
+.jr-sheet .ok { width: 60px; height: 60px; border-radius: 50%; background: #DCFCE7; color: #16A34A; font-size: 30px; font-weight: 800; line-height: 60px; margin: 0 auto 14px; }
+.jr-sheet h3 { margin: 0 0 22px; font-size: 26px; color: #0F2A3D; }
+.jr-sheet .btn-ok { width: 100%; min-height: 50px; border: 0; border-radius: 10px; background: #16A34A; color: #fff; font-weight: 800; font-size: 17px; cursor: pointer; }
+.jr-sheet .btn-edit { width: 100%; min-height: 46px; border: 0; background: none; color: #0F2A3D; font-weight: 700; font-size: 16px; margin-top: 8px; cursor: pointer; }
+@keyframes jrUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }

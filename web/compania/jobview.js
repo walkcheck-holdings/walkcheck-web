@@ -594,9 +594,14 @@
         slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts), 'rpRec', receipts.length > 0) + '</section>' +
       '<section class="jr-card"><h3>Final Notes</h3><textarea id="rpN" rows="3" aria-label="Final Notes">' + esc(r.finalNotes || '') + '</textarea>' +
         '<div class="err" id="rpErr"></div><p class="muted" id="rpSaved"></p></section>' +
-      '<div class="jr-foot"><button type="button" class="jr-save" id="rpSaveBtn" onclick="jvSaveReport(false)">' + esc(L('Guardar progreso', 'Save progress')) + '</button>' +
+      '<div class="jr-foot">' + (n === 10
+          ? '<button type="button" class="jr-done-main" id="rpSaveBtn" onclick="jvSaveReport(true)">' + esc(L('Marcar formulario como completado', 'Mark form as complete')) + '</button>'
+          : '<button type="button" class="jr-save" id="rpSaveBtn" onclick="jvSaveReport(false)">' + esc(L('Guardar progreso', 'Save progress')) + '</button>') +
         '<div class="jr-more-wrap"><button type="button" class="jr-more" aria-label="' + esc(L('Más', 'More')) + '" onclick="var m=document.getElementById(\'jrMore\'); if(m) m.classList.toggle(\'hidden\')">⋯</button>' +
-          '<div id="jrMore" class="jr-menu hidden"><button type="button" onclick="jvSaveReport(true)">' + esc(r.completed ? L('Guardar reporte completado', 'Save completed report') : L('Completar', 'Complete')) + '</button></div></div></div>';
+          '<div id="jrMore" class="jr-menu hidden">' + (n === 10
+            ? '<button type="button" onclick="jvSaveReport(false)">' + esc(L('Guardar progreso', 'Save progress')) + '</button>'
+            : '<button type="button" onclick="jvSaveReport(true)">' + esc(r.completed ? L('Guardar reporte completado', 'Save completed report') : L('Completar', 'Complete')) + '</button>') +
+          '</div></div></div>';
   }
   window.jvOpenReport = function () { S.view = 'jobreport'; render(); };
   window.jvCloseReport = function () { S.view = 'job'; S.tab = 'checklists'; render(); };
@@ -604,6 +609,20 @@
     var files = (input && input.files) ? Array.from(input.files) : [];
     for (var i = 0; i < files.length && list.length < 50; i++) list.push(await uploadJobFile(jobId, kind, files[i]));
     return list;
+  }
+  // "Formulario completado": Listo goes back to the visit, "Seguir editando" stays.
+  function jvDoneSheet() {
+    var bg = document.createElement('div');
+    bg.className = 'jr-sheet-bg';
+    bg.innerHTML = '<div class="jr-sheet" role="dialog" aria-modal="true"><div class="grab"></div><div class="ok">✓</div>' +
+      '<h3>' + esc(L('Formulario completado', 'Form completed')) + '</h3>' +
+      '<button type="button" class="btn-ok">' + esc(L('Listo', 'Done')) + '</button>' +
+      '<button type="button" class="btn-edit">' + esc(L('Seguir editando', 'Keep editing')) + '</button></div>';
+    document.body.appendChild(bg);
+    var close = function () { bg.remove(); };
+    bg.querySelector('.btn-ok').onclick = function () { close(); jvCloseReport(); };
+    bg.querySelector('.btn-edit').onclick = close;
+    bg.onclick = function (e) { if (e.target === bg) close(); };
   }
   window.jvSaveReport = async function (complete) {
     var j = S.job; if (!j || !$('rpP')) return;
@@ -667,6 +686,13 @@
       await db.collection('jobs').doc(j.id).set(patch, { merge: true });
       var fresh = await loadJob(j.id);
       if (fresh) { S.job = fresh; j = fresh; }
+      // "Completar" with everything filled: back to the visit screen.
+      if (complete && !miss.length && report.completed) {
+        S.view = 'jobreport';
+        render();
+        jvDoneSheet();
+        return;
+      }
       S.view = 'jobreport';
       render();
       var msg = miss.length

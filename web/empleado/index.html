@@ -547,6 +547,18 @@
   @media (min-width: 768px) {
     body.ready[data-portal="employee"] #empNav { display: flex !important; }
   }
+
+/* "Formulario completado" bottom sheet + big complete button (Job Report) */
+.jr-done-main { flex: 1; min-height: 48px; border-radius: 10px; border: 0; background: #16A34A; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
+.jr-done-main:disabled { opacity: .55; }
+.jr-sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 9998; display: flex; align-items: flex-end; justify-content: center; }
+.jr-sheet { background: #fff; width: 100%; max-width: 520px; border-radius: 22px 22px 0 0; padding: 12px 24px calc(24px + env(safe-area-inset-bottom)); text-align: center; animation: jrUp .2s ease-out; }
+.jr-sheet .grab { width: 44px; height: 5px; border-radius: 3px; background: #E5E7EB; margin: 0 auto 18px; }
+.jr-sheet .ok { width: 60px; height: 60px; border-radius: 50%; background: #DCFCE7; color: #16A34A; font-size: 30px; font-weight: 800; line-height: 60px; margin: 0 auto 14px; }
+.jr-sheet h3 { margin: 0 0 22px; font-size: 26px; color: #0F2A3D; }
+.jr-sheet .btn-ok { width: 100%; min-height: 50px; border: 0; border-radius: 10px; background: #16A34A; color: #fff; font-weight: 800; font-size: 17px; cursor: pointer; }
+.jr-sheet .btn-edit { width: 100%; min-height: 46px; border: 0; background: none; color: #0F2A3D; font-weight: 700; font-size: 16px; margin-top: 8px; cursor: pointer; }
+@keyframes jrUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 </style>
 </head>
 <body class="tab-agenda">
@@ -3366,15 +3378,38 @@ function jobReportScreenHtml(j){
     </div>
     <div class="jr-foot">
       <button type="button" class="jr-save" id="rpSaveBtn" onclick="saveJobReport('${j.id}', false)">${esc(enL?'Save progress':'Guardar progreso')}</button>
+      <button type="button" class="jr-done-main hidden" id="rpDoneMain" onclick="saveJobReport('${j.id}', true)">${esc(enL?'Mark form as complete':'Marcar formulario como completado')}</button>
       <div class="jr-more-wrap">
         <button type="button" class="jr-more" aria-label="${esc(enL?'More':'Más')}" onclick="jrToggleMore(event)">⋯</button>
         <div id="jrMore" class="jr-menu hidden">
+          <button type="button" id="rpSaveMenu" class="hidden" onclick="jrToggleMore();saveJobReport('${j.id}', false)">${esc(enL?'Save progress':'Guardar progreso')}</button>
           <button type="button" id="rpDoneBtn" onclick="jrToggleMore();saveJobReport('${j.id}', true)">${esc(r.completed ? (enL?'Save completed report':'Guardar reporte completado') : (enL?'Complete':'Completar'))}</button>
         </div>
       </div>
     </div>`;
 }
 function openJobReport(id){ goVisitTab('jobreport', id); }
+// "Formulario completado": Listo goes back to the visit (both forms),
+// "Seguir editando" stays on the Job Report.
+function jrDoneSheet(id){
+  const en = loginLang() === 'en';
+  const bg = document.createElement('div');
+  bg.className = 'jr-sheet-bg';
+  bg.innerHTML = `<div class="jr-sheet" role="dialog" aria-modal="true">
+    <div class="grab"></div><div class="ok">✓</div>
+    <h3>${esc(en ? 'Form completed' : 'Formulario completado')}</h3>
+    <button type="button" class="btn-ok">${esc(en ? 'Done' : 'Listo')}</button>
+    <button type="button" class="btn-edit">${esc(en ? 'Keep editing' : 'Seguir editando')}</button></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.querySelector('.btn-ok').onclick = () => {
+    close();
+    visitTab = (jrFrom && jrFrom !== 'jobreport') ? jrFrom : 'info';
+    openJobView(id);
+  };
+  bg.querySelector('.btn-edit').onclick = close;
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+}
 async function closeJobReport(id){
   const back = (jrFrom && jrFrom !== 'jobreport') ? jrFrom : 'info';
   if (jrPendingFiles() || rpDirty) { await saveJobReport(id, false, { stay: back }); return; }
@@ -3445,6 +3480,13 @@ function jrMeter(){
   });
   $('jrCount').textContent = n + '/10 ' + (en ? 'required fields completed' : 'campos obligatorios completos');
   const bar = $('jrBar'); if (bar) bar.style.width = (n/10*100) + '%';
+  // 10/10: the big button becomes "Marcar formulario como completado";
+  // "Guardar progreso" moves into the ⋯ menu.
+  const full = n === 10;
+  if ($('rpDoneMain')) $('rpDoneMain').classList.toggle('hidden', !full);
+  if ($('rpSaveBtn')) $('rpSaveBtn').classList.toggle('hidden', full);
+  if ($('rpSaveMenu')) $('rpSaveMenu').classList.toggle('hidden', !full);
+  if ($('rpDoneBtn')) $('rpDoneBtn').classList.toggle('hidden', full);
   const bn = $('jrBeforeN'); if (bn) bn.textContent = pics('rpBeforeThumbs') + '/50';
   const an = $('jrAfterN'); if (an) an.textContent = pics('rpAfterThumbs') + '/50';
   const rn = $('jrRecN'); if (rn) rn.textContent = pics('rpRecThumbs') + '/50';
@@ -3802,9 +3844,13 @@ async function saveJobReport(id, complete, opt){
       });
     }
   } catch(e){ if (err) err.textContent = reportSaveError(e); if (saved) saved.textContent = ''; unlock(); return; }
+  // "Completar" with everything filled: go back to the visit screen (where
+  // both forms are) so the worker can finish the visit.
+  const doneNow = !!complete && report.completed === true && !missing;
   visitTab = (opt && opt.stay) || 'jobreport';
   await loadBoard();
   await openJobView(id);
+  if (doneNow) { jrDoneSheet(id); return; }
   // Message after the screen reloads: what is still missing, or done.
   const msg = missing || (justCompleted ? (enS ? '✓ Job Report completed.' : '✓ Job Report completado.') : '');
   const e2 = $('rpErr');
