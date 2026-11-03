@@ -3594,7 +3594,8 @@ async function openJobView(id){
   const dayStr = j.scheduledDate || v0.scheduledDate || ymd(selectedDay);
   const dayLbl = (() => { const p = String(dayStr).split('-'); if (p.length < 3) return dayStr; const m = (enL ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'])[+p[1]-1]; return m + ' ' + p[2]; })();
   const started = !!(j.visitStartedAt || v0.startedAt);
-  const late = !completed && dayStr < ymd(new Date());
+  // "Retrasado" only after the END time of the visit, never when it is closed.
+  const late = !completed && (dayStr < ymd(new Date()) || (dayStr === ymd(new Date()) && en < new Date()));
   const stInfo = completed ? ['done', L('Concluida', 'Completed')]
     : j.needsReturn === true ? ['ret', L('Necesita volver', 'Needs return')]
     : started ? ['run', L('En curso', 'In progress')]
