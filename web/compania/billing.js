@@ -829,10 +829,27 @@
       '<label class="muted">' + esc(T('Asunto', 'Subject')) + '</label><input id="emSub" type="text" value="' + esc(copy.subject) + '">' +
       '<label class="muted">' + esc(T('Mensaje', 'Message')) + '</label><textarea id="emBody" rows="6">' + esc(copy.body) + '</textarea>' +
       '<p class="muted">📎 ' + esc(pdfName(inv)) + ' — ' + esc(T('el mismo PDF que se descarga.', 'the same PDF you download.')) + '</p>' +
+      '<div id="emPay" class="muted" style="margin:8px 0">💳 ' + esc(T('Revisando pago con tarjeta…', 'Checking card payments…')) + '</div>' +
       '<div class="err" id="emErr"></div>' +
       '<button class="btn" id="emSend" onclick="sendInvoiceMail(\'' + id + '\')">' + esc(T('Enviar', 'Send')) + '</button>' +
       '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(T('Cancelar', 'Cancel')) + '</button></div>';
+    showInvoicePayOption(inv);
   };
+  // Tells the owner, before sending, whether the client will get the
+  // "Pagar en línea" (card) button — it needs the company's Stripe connected.
+  async function showInvoicePayOption(inv) {
+    var box = $('emPay'); if (!box) return;
+    try { var s = await connectCall('status'); window.companyCanTakeCards = !!s.chargesEnabled; } catch (_) {}
+    box = $('emPay'); if (!box) return;
+    if (window.companyCanTakeCards) {
+      box.innerHTML = '<b style="color:#166534">💳 ' + esc(T('El cliente podrá pagar con tarjeta', 'The client can pay by card')) + '</b> — ' +
+        esc(T('el correo lleva el botón "Pagar en línea · ', 'the email includes the "Pay online · ') + money(inv.total) + '".');
+    } else {
+      box.innerHTML = '<b style="color:#9A5B00">💳 ' + esc(T('Sin pago con tarjeta', 'No card payment')) + '</b> — ' +
+        esc(T('para que el cliente pueda pagar con tarjeta, conecta tu Stripe primero.', 'to let the client pay by card, connect your Stripe first.')) +
+        (canManageRoles() ? ' <a href="#" onclick="startConnect();return false">' + esc(T('Conectar mi Stripe', 'Connect my Stripe')) + '</a>' : '');
+    }
+  }
   // Builds the PDF, stores it (reports/{companyId}/invoices/...), and queues
   // the email to the paying client in the `mail` collection with the PDF
   // attached (plus a link, in case the mail client strips attachments).
