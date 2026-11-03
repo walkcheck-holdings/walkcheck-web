@@ -559,6 +559,48 @@
 .jr-sheet .btn-ok { width: 100%; min-height: 50px; border: 0; border-radius: 10px; background: #16A34A; color: #fff; font-weight: 800; font-size: 17px; cursor: pointer; }
 .jr-sheet .btn-edit { width: 100%; min-height: 46px; border: 0; background: none; color: #0F2A3D; font-weight: 700; font-size: 16px; margin-top: 8px; cursor: pointer; }
 @keyframes jrUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Visit screen (worker) — same layout as the app */
+.vz { background: #fff; min-height: 100%; }
+.vz-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; position: sticky; top: 0; background: #fff; z-index: 3; }
+.vz-icon { width: 42px; height: 42px; border-radius: 50%; border: 1px solid #E5E7EB; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; text-decoration: none; color: #0F2A3D; cursor: pointer; }
+.vz-head { padding: 0 14px 6px; }
+.vz-st { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #374151; }
+.vz-st i { width: 10px; height: 10px; border-radius: 3px; background: #9CA3AF; }
+.vz-st.late i { background: #DC2626; } .vz-st.done i { background: #16A34A; } .vz-st.run i { background: #2563EB; } .vz-st.ret i { background: #D97706; }
+.vz-head h2 { margin: 6px 0 2px; font-size: 24px; line-height: 1.2; color: #0F2A3D; }
+.vz-sub { color: #15803D; font-weight: 700; font-size: 17px; margin-bottom: 10px; }
+.vz-row { margin: 8px 0; font-size: 15px; color: #111827; }
+.vz-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.vz-btn { min-height: 46px; border-radius: 10px; border: 0; background: #16A34A; color: #fff; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0 12px; cursor: pointer; }
+.vz-btn.ghost { background: #fff; color: #0F2A3D; border: 1px solid #D1D5DB; font-weight: 700; }
+.vz-acts { display: flex; gap: 8px; margin: 12px 0 6px; align-items: stretch; }
+.vz-acts .grow { flex: 1; }
+.vz-acts > .vz-btn.ghost.grow:first-child { color: #15803D; border-color: #16A34A; }
+.vz-started { color: #2563EB !important; border-color: #93C5FD !important; }
+.vz-more { width: 48px; padding: 0; font-size: 20px; }
+.vz-menu { right: 0; top: 52px; bottom: auto; }
+.vz-tabs { display: flex; gap: 4px; border-bottom: 1px solid #E5E7EB; padding: 0 8px; overflow-x: auto; }
+.vz-tabs button { border: 0; background: none; padding: 12px 14px; font-size: 15px; font-weight: 600; color: #6B7280; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.vz-tabs button.on { color: #0F2A3D; font-weight: 800; border-bottom-color: #16A34A; }
+.vz-body { background: #F3F4F6; padding-bottom: 90px; }
+.vz-sec { background: #fff; padding: 14px; margin-bottom: 8px; }
+.vz-sec h4 { margin: 0 0 8px; font-size: 16px; color: #0F2A3D; }
+.vz-form { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; border: 0; border-top: 1px solid #F1F5F9; background: #fff; padding: 12px 0; cursor: pointer; font: inherit; color: #0F2A3D; }
+.vz-form:first-of-type { border-top: 0; }
+.vz-form-sub { display: block; font-size: 13px; color: #6B7280; margin-top: 2px; }
+.vz-form-sub.ok { color: #15803D; }
+.vz-chev { font-size: 24px; color: #15803D; }
+.vz-item { padding: 8px 0; border-top: 1px solid #F1F5F9; }
+.vz-item:first-of-type { border-top: 0; }
+.vz-back { border: 0; background: #fff; width: 100%; text-align: left; padding: 12px 14px; font-weight: 700; color: #15803D; font-size: 15px; cursor: pointer; }
+.vz-sheet { text-align: left; }
+.vz-sheet h3 { font-size: 22px; margin: 0 0 4px; }
+.vz-sheet .muted { display: block; margin-bottom: 14px; }
+.vz-miss { width: 100%; display: flex; gap: 10px; align-items: center; border: 1px solid #E5E7EB; border-radius: 12px; background: #fff; padding: 12px; text-align: left; font: inherit; margin-bottom: 10px; cursor: pointer; }
+.vz-miss > span:nth-child(2) { flex: 1; }
+.vz-miss .muted { margin: 2px 0 0; font-size: 13px; }
+.vz-anyway { text-align: left; padding-left: 0; }
 </style>
 </head>
 <body class="tab-agenda">
@@ -3544,43 +3586,174 @@ async function openJobView(id){
   document.body.classList.remove('jr-on');
   $('viewJobs').classList.remove('jr-on');
   jrFrom = tab;
-  const info = `<p><b>${esc(j.title || j.kind || 'Job')}</b> · ${esc(j.clientName || j.contactName || '')}</p>
-      <p class="t">${esc(j.scheduledDate || ymd(selectedDay))} · ${fmt(st)} – ${fmt(en)}</p>
-      <p>${esc(j.address || '')}</p>
-      <p>${phoneHtml} · <a class="phone" target="_blank" rel="noopener" href="${maps}">Directions</a></p>
-      <p class="muted">Arrival window: Arrive at start time</p>
-      ${completed ? '' : `<button type="button" class="btn ghost" onclick="openReschedule('${j.id}')">📅 ${esc(loginLang()==='en'?'Reschedule':'Reprogramar')}</button>`}
-      ${j.lastReschedule && j.lastReschedule.reason ? `<p class="muted">${esc(loginLang()==='en'?'Rescheduled':'Reprogramado')}: ${esc(j.lastReschedule.reason)}</p>` : ''}
-      <h3>Instructions</h3>
-      <p style="white-space:pre-wrap">${esc(j.instructions || j.description || '')}</p>
-      ${completed ? '<p class="okmsg">✓ Completed</p>' : ''}`;
-  const client = `<p><b>${esc(j.clientName || j.contactName || '—')}</b></p><p>${esc(j.address || '')}</p><p>${phoneHtml}</p>`;
-  const notesHtml = (j.notesLog || []).map(n => `<div class="note-item"><div class="muted">${esc(n.authorName||'')}</div>${esc(n.text||'')}</div>`).join('')
-    || (j.notes ? `<p>${esc(j.notes)}</p>` : '<p class="muted">Sin notas</p>');
+  const enL = loginLang() === 'en';
+  const L = (es, en_) => enL ? en_ : es;
+  const client = j.clientName || j.contactName || '';
+  const title = j.title || j.kind || 'Job';
+  const v0 = jobVisits(j)[0] || {};
+  const dayStr = j.scheduledDate || v0.scheduledDate || ymd(selectedDay);
+  const dayLbl = (() => { const p = String(dayStr).split('-'); if (p.length < 3) return dayStr; const m = (enL ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'])[+p[1]-1]; return m + ' ' + p[2]; })();
+  const started = !!(j.visitStartedAt || v0.startedAt);
+  const late = !completed && dayStr < ymd(new Date());
+  const stInfo = completed ? ['done', L('Concluida', 'Completed')]
+    : j.needsReturn === true ? ['ret', L('Necesita volver', 'Needs return')]
+    : started ? ['run', L('En curso', 'In progress')]
+    : late ? ['late', L('Retrasado', 'Late')]
+    : ['up', L('Programada', 'Scheduled')];
+  const telHref = phone ? 'tel:' + phone.replace(/[^\d+]/g, '') : '';
   const tSteps = window.tradeSteps ? tradeSteps(companyType, j.kind || j.title || '') : [];
   const stepsDone = Array.isArray(r.steps) ? r.steps : [];
-  const enL = loginLang() === 'en';
-  const stepsHtml = tSteps.length ? `<h3>${esc(enL ? 'Job steps' : 'Pasos del trabajo')} <span class="muted" style="font-weight:400">(${stepsDone.filter(s => tSteps.includes(s)).length}/${tSteps.length})</span></h3>
-      <div class="trade-steps">${tSteps.map(s => `<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #EEF1F5;font-size:15px"><input type="checkbox" data-step="${esc(s)}" ${stepsDone.includes(s)?'checked':''} style="width:22px;height:22px;flex:none"> ${esc(s)}</label>`).join('')}</div>` : '';
-  const jrState = r.completed ? (enL ? 'Completed' : 'Completado') : (enL ? 'Not completed' : 'No completado');
-  const jrBtn = `<button type="button" class="jr-row" onclick="openJobReport('${j.id}')"><span><b>Job Report</b><span class="jr-row-sub">${done}/10 · ${esc(jrState)}</span></span><span aria-hidden="true">›</span></button>`;
-  const checks = `${stepsHtml}${jrBtn}`;
-  const body = (tab==='walk' && isWt) ? wtWorkerHtml(j) : tab==='client' ? client : tab==='notes' ? (notesHtml + `<textarea id="jobNotes" rows="3"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(loginLang()==='en'?'Add note':'Agregar nota')}</button>`) : tab==='checks' ? checks : info;
+  const upd = (() => { const t = r.updatedAt; const d = t && t.toDate ? t.toDate() : (t ? new Date(t) : null); return d && !isNaN(d) ? d.toLocaleString(enL ? 'en-US' : 'es-US', { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''; })();
+  const formRow = (name, ok, sub, onclick) => `<button type="button" class="vz-form" onclick="${onclick}">
+      <span><b>${esc(name)}</b><span class="vz-form-sub ${ok ? 'ok' : ''}">${ok ? '✓ ' : ''}${esc(sub)}</span></span><span class="vz-chev" aria-hidden="true">›</span></button>`;
+  const forms = formRow('Job Report', !!r.completed,
+      r.completed || done ? `${done}/10 ${L('campos obligatorios completados', 'required fields completed')}${upd ? ' · ' + L('Actualizado ', 'Updated ') + upd : ''}` : L('No completado', 'Not completed'),
+      `openJobReport('${j.id}')`) +
+    (tSteps.length ? formRow(L('Pasos del trabajo', 'Job steps'), stepsDone.filter(x => tSteps.includes(x)).length === tSteps.length,
+      `${stepsDone.filter(x => tSteps.includes(x)).length}/${tSteps.length} ${L('pasos', 'steps')}`, `goVisitTab('checks','${j.id}')`) : '');
+  const lines = Array.isArray(j.lines) ? j.lines : [];
+  const items = lines.length
+    ? lines.map(l => `<div class="vz-item"><b>${esc(l.name || '')}</b>${l.description || l.desc ? `<div class="muted">${esc(l.description || l.desc)}</div>` : ''}${l.qty ? `<span class="muted">× ${esc(l.qty)}</span>` : ''}</div>`).join('')
+    : `<p class="muted">${esc(L('Sin artículos', 'No items'))}</p>`;
+  const notesHtml = (j.notesLog || []).map(n => `<div class="note-item"><div class="muted">${esc(n.authorName||'')}</div>${esc(n.text||'')}</div>`).join('')
+    || (j.notes ? `<p>${esc(j.notes)}</p>` : `<p class="muted">${esc(L('Sin notas', 'No notes'))}</p>`);
+  const stepsHtml = tSteps.length ? `<h3>${esc(L('Pasos del trabajo', 'Job steps'))} <span class="muted" style="font-weight:400">(${stepsDone.filter(s => tSteps.includes(s)).length}/${tSteps.length})</span></h3>
+      <div class="trade-steps">${tSteps.map(s => `<label style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #EEF1F5;font-size:15px"><input type="checkbox" data-step="${esc(s)}" ${stepsDone.includes(s) ? 'checked' : ''} style="width:22px;height:22px;margin:0"> ${esc(s)}</label>`).join('')}</div>` : '';
+  let body;
+  if (tab === 'walk' && isWt) body = wtWorkerHtml(j);
+  else if (tab === 'checks') body = `<div class="vz-sec">${stepsHtml || `<p class="muted">${esc(L('Sin pasos', 'No steps'))}</p>`}</div>`;
+  else if (tab === 'notes') body = `<div class="vz-sec">${notesHtml}<textarea id="jobNotes" rows="3" placeholder="${esc(L('Escribe una nota…', 'Write a note…'))}"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(L('Agregar nota', 'Add note'))}</button></div>`;
+  else if (tab === 'client') body = `<div class="vz-sec"><h4>${esc(L('Cliente', 'Client'))}</h4><p><b>${esc(client || '—')}</b></p><p>${esc(j.address || '')}</p><p>${phoneHtml}</p></div>
+      <div class="vz-sec"><h4>${esc(L('Trabajo', 'Job'))}</h4><p>${esc(title)}${j.jobNumber ? ' · #' + esc(j.jobNumber) : ''}</p>
+      ${j.lastReschedule && j.lastReschedule.reason ? `<p class="muted">${esc(L('Reprogramado', 'Rescheduled'))}: ${esc(j.lastReschedule.reason)}</p>` : ''}</div>`;
+  else body = `<div class="vz-sec"><h4>${esc(L('Instrucciones', 'Instructions'))}</h4><p style="white-space:pre-wrap;margin:0">${esc(j.instructions || j.description || v0.instructions || '') || `<span class="muted">${esc(L('Sin instrucciones', 'No instructions'))}</span>`}</p></div>
+      <div class="vz-sec"><h4>${esc(L('Formularios', 'Forms'))}</h4>${forms}</div>
+      <div class="vz-sec"><h4>${esc(L('Producto / Servicio', 'Product / Service'))}</h4>${items}</div>
+      <div class="vz-sec"><h4>${esc(L('Horario', 'Schedule'))}</h4><p class="vz-row">📅 <b>${esc(dayLbl)}, ${fmt(st)} – ${fmt(en)}</b></p>
+        <h4 style="margin-top:14px">${esc(L('Equipo', 'Team'))}</h4><p class="vz-row">👥 ${esc(workerNameOf(j) || L('Sin asignar', 'Not assigned'))}</p></div>`;
+  const tabBtn = (t, label) => `<button type="button" class="${tab === t || (t === 'info' && tab === 'checks') ? 'on' : ''}" onclick="goVisitTab('${t}','${j.id}')">${esc(label)}</button>`;
   $('viewJobs').classList.remove('hidden');
-  $('viewJobs').innerHTML = `<div class="jobhead">
-      <button class="back" onclick="(rpDirty?saveReportDraft('${j.id}'):Promise.resolve()).then(closeJobView)">← ${esc(uiT('horario'))}</button>
-      <h2>${esc(j.title||j.kind||'Job')}${completed?' ✓':''}</h2>
+  $('viewJobs').innerHTML = `<div class="vz">
+    <div class="vz-top">
+      <button type="button" class="vz-icon" aria-label="${esc(L('Volver', 'Back'))}" onclick="(rpDirty?saveReportDraft('${j.id}'):Promise.resolve()).then(closeJobView)">‹</button>
+      ${telHref ? `<a class="vz-icon" href="${esc(telHref)}" aria-label="${esc(L('Llamar', 'Call'))}">📞</a>` : '<span></span>'}
     </div>
-    <div class="view-tabs" style="margin:8px 12px;flex-wrap:wrap">
-      ${isWt ? `<button type="button" class="${tab==='walk'?'on':''}" onclick="goVisitTab('walk','${j.id}')">🚶 Walkcheck (${WK_WALKTHROUGH.summary(j).checked}/${WK_WALKTHROUGH.areas.length})</button>` : ''}
-      <button type="button" class="${tab==='info'?'on':''}" onclick="goVisitTab('info','${j.id}')">Info</button>
-      <button type="button" class="${tab==='client'?'on':''}" onclick="goVisitTab('client','${j.id}')">Client</button>
-      <button type="button" class="${tab==='notes'?'on':''}" onclick="goVisitTab('notes','${j.id}')">Notes (${notes})</button>
-      <button type="button" class="${tab==='checks'?'on':''}" onclick="goVisitTab('checks','${j.id}')">Checklists (${cks})</button>
-      <button type="button" onclick="openJobReport('${j.id}')">Job Report</button>
+    <div class="vz-head">
+      <div class="vz-st ${stInfo[0]}"><i></i>${esc(stInfo[1])}</div>
+      <h2>${esc(L('Visita para ', 'Visit for ') + (client || title))}</h2>
+      <div class="vz-sub">${esc((client ? client + ' - ' : '') + title)}</div>
+      <p class="vz-row">📍 ${esc(j.address || '—')}</p>
+      <div class="vz-two">
+        <a class="vz-btn ghost" target="_blank" rel="noopener" href="${maps}">${esc(L('Direcciones', 'Directions'))}</a>
+        <button type="button" class="vz-btn ghost" onclick="visitOnMyWay('${j.id}')">${esc(j.onMyWayAt ? L('✓ En camino', '✓ On my way') : L('Voy en camino', 'On my way'))}</button>
+      </div>
+      <p class="vz-row">📅 ${esc(dayLbl)}, ${fmt(st)} – ${fmt(en)}</p>
+      <div class="vz-acts">
+        ${completed
+          ? `<button type="button" class="vz-btn ghost grow" onclick="reopenVisit('${j.id}')">${esc(L('Reabrir visita', 'Reopen visit'))}</button>`
+          : `${started ? `<span class="vz-btn ghost grow vz-started">▶ ${esc(L('En curso', 'In progress'))}</span>` : `<button type="button" class="vz-btn ghost grow" onclick="startVisit('${j.id}')">▶ ${esc(L('Iniciar visita', 'Start visit'))}</button>`}
+             <button type="button" class="vz-btn grow" onclick="askCompleteVisit('${j.id}')">${esc(L('Completar visita', 'Complete visit'))}</button>`}
+        <div class="jr-more-wrap"><button type="button" class="vz-btn ghost vz-more" aria-label="${esc(L('Más', 'More'))}" onclick="var m=document.getElementById('vzMore');if(m)m.classList.toggle('hidden')">⋯</button>
+          <div id="vzMore" class="jr-menu vz-menu hidden">${completed ? '' : `<button type="button" onclick="openReschedule('${j.id}')">📅 ${esc(L('Reprogramar', 'Reschedule'))}</button>`}<button type="button" onclick="openJobReport('${j.id}')">📝 Job Report</button></div></div>
+      </div>
     </div>
-    <div class="card">${body}</div>`;
+    <div class="vz-tabs">
+      ${isWt ? tabBtn('walk', '🚶 Walkcheck') : ''}${tabBtn('info', L('Visita', 'Visit'))}${tabBtn('client', L('Detalles', 'Details'))}${tabBtn('notes', L('Notas', 'Notes') + (notes ? ' (' + notes + ')' : ''))}
+    </div>
+    <div class="vz-body">${tab === 'checks' ? `<button type="button" class="vz-back" onclick="goVisitTab('info','${j.id}')">‹ ${esc(L('Visita', 'Visit'))}</button>` : ''}${body}</div>
+  </div>`;
   if (tab === 'checks') wireReportAutosave(j.id);
+}
+/* ===== Visit actions (worker) — like the app: Voy en camino, Iniciar,
+   Completar visita (warns if a form is not filled) and Reabrir visita. ===== */
+function visitDayPatch(j, status){
+  const day = j.scheduledDate || ymd(selectedDay);
+  return jobVisits(j).map(v => ((v.scheduledDate || j.scheduledDate) === day) ? Object.assign({}, v, { status }) : v);
+}
+async function visitJob(id){
+  try { const d = await db.collection('jobs').doc(id).get(); if (d.exists) return { id: d.id, ...d.data() }; } catch(_){}
+  return jobs.find(x => x.id === id) || null;
+}
+async function visitOnMyWay(id){
+  const j = await visitJob(id); if (!j) return;
+  const en = loginLang() === 'en';
+  try { await db.collection('jobs').doc(id).set({ onMyWayAt: new Date().toISOString(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }); } catch (e) { alert(e.message || e); return; }
+  const phone = String(j.contactPhone || j.clientPhone || '').replace(/[^\d+]/g, '');
+  if (phone) {
+    const who = (profile && (profile.displayName || '')) || '';
+    const msg = en ? `Hi, this is ${who}${companyName ? ' from ' + companyName : ''}. I'm on my way.` : `Hola, soy ${who}${companyName ? ' de ' + companyName : ''}. Voy en camino.`;
+    location.href = 'sms:' + phone + '?&body=' + encodeURIComponent(msg);
+  } else {
+    wkToast(en ? 'Marked on my way (no client phone).' : 'Marcado en camino (el cliente no tiene teléfono).');
+  }
+  openJobView(id);
+}
+async function startVisit(id){
+  try {
+    await db.collection('jobs').doc(id).set({ visitStartedAt: new Date().toISOString(), visitStartedBy: (auth.currentUser && auth.currentUser.uid) || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  } catch (e) { alert(e.message || e); return; }
+  wkToast(loginLang() === 'en' ? 'Visit started' : 'Visita iniciada');
+  openJobView(id);
+}
+async function askCompleteVisit(id){
+  if (rpDirty) await saveReportDraft(id);
+  const j = await visitJob(id); if (!j) return;
+  const en = loginLang() === 'en';
+  const r = j.report || {};
+  const missing = [];
+  if (!r.completed) missing.push({ name: 'Job Report', sub: `${requiredReportCount(r)}/10 ${en ? 'required fields completed' : 'campos obligatorios completados'}`, go: `openJobReport('${id}')` });
+  if (!missing.length) return completeVisit(id);
+  const bg = document.createElement('div');
+  bg.className = 'jr-sheet-bg';
+  bg.innerHTML = `<div class="jr-sheet vz-sheet" role="dialog" aria-modal="true"><div class="grab"></div>
+    <h3>${esc(missing.length > 1 ? (en ? 'Some forms are not filled' : 'Hay formularios sin rellenar') : (en ? 'A form is not filled' : 'Un formulario no está rellenado'))}</h3>
+    <p class="muted">${esc(en ? 'Before you go, please fill the form' : 'Antes de ir, por favor, rellene el formulario')}</p>
+    ${missing.map((m, i) => `<button type="button" class="vz-miss" data-i="${i}"><span>⚠️</span><span><b>${esc(m.name)}</b><span class="muted">${esc(m.sub)}</span></span><span>→</span></button>`).join('')}
+    <button type="button" class="btn-edit vz-anyway">${esc(en ? 'Complete visit' : 'Completar visita')}</button></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = (e) => { if (e.target === bg) close(); };
+  bg.querySelectorAll('.vz-miss').forEach(b => b.onclick = () => { close(); (new Function(missing[+b.dataset.i].go))(); });
+  bg.querySelector('.vz-anyway').onclick = () => { close(); completeVisit(id); };
+}
+async function completeVisit(id){
+  const j = await visitJob(id); if (!j) return;
+  const en = loginLang() === 'en';
+  const r = j.report || {};
+  const goBack = r.outcome === 'return';
+  const patch = {
+    status: goBack ? 'needs_return' : 'completed',
+    visitStatus: 'completed',
+    needsReturn: goBack,
+    visits: visitDayPatch(j, 'completed'),
+    completedAt: new Date().toISOString(),
+    completedBy: (auth.currentUser && auth.currentUser.uid) || '',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (goBack) patch.returnRequest = { reason: r.returnReason || '', byUid: patch.completedBy, byName: (profile && (profile.displayName || profile.email)) || '', at: new Date().toISOString() };
+  try { await db.collection('jobs').doc(id).set(patch, { merge: true }); } catch (e) { alert(reportSaveError(e)); return; }
+  visitTab = 'info';
+  await loadBoard();
+  await openJobView(id);
+  wkToast(en ? '✓ Visit completed' : '✓ Visita completada');
+}
+async function reopenVisit(id){
+  const en = loginLang() === 'en';
+  if (!confirm(en ? 'Reopen this visit?' : '¿Reabrir esta visita?')) return;
+  const j = await visitJob(id); if (!j) return;
+  try {
+    await db.collection('jobs').doc(id).set({ status: 'reopened', visitStatus: 'open', visits: visitDayPatch(j, 'open'), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  } catch (e) { alert(reportSaveError(e)); return; }
+  visitTab = 'info';
+  await loadBoard();
+  await openJobView(id);
+}
+function wkToast(text){
+  const t = document.createElement('div');
+  t.textContent = text;
+  t.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0F2A3D;color:#fff;font-weight:700;padding:12px 18px;border-radius:12px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:90vw;text-align:center';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
 }
 /* Job Report: typed text saves by itself a moment after the worker stops
    typing, and before switching tab or leaving, so nothing is lost. */
@@ -3808,27 +3981,9 @@ async function saveJobReport(id, complete, opt){
   const justCompleted = report.completed && prev.completed !== true;
   try {
     const patch = { report, reportCompleted: !!report.completed, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-    if (justCompleted) {
-      const goBack = solvedVal === 'return';
-      // Visit is done; if the job needs a return visit it stays open for the
-      // office (company panel shows it in alerts with "Agendar regreso").
-      patch.status = goBack ? 'needs_return' : 'completed';
-      patch.needsReturn = goBack;
-      if (goBack) {
-        patch.returnRequest = {
-          reason: returnReason,
-          byUid: (auth.currentUser && auth.currentUser.uid) || '',
-          byName: (profile && (profile.displayName || profile.email)) || '',
-          at: new Date().toISOString()
-        };
-      }
-      patch.visitStatus = 'completed';
-      const day = j.scheduledDate || ymd(selectedDay);
-      patch.visits = jobVisits(j).map(v => {
-        if ((v.scheduledDate || j.scheduledDate) === day) return Object.assign({}, v, { status: 'completed' });
-        return v;
-      });
-    }
+    // Completing the Job Report does not close the visit any more: the
+    // worker taps "Completar visita" (like the app). Keep it open until then.
+    if (justCompleted) patch.status = (j.status && j.status !== 'completed') ? j.status : 'open';
     await db.collection('jobs').doc(id).set(patch, {merge:true});
     rpDirty = false;
     if (justCompleted) {
