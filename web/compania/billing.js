@@ -37,6 +37,11 @@
   // building keep their own client fields.
   function clientOf(j) {
     j = j || {};
+    // Payer picked on the job itself ("Cliente que paga"): always wins. The
+    // tenant (contactName) is never the payer unless picked as such.
+    if (j.payerSet === true && (j.clientName || j.clientEmail)) {
+      return { name: j.clientName || '', email: j.clientEmail || '', address: j.clientAddress || '', source: 'job' };
+    }
     var b = buildings.find(function (x) { return x.id === j.buildingId; });
     if (b && (b.clientName || b.clientEmail)) {
       return { name: b.clientName || '', email: b.clientEmail || '', address: b.clientAddress || b.address || '', source: 'building', buildingId: b.id };
@@ -96,6 +101,21 @@
       ? '<img src="' + esc(data) + '" alt="" style="width:' + size + 'px;height:' + size + 'px;object-fit:contain;border-radius:8px">'
       : '<div class="rpt-logo" style="width:' + size + 'px;height:' + size + 'px">' + esc(String(name || 'W').charAt(0)) + '</div>';
   }
+  function workSiteOf(j) {
+    j = j || {};
+    return {
+      address: j.address || '',
+      unit: j.unit || '',
+      tenant: j.tenantName || (j.payerSet === true ? (j.contactName || '') : ''),
+      tenantPhone: j.tenantPhone || ''
+    };
+  }
+  window.workSiteOf = workSiteOf;
+  function workSiteLine(inv) {
+    var w = inv.workSite || {};
+    var bits = [w.unit ? T('Unidad ', 'Unit ') + w.unit : '', w.address || inv.address || '', w.tenant ? T('Inquilino: ', 'Tenant: ') + w.tenant : ''].filter(Boolean);
+    return bits.join(' · ');
+  }
   function partiesHtml(inv, c) {
     var ok = clientOk(c);
     return '<div class="inv-parties" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0">' +
@@ -139,7 +159,11 @@
     var b = buildings.find(function (x) { return x.id === j.buildingId; });
     var data = { clientName: c.name, clientEmail: c.email, clientAddress: c.address };
     try {
-      if (b) {
+      if (j.payerSet === true || !b) {
+        data.payerSet = true;
+        await db.collection('jobs').doc(jobId).set(data, { merge: true });
+        Object.assign(j, data);
+      } else if (b) {
         try {
           await db.collection('buildings').doc(b.id).update(data);
         } catch (_) {
@@ -202,7 +226,10 @@
     var by = y + 14, jy = y + 14;
     if (c.email) { doc.text(c.email, M, by); by += 13; }
     if (c.address) { doc.splitTextToSize(c.address, W / 2 - M - 10).forEach(function (l) { doc.text(l, M, by); by += 13; }); }
-    doc.splitTextToSize(String(inv.building || inv.address || ''), W / 2 - M - 10).forEach(function (l) { doc.text(l, W / 2 + 10, jy); jy += 13; });
+    var ws = inv.workSite || {};
+    var site = [ws.unit ? T('Unidad ', 'Unit ') + ws.unit : '', ws.address || inv.address || inv.building || ''].filter(Boolean).join(', ');
+    doc.splitTextToSize(site, W / 2 - M - 10).forEach(function (l) { doc.text(l, W / 2 + 10, jy); jy += 13; });
+    if (ws.tenant) { doc.splitTextToSize(T('Inquilino: ', 'Tenant: ') + ws.tenant, W / 2 - M - 10).forEach(function (l) { doc.text(l, W / 2 + 10, jy); jy += 13; }); }
     y = Math.max(by, jy) + 16;
     // Lines table
     var cols = [M, M + 150, W - M - 170, W - M - 95, W - M];
@@ -496,8 +523,10 @@
       companyName: companyName || j.companyName || '',
       building: bldName(j),
       address: j.address || bldName(j),
-      client: j.clientName || j.contactName || '',
-      clientEmail: j.contactEmail || '',
+      client: clientOf(j).name || (j.payerSet === true ? '' : (j.clientName || j.contactName || '')),
+      clientEmail: clientOf(j).email || (j.payerSet === true ? '' : (j.contactEmail || '')),
+      clientAddress: clientOf(j).address || '',
+      workSite: workSiteOf(j),
       description: j.instructions || j.description || '',
       issueDate: ymd(new Date()),
       dueDate: ymd(new Date()),
@@ -743,6 +772,7 @@
         partiesHtml(inv, c) +
         '<p>' + esc(T('Emitida', 'Issued')) + ': <b>' + esc(fmtDay(inv.issueDate)) + '</b> · ' + esc(T('Vence', 'Due')) + ': <b>' + esc(fmtDay(inv.dueDate || inv.issueDate)) + '</b></p>' +
         '<p class="muted">' + esc(T('Trabajo #', 'Job #') + (inv.jobNumber || '') + ' · ' + (inv.kind || '') + ' · ' + (inv.building || '')) + '</p>' +
+        (workSiteLine(inv) ? '<p style="margin:-4px 0 10px"><b>' + esc(T('Trabajo realizado en: ', 'Work done at: ')) + '</b>' + esc(workSiteLine(inv)) + '</p>' : '') +
         '<table><thead><tr><th>' + esc(T('Tipo de trabajo / descripción', 'Job type / description')) + '</th><th>' + esc(T('Cant.', 'Qty')) + '</th><th>' + esc(T('Precio', 'Price')) + '</th><th>Subtotal</th></tr></thead><tbody>' + rows + '</tbody></table>' +
         '<p style="text-align:right">' + esc(T('Subtotal', 'Subtotal')) + ' ' + money(inv.subtotal) + '<br>' +
           esc(T('Impuesto', 'Tax')) + ' (' + (Math.round(Number(inv.taxRate || 0) * 10000) / 100) + '%) ' + money(inv.tax) + '<br><b style="font-size:18px">Total ' + money(inv.total) + '</b></p>' +

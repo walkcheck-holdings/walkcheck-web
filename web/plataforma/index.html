@@ -34,6 +34,18 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .row-actions .btn { width:auto; padding:8px 12px; min-height:36px; font-size:13px; }
 .q { max-width:320px; margin:0 0 16px; }
+/* Discount / forgive a month */
+.cr-bg { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
+.cr-box { background:#fff; border-radius:14px; padding:18px; width:420px; max-width:100%; }
+.cr-box h3 { margin:0 0 4px; }
+.cr-opt { display:flex; gap:10px; align-items:flex-start; border:1.5px solid #E5E5EA; border-radius:10px; padding:10px 12px; margin:8px 0; cursor:pointer; }
+.cr-opt.on { border-color:#16A34A; background:#F0FDF4; }
+.cr-opt input[type=radio] { width:auto; margin:3px 0 0; }
+.cr-box input[type=number], .cr-box input[type=text] { width:100%; margin:6px 0 0; }
+.cr-hist { font-size:12px; color:#6B7280; margin-top:4px; }
+.cr-err { color:#B3261E; font-weight:700; min-height:18px; margin:8px 0 0; }
+.cr-btns { display:flex; gap:8px; margin-top:12px; }
+.cr-btns .btn { flex:1; }
 /* Revenue report */
 .kpis { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:0 0 18px; }
 .kpi { background:#fff; border-radius:12px; padding:14px; }
@@ -167,7 +179,7 @@ function render() {
       : '<span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span>';
     var btnLabel = pending ? 'Activar a mano' : (on ? 'Suspender' : 'Activar');
     return '<tr>' +
-      '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div></td>' +
+      '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div>' + creditLine(c) + '</td>' +
       '<td class="hide-sm">' + esc(plan) + '</td>' +
       '<td class="hide-sm">' + (PRICE[planId(c)] ? money(PRICE[planId(c)]) : '—') + '</td>' +
       '<td class="hide-sm"><span class="st-pill ' + bs.cls + '">' + esc(bs.txt) + '</span></td>' +
@@ -176,14 +188,81 @@ function render() {
       '<td><div class="row-actions">' +
         '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '"' +
           (pending ? ' data-confirm="1"' : '') + '>' + btnLabel + '</button>' +
+        (c.stripeCustomerId ? '<button type="button" class="btn ghost" data-credit="' + esc(c.id) + '">💸 Descuento</button>' : '') +
       '</div></td></tr>';
   }).join('');
+  $('rows').querySelectorAll('button[data-credit]').forEach(function (btn) {
+    btn.onclick = function () { openCredit(btn.getAttribute('data-credit')); };
+  });
   $('rows').querySelectorAll('button[data-id]').forEach(function (btn) {
     btn.onclick = function () {
       if (btn.getAttribute('data-confirm') && !confirm('Esta compañía no ha pagado en Stripe. ¿Activarla a mano de todas formas?')) return;
       setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-st'));
     };
   });
+}
+
+/* ===== Descuento / perdonar el mes (solo dueño de la app) =====
+   Stripe guarda el crédito en el cliente y lo resta solo del PRÓXIMO cobro. */
+var FN = 'https://us-central1-walkcheck-a4f1e.cloudfunctions.net/';
+function creditLine(c) {
+  var cr = Array.isArray(c.credits) ? c.credits : [];
+  if (!cr.length) return '';
+  var last = cr[cr.length - 1];
+  return '<div class="cr-hist">💸 ' + cr.length + (cr.length === 1 ? ' descuento' : ' descuentos') +
+    ' · total ' + money((c.creditsTotalCents || 0) / 100) + ' · último ' + day(last.at) + '</div>';
+}
+function openCredit(id) {
+  var c = list.filter(function (x) { return x.id === id; })[0];
+  if (!c) return;
+  var price = PRICE[planId(c)] || 0;
+  var bg = document.createElement('div');
+  bg.className = 'cr-bg';
+  bg.innerHTML = '<div class="cr-box" role="dialog" aria-modal="true">' +
+    '<h3>💸 Descuento para ' + esc(c.name || c.id) + '</h3>' +
+    '<p class="muted" style="margin:0 0 6px">Se resta solo del próximo cobro de su plan en Stripe. No se le devuelve dinero ya cobrado.</p>' +
+    '<label class="cr-opt on"><input type="radio" name="crk" value="month" checked><span><b>Perdonar el próximo mes</b><br><span class="muted">' +
+      (price ? 'Crédito de ' + money(price) + ' (su plan)' : 'Crédito igual al precio de su plan') + '</span></span></label>' +
+    '<label class="cr-opt"><input type="radio" name="crk" value="amount"><span style="flex:1"><b>Descontar un monto</b>' +
+      '<input id="crAmt" type="number" min="1" step="0.01" placeholder="Ej. 50.00"></span></label>' +
+    '<label class="muted" for="crNote" style="display:block;margin-top:6px">Motivo (lo ve la compañía en su recibo de Stripe)</label>' +
+    '<input id="crNote" type="text" maxlength="200" placeholder="Ej. Cortesía por el retraso">' +
+    '<div class="cr-err" id="crErr"></div>' +
+    '<div class="cr-btns"><button type="button" class="btn ghost" id="crNo">Cancelar</button><button type="button" class="btn" id="crGo">Dar descuento</button></div></div>';
+  document.body.appendChild(bg);
+  var close = function () { bg.remove(); };
+  var reqId = id + '-' + Date.now();
+  bg.querySelectorAll('input[name=crk]').forEach(function (r) {
+    r.onchange = function () { bg.querySelectorAll('.cr-opt').forEach(function (o) { o.classList.toggle('on', o.contains(bg.querySelector('input[name=crk]:checked'))); }); };
+  });
+  $('crAmt').onfocus = function () { bg.querySelector('input[value=amount]').checked = true; bg.querySelector('input[value=amount]').onchange(); };
+  $('crNo').onclick = close;
+  bg.onclick = function (e) { if (e.target === bg) close(); };
+  $('crGo').onclick = async function () {
+    var kind = bg.querySelector('input[name=crk]:checked').value;
+    var amount = Number($('crAmt').value);
+    if (kind === 'amount' && !(amount > 0)) { $('crErr').textContent = 'Escribe un monto.'; return; }
+    var what = kind === 'month' ? 'perdonarle el próximo mes' + (price ? ' (' + money(price) + ')' : '') : 'descontarle ' + money(amount);
+    if (!confirm('¿Seguro que quieres ' + what + ' a ' + (c.name || c.id) + '?')) return;
+    var go = $('crGo'); go.disabled = true; go.textContent = 'Aplicando…';
+    $('crErr').textContent = '';
+    try {
+      var tok = await auth.currentUser.getIdToken();
+      var r = await fetch(FN + 'platformCredit', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: id, kind: kind, amount: amount, note: $('crNote').value.trim(), requestId: reqId })
+      });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      close();
+      alert('Listo: ' + money(j.cents / 100) + ' de descuento para ' + (c.name || c.id) + '. Se resta en su próximo cobro.');
+      await load();
+    } catch (e) {
+      $('crErr').textContent = 'No se pudo: ' + (e.message || e);
+      go.disabled = false; go.textContent = 'Dar descuento';
+    }
+  };
 }
 
 async function setStatus(id, status) {

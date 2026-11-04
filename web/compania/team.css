@@ -1,0 +1,17 @@
+/* Team members (company panel only) */
+/* Team member page (company panel) */
+.wk-head { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+.wk-av { width:52px; height:52px; border-radius:50%; background:#DCFCE7; color:#166534; font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; flex:none; }
+.wk-acts { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.wk-acts .btn { width:auto; flex:1; min-width:110px; text-align:center; text-decoration:none; margin:0; }
+.wk-row { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid #EEF0F3; font-size:14px; }
+.wk-row > span { color:#6B7280; flex:none; }
+.wk-row > b { text-align:right; overflow-wrap:anywhere; }
+.wk-temp { background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:10px 12px; margin:12px 0 0; }
+.wk-edit-btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.wk-edit-btns .btn { width:auto; flex:1; min-width:160px; margin:0; }
+.wk-team-row { width:100%; border:0; background:#fff; text-align:left; font:inherit; cursor:pointer; color:inherit; }
+.wk-team-row:hover { background:#F9FFF9; }
+.wk-sub { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wk-role { color:#166534; font-weight:700; white-space:nowrap; }
+@media (max-width:640px){ .wk-row { flex-direction:column; gap:2px; } .wk-row > b { text-align:left; } }

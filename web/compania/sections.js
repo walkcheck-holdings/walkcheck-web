@@ -16,6 +16,8 @@
 
   /* ---------- Clients ---------- */
   window.clientUi = window.clientUi || { q: '' };
+  // Used by "Crear trabajo" to pick who pays.
+  window.loadClientsList = function () { return loadClients(); };
   async function loadClients() {
     var list = [];
     var snap = await col('clients').limit(500).get();

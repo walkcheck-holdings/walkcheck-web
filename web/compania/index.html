@@ -23,11 +23,12 @@
 <link rel="stylesheet" href="/web/compania/base.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
-<link rel="stylesheet" href="/web/compania/billing.css?v=20261102c">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261030b">
-<link rel="stylesheet" href="/web/compania/jobview.css?v=20261102a">
+<link rel="stylesheet" href="/web/compania/billing.css?v=20261104b">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261104b">
+<link rel="stylesheet" href="/web/compania/jobview.css?v=20261104b">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
+<link rel="stylesheet" href="/web/compania/team.css?v=20261104a">
 </head>
 <body class="tab-agenda">
 <header id="siteHdr">
@@ -1271,7 +1272,17 @@ async function loadBoard(){
       uid: d.id,
       name: u.displayName || u.email || '',
       role: u.role || 'worker',
-      email: String(u.email || '').toLowerCase()
+      email: String(u.email || '').toLowerCase(),
+      username: u.username || '',
+      phone: u.phone || '',
+      address: u.address || '',
+      contactEmail: u.contactEmail || '',
+      emergencyName: u.emergencyName || '',
+      emergencyPhone: u.emergencyPhone || '',
+      startDate: u.startDate || '',
+      notes: u.notes || '',
+      mustChangePassword: u.mustChangePassword === true,
+      tempPassword: u.tempPassword || ''
     });
   });
   const me = auth.currentUser && auth.currentUser.uid;
@@ -1907,27 +1918,124 @@ function openWorker(uid){
   document.body.classList.remove('view-hours', 'view-reports', 'view-roles', 'view-companies');
   const pane = $('workerPane');
   if (!pane) return;
+  const en = loginLang() === 'en';
+  const L = (es, e) => en ? e : es;
   const list = jobs.filter(j => accountUidOf(j) === t.uid).sort((a,b) => jobTime(a)-jobTime(b));
   const canEd = canManageRoles();
   const role = String(t.role||'worker').toLowerCase();
   const locked = role === 'owner' || role === 'admin';
-  pane.innerHTML = `<button type="button" class="back" onclick="document.body.classList.remove('view-worker');setSchedView('day')">← ${esc(uiT('horario'))}</button>
-    <div class="card">
-      <h2 style="margin:0 0 8px">${esc(t.name)}</h2>
-      <p class="muted">${esc(t.email||'')} · ${esc(roleWord(role))}</p>
-      ${canEd && !locked ? `<p>${esc(uiT('editWorker'))}</p>${roleSelectHtml(t.uid, role)}` : ''}
+  const tel = String(t.phone || '').replace(/[^\d+]/g, '');
+  const mail = t.contactEmail || (/@workers\.walkcheck\.app$/.test(t.email) ? '' : t.email);
+  const row = (label, val, extra) => `<div class="wk-row"><span>${esc(label)}</span><b>${val ? esc(val) : `<span class="muted">${esc(L('Sin poner', 'Not set'))}</span>`}</b>${extra || ''}</div>`;
+  pane.innerHTML = `<button type="button" class="back" onclick="document.body.classList.remove('view-worker');openRolesPane()">← ${esc(uiT('teamRoles'))}</button>
+    <div class="card wk-card">
+      <div class="wk-head"><div class="wk-av">${esc(String(t.name||'?').trim().charAt(0).toUpperCase())}</div>
+        <div><h2 style="margin:0">${esc(t.name)}</h2><div class="muted">${esc(roleWord(role))}${t.username ? ' · @' + esc(t.username) : ''}</div></div></div>
+      <div class="wk-acts">
+        ${tel ? `<a class="btn ghost" href="tel:${esc(tel)}">📞 ${esc(L('Llamar', 'Call'))}</a><a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${esc(tel.replace(/^\+/, '').replace(/^(\d{10})$/, '1$1'))}">💬 WhatsApp</a>` : ''}
+        ${mail ? `<a class="btn ghost" href="mailto:${esc(mail)}">✉️ ${esc(L('Correo', 'Email'))}</a>` : ''}
+        ${t.address ? `<a class="btn ghost" target="_blank" rel="noopener" href="https://maps.google.com/?q=${encodeURIComponent(t.address)}">📍 ${esc(L('Mapa', 'Map'))}</a>` : ''}
+      </div>
+      ${row(L('Teléfono', 'Phone'), t.phone)}
+      ${row(L('Correo', 'Email'), mail)}
+      ${row(L('Dirección', 'Address'), t.address)}
+      ${row(L('Usuario para entrar', 'Sign-in username'), t.username || t.email)}
+      ${row(L('Fecha de inicio', 'Start date'), t.startDate)}
+      ${row(L('Contacto de emergencia', 'Emergency contact'), [t.emergencyName, t.emergencyPhone].filter(Boolean).join(' · '))}
+      ${t.notes ? `<div class="wk-row"><span>${esc(L('Notas', 'Notes'))}</span><b style="white-space:pre-wrap;font-weight:500">${esc(t.notes)}</b></div>` : ''}
+      ${t.mustChangePassword && t.tempPassword && canEd ? `<p class="wk-temp">🔑 ${esc(L('Contraseña temporal (todavía no la ha cambiado)', 'Temporary password (not changed yet)'))}: <b>${esc(t.tempPassword)}</b></p>` : ''}
+      ${canEd && !locked ? `<div class="wk-edit-btns">
+        <button type="button" class="btn" onclick="openEditWorker('${t.uid}')">✏️ ${esc(L('Editar información', 'Edit info'))}</button>
+        <button type="button" class="btn ghost" onclick="resetWorkerPassword('${t.uid}')">🔑 ${esc(L('Nueva contraseña temporal', 'New temporary password'))}</button></div>
+        <label class="muted" style="display:block;margin-top:12px">${esc(uiT('setRole'))}</label>${roleSelectHtml(t.uid, role)}` : ''}
     </div>
     <div class="card">
-      <h3 style="margin:0 0 8px">${esc(uiT('workerJobs'))}</h3>
+      <h3 style="margin:0 0 8px">${esc(uiT('workerJobs'))} (${list.length})</h3>
       ${list.map(j => {
-        const st = jobTime(j), en = jobEnd(j, st);
+        const st = jobTime(j), en_ = jobEnd(j, st);
         return `<button type="button" class="daycard" onclick="openJobView('${j.id}')">
-          <div class="daycard-k">${esc(j.kind||'Job')}</div>
-          <div class="daycard-t">${fmt(st)} – ${fmt(en)}</div>
+          <div class="daycard-k">${jobDone(j)?'✓ ':''}${esc(j.kind||j.title||'Job')}</div>
+          <div class="daycard-t">${esc(j.scheduledDate || '')} · ${fmt(st)} – ${fmt(en_)}</div>
           <div class="daycard-a">${esc(j.address||j.title||'')}</div>
         </button>`;
       }).join('') || `<p class="muted">${esc(uiT('noJobsDay'))}</p>`}
     </div>`;
+}
+/* Edit a team member's info (owner/admin). Username and role stay as they are. */
+function openEditWorker(uid){
+  const t = techs.find(x => x.uid === uid);
+  if (!t || !canManageRoles()) return;
+  const en = loginLang() === 'en';
+  const L = (es, e) => en ? e : es;
+  const f = (id, label, val, type) => `<label class="muted" for="${id}">${esc(label)}</label><input id="${id}" type="${type||'text'}" value="${esc(val||'')}">`;
+  $('modal').classList.remove('hidden');
+  $('modal').innerHTML = `<div class="box" style="max-height:90vh;overflow:auto">
+    <h3>✏️ ${esc(L('Editar trabajador', 'Edit worker'))}</h3>
+    ${f('ewName', L('Nombre *', 'Name *'), t.name)}
+    ${f('ewPhone', L('Teléfono', 'Phone'), t.phone, 'tel')}
+    ${f('ewMail', L('Correo', 'Email'), t.contactEmail || (/@workers\.walkcheck\.app$/.test(t.email) ? '' : t.email), 'email')}
+    ${f('ewAddr', L('Dirección', 'Address'), t.address)}
+    ${f('ewStart', L('Fecha de inicio', 'Start date'), t.startDate, 'date')}
+    ${f('ewEmName', L('Contacto de emergencia (nombre)', 'Emergency contact (name)'), t.emergencyName)}
+    ${f('ewEmPhone', L('Contacto de emergencia (teléfono)', 'Emergency contact (phone)'), t.emergencyPhone, 'tel')}
+    <label class="muted" for="ewNotes">${esc(L('Notas (solo la oficina)', 'Notes (office only)'))}</label><textarea id="ewNotes" rows="3">${esc(t.notes||'')}</textarea>
+    <div class="err" id="ewErr"></div>
+    <button class="btn" id="ewGo" onclick="saveWorkerInfo('${uid}')">${esc(uiT('save'))}</button>
+    <button class="btn ghost" onclick="$('modal').classList.add('hidden')">${esc(uiT('close'))}</button>
+  </div>`;
+}
+async function saveWorkerInfo(uid){
+  const t = techs.find(x => x.uid === uid);
+  if (!t) return;
+  const en = loginLang() === 'en';
+  const v = id => (($(id) && $(id).value) || '').trim();
+  const patch = {
+    displayName: v('ewName'), phone: v('ewPhone'), contactEmail: v('ewMail').toLowerCase(),
+    address: v('ewAddr'), startDate: v('ewStart'), emergencyName: v('ewEmName'),
+    emergencyPhone: v('ewEmPhone'), notes: v('ewNotes'),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!patch.displayName) { $('ewErr').textContent = en ? 'Name is required.' : 'El nombre es obligatorio.'; return; }
+  if (patch.contactEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(patch.contactEmail)) { $('ewErr').textContent = en ? 'Check the email.' : 'Revisa el correo.'; return; }
+  $('ewGo').disabled = true;
+  try {
+    await db.collection('users').doc(uid).set(patch, { merge: true });
+    try { await db.collection('companies').doc(cid()).collection('members').doc(uid).set({ displayName: patch.displayName }, { merge: true }); } catch(_){}
+    Object.assign(t, { name: patch.displayName, phone: patch.phone, contactEmail: patch.contactEmail, address: patch.address,
+      startDate: patch.startDate, emergencyName: patch.emergencyName, emergencyPhone: patch.emergencyPhone, notes: patch.notes });
+    $('modal').classList.add('hidden');
+    openWorker(uid);
+    renderTeam();
+  } catch(e){ $('ewErr').textContent = e.message || e; $('ewGo').disabled = false; }
+}
+/* New temporary password for a worker (server function: the browser can't
+   change someone else's password). They must change it when they sign in. */
+async function resetWorkerPassword(uid){
+  const t = techs.find(x => x.uid === uid);
+  if (!t) return;
+  const en = loginLang() === 'en';
+  if (!confirm(en ? `Give ${t.name} a new temporary password? The old one stops working.` : `¿Darle a ${t.name} una contraseña temporal nueva? La anterior deja de funcionar.`)) return;
+  try {
+    const tok = await auth.currentUser.getIdToken();
+    const r = await fetch('https://us-central1-walkcheck-a4f1e.cloudfunctions.net/resetWorkerPassword', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid })
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    t.mustChangePassword = true; t.tempPassword = j.tempPassword;
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = `<div class="box">
+      <h3>🔑 ${esc(en ? 'New temporary password' : 'Contraseña temporal nueva')}</h3>
+      <div class="card" style="margin:10px 0">
+        <p><b>${esc(en ? 'Username' : 'Usuario')}:</b> ${esc(t.username || t.email)}</p>
+        <p><b>${esc(en ? 'Temporary password' : 'Contraseña temporal')}:</b> ${esc(j.tempPassword)}</p>
+      </div>
+      <p class="muted">${esc(en ? 'Send it to them. When they sign in they choose their own password.' : 'Pásasela. Al entrar, tendrá que poner su propia contraseña.')}</p>
+      <button class="btn" onclick="$('modal').classList.add('hidden');openWorker('${uid}')">${esc(en ? 'Done' : 'Listo')}</button></div>`;
+  } catch(e){
+    alert((en ? 'Could not change it: ' : 'No se pudo cambiar: ') + (e.message || e));
+  }
 }
 function openRolesPane(){
   if (!canManageRoles()) return;
@@ -1940,8 +2048,10 @@ function openRolesPane(){
     ${techs.map(t => {
       const r = String(t.role||'worker').toLowerCase();
       const locked = r === 'owner' || r === 'admin';
-      return `<div class="role-row"><div>${esc(t.name)}<div class="muted">${esc(t.email||t.role||'')}</div></div>
-        ${locked ? `<b>${esc(roleWord(r))}</b>` : roleSelectHtml(t.uid, r)}</div>`;
+      const mail = t.contactEmail || (/@workers\.walkcheck\.app$/.test(t.email||'') ? '' : (t.email||''));
+      const sub = [t.phone, mail, t.address].filter(Boolean).join(' · ') || (t.username ? '@' + t.username : (t.email||''));
+      return `<button type="button" class="role-row wk-team-row" onclick="openWorker('${t.uid}')"><div style="min-width:0">${esc(t.name)}<div class="muted wk-sub">${esc(sub)}</div></div>
+        <span class="wk-role">${esc(roleWord(r))} ›</span></button>`;
     }).join('') || `<p class="muted">${esc(uiT('noTeam'))}</p>`}
     <button class="btn ghost" style="margin-top:12px;width:auto" onclick="document.body.classList.remove('view-roles');setSchedView('day')">${esc(uiT('horario'))}</button>`;
 }
@@ -3800,11 +3910,11 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261102c"></script>
+<script src="/web/compania/billing.js?v=20261104b"></script>
 <script src="/web/compania/quotes.js?v=20261030b"></script>
-<script src="/web/compania/jobs.js?v=20261030b"></script>
-<script src="/web/compania/sections.js?v=20261030b"></script>
-<script src="/web/compania/jobview.js?v=20261102a"></script>
+<script src="/web/compania/jobs.js?v=20261104b"></script>
+<script src="/web/compania/sections.js?v=20261104b"></script>
+<script src="/web/compania/jobview.js?v=20261104b"></script>
 <script src="/web/compania/dashboard.js?v=20261102a"></script>
 <script src="/web/compania/jobslist.js?v=20261102a"></script>
 </body>

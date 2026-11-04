@@ -312,8 +312,9 @@
     }
   };
 
-  window.openCreateJob = function () {
+  window.openCreateJob = async function () {
     if (!canAssign()) return;
+    await refreshClients();
     enterJobsView('view-job');
     var pane = $('jobPane');
     var bopts = '<option value="">' + esc(uiT('siteOrAddr')) + '</option>' +
@@ -324,13 +325,9 @@
     pane.innerHTML =
       '<div class="job-actions"><button class="btn ghost" onclick="openJobs()">← ' + esc(loginLang() === 'en' ? 'Jobs' : 'Trabajos') + '</button></div>' +
       '<div class="job-sec"><h3>' + esc(uiT('createJob')) + '</h3>' +
-      '<label class="muted">' + esc(loginLang() === 'en' ? 'Client / building' : 'Cliente / edificio') + '</label><select id="njB">' + bopts + '</select>' +
-      '<label class="muted">' + esc(uiT('address')) + '</label><input id="njAddr" type="text">' +
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Title' : 'Título') + '</label><input id="njTitle" type="text">' +
-      '<label class="muted">' + esc(uiT('contact')) + '</label><input id="njContact" type="text">' +
-      '<label class="muted">' + esc(uiT('phone')) + '</label><input id="njPhone" type="text">' +
-      '<label class="muted">Email</label><input id="njEmail" type="email">' +
       '</div>' +
+      partiesFormHtml('nj', {}) +
       '<div class="job-sec"><h3>Product / Service</h3><p class="muted">' +
         esc(loginLang() === 'en' ? 'Lines inherit from an approved quote. Without a quote they start at $0 — type the price.' : 'Las líneas se heredan de un presupuesto aprobado. Sin quote salen en $0: pon el precio a mano.') +
         '</p><div id="njLines">' + lineEditorHtml([{ name: '', description: '', qty: 1, unitPrice: 0, total: 0 }]) + '</div></div>' +
@@ -399,16 +396,18 @@
       checklists: cks,
       title: title
     };
+    var parties = readPartiesForm('nj', b);
+    if (parties.error) { err.textContent = parties.error; return; }
     var payload = Object.assign({
       companyId: cid(), companyName: companyName,
       buildingId: bid || '',
       title: title,
-      clientName: (b && b.name) || ($('njContact').value || '').trim(),
       address: ($('njAddr').value || '').trim() || (b && (b.address || b.name)) || title,
-      contactName: ($('njContact').value || '').trim(),
-      contactPhone: ($('njPhone').value || '').trim(),
-      contactEmail: ($('njEmail').value || '').trim(),
       kind: (lines[0] && lines[0].name) || title,
+      unit: parties.data.unit, payerSet: parties.data.payerSet, billClientId: parties.data.billClientId,
+      clientName: parties.data.clientName, clientEmail: parties.data.clientEmail, clientAddress: parties.data.clientAddress,
+      tenantName: parties.data.tenantName, tenantPhone: parties.data.tenantPhone, tenantEmail: parties.data.tenantEmail,
+      contactName: parties.data.tenantName, contactPhone: parties.data.tenantPhone, contactEmail: parties.data.tenantEmail,
       description: (lines[0] && lines[0].description) || '',
       instructions: visit.instructions,
       lines: lines,
@@ -495,8 +494,9 @@
         (canAssign() && jobArchived(j) ? '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Unarchive' : 'Desarchivar') + '</button>' : '') +
       '</div>' +
       '<div class="job-sec"><h3>' + esc(j.title || j.kind || 'Job') + (j.jobNumber ? ' <span class="muted">#' + esc(j.jobNumber) + '</span>' : '') + '</h3>' +
-      '<p>' + esc(j.clientName || j.contactName || '') + '<br>' + esc(j.address || '') + '<br>' + phoneHtml +
-      ' · <a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">Directions</a></p>' +
+      partiesViewHtml(j, phoneHtml) +
+      '<p><a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">Directions</a>' +
+      (canAssign() && !jobArchived(j) ? ' · <a href="#" onclick="openPartiesEditor(\'' + j.id + '\');return false">' + esc(loginLang() === 'en' ? 'Edit client / tenant' : 'Editar cliente / inquilino') + '</a>' : '') + '</p>' +
       '<p class="' + statusClass(j) + '">' + esc(statusWord(j)) + ' · ' + esc(durationLabel(j)) + '</p></div>' +
       '<div class="job-sec"><h3>Product / Service</h3><div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
         return '<p><b>' + esc(l.name) + '</b> × ' + esc(l.qty) + (moneyOk ? ' · ' + usd(l.unitPrice) + ' = ' + usd(l.total) : '') +
@@ -515,6 +515,115 @@
       (typeof tradeStepsOfficeHtml === 'function' ? tradeStepsOfficeHtml(j).replace('<div class="card">', '<div class="job-sec">') : '') +
       '<div class="job-sec"><h3>Notes</h3>' + notes +
       '<textarea id="jdNote" rows="2"></textarea><button class="btn ghost" onclick="addJobNote(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Add note' : 'Agregar nota') + '</button></div>';
+  };
+
+  /* ===== Who pays vs. who is at the place =====
+     Cliente que paga = the company billed (e.g. the property manager).
+     Inquilino = the person living there; the worker calls them to get in. */
+  var CLIENTS = [];
+  async function refreshClients() {
+    try { CLIENTS = typeof loadClientsList === 'function' ? await loadClientsList() : []; } catch (_) { CLIENTS = []; }
+    return CLIENTS;
+  }
+  function payerForBuilding(b) {
+    if (!b) return null;
+    var c = CLIENTS.find(function (x) { return (x.buildingIds || []).indexOf(b.id) >= 0; });
+    if (c) return { id: c.id, name: c.name || '', email: c.email || '', address: c.address || '' };
+    if (b.clientName || b.clientEmail) return { id: '', name: b.clientName || '', email: b.clientEmail || '', address: b.clientAddress || '' };
+    return null;
+  }
+  function partiesFormHtml(p, j) {
+    var en = loginLang() === 'en';
+    var L = function (es, e) { return en ? e : es; };
+    var cur = j.billClientId || '';
+    var opts = '<option value="">' + esc(L('— Elige quién paga —', '— Pick who pays —')) + '</option>' +
+      CLIENTS.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === cur ? ' selected' : '') + '>' + esc(c.name || c.email || c.id) + '</option>'; }).join('') +
+      '<option value="__new"' + (!cur && j.payerSet ? ' selected' : '') + '>' + esc(L('+ Otro (escribir)', '+ Other (type it)')) + '</option>';
+    var other = !cur && j.payerSet;
+    return '<div class="job-sec"><h3>💵 ' + esc(L('Cliente que paga', 'Client who pays')) + '</h3>' +
+      '<p class="muted">' + esc(L('La compañía o persona a la que le cobras. A ella va la factura.', 'The company or person you charge. The invoice goes to them.')) + '</p>' +
+      '<select id="' + p + 'Payer" onchange="document.getElementById(\'' + p + 'PayerNew\').classList.toggle(\'hidden\', this.value!==\'__new\')">' + opts + '</select>' +
+      '<div id="' + p + 'PayerNew" class="' + (other ? '' : 'hidden') + '">' +
+        '<label class="muted">' + esc(L('Nombre de quien paga', 'Name of who pays')) + '</label><input id="' + p + 'PayName" type="text" value="' + esc(other ? j.clientName : '') + '">' +
+        '<label class="muted">' + esc(L('Correo para la factura', 'Invoice email')) + '</label><input id="' + p + 'PayMail" type="email" value="' + esc(other ? j.clientEmail : '') + '">' +
+      '</div>' +
+      '<p class="muted" style="margin-top:6px">' + esc(L('Si eliges un edificio que ya tiene cliente, se usa ese.', 'If you pick a building that already has a client, that one is used.')) + '</p></div>' +
+      '<div class="job-sec"><h3>🏠 ' + esc(L('Lugar e inquilino', 'Place and tenant')) + '</h3>' +
+      (p === 'nj' ? '<label class="muted">' + esc(L('Edificio', 'Building')) + '</label><select id="njB">' +
+        '<option value="">' + esc(uiT('siteOrAddr')) + '</option>' + buildings.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('') + '</select>' +
+        '<label class="muted">' + esc(uiT('address')) + '</label><input id="njAddr" type="text">' : '') +
+      '<label class="muted">' + esc(L('Unidad / apartamento', 'Unit / apartment')) + '</label><input id="' + p + 'Unit" type="text" value="' + esc(j.unit || '') + '">' +
+      '<label class="muted">' + esc(L('Inquilino / contacto en el lugar', 'Tenant / on-site contact')) + '</label><input id="' + p + 'Ten" type="text" value="' + esc(j.tenantName || (j.payerSet ? j.contactName : '') || '') + '">' +
+      '<label class="muted">' + esc(L('Teléfono del inquilino', 'Tenant phone')) + '</label><input id="' + p + 'TenPh" type="tel" value="' + esc(j.tenantPhone || (j.payerSet ? j.contactPhone : '') || '') + '">' +
+      '<label class="muted">' + esc(L('Correo del inquilino (opcional)', 'Tenant email (optional)')) + '</label><input id="' + p + 'TenMail" type="email" value="' + esc(j.tenantEmail || '') + '">' +
+      '<p class="muted" style="margin-top:6px">' + esc(L('El trabajador ve al inquilino para llamarlo y entrar. No recibe la factura.', 'The worker sees the tenant to call and get in. They do not get the invoice.')) + '</p></div>';
+  }
+  function readPartiesForm(p, b) {
+    var en = loginLang() === 'en';
+    var v = function (id) { return (($(p + id) && $(p + id).value) || '').trim(); };
+    var sel = v('Payer');
+    var payer = null, billClientId = '';
+    if (sel && sel !== '__new') {
+      var c = CLIENTS.find(function (x) { return x.id === sel; });
+      if (c) { payer = { name: c.name || '', email: c.email || '', address: c.address || '' }; billClientId = c.id; }
+    } else if (sel === '__new') {
+      payer = { name: v('PayName'), email: v('PayMail').toLowerCase(), address: '' };
+      if (!payer.name) return { error: en ? 'Type the name of who pays.' : 'Escribe el nombre de quien paga.' };
+      if (payer.email && !/.+@.+\..+/.test(payer.email)) return { error: en ? 'Check the invoice email.' : 'Revisa el correo para la factura.' };
+    } else if (b) {
+      var fromB = payerForBuilding(b);
+      if (fromB) { payer = fromB; billClientId = fromB.id || ''; }
+    }
+    return { data: {
+      payerSet: !!payer, billClientId: billClientId,
+      clientName: payer ? payer.name : '', clientEmail: payer ? payer.email : '', clientAddress: payer ? payer.address : '',
+      unit: v('Unit'), tenantName: v('Ten'), tenantPhone: v('TenPh'), tenantEmail: v('TenMail').toLowerCase()
+    } };
+  }
+  function partiesViewHtml(j, phoneHtml) {
+    var en = loginLang() === 'en';
+    var c = typeof invoiceClientOf === 'function' ? invoiceClientOf(j) : { name: j.clientName || '' };
+    var ten = j.tenantName || (j.payerSet ? j.contactName : '');
+    var tenPh = j.tenantPhone || j.contactPhone || '';
+    var tel = tenPh ? '<a class="phone" href="tel:' + esc(tenPh.replace(/[^\d+]/g, '')) + '">' + esc(tenPh) + '</a>' : (phoneHtml || '');
+    return '<div class="party-grid">' +
+      '<div><span class="muted">💵 ' + esc(en ? 'Client who pays' : 'Cliente que paga') + '</span><b>' + esc(c.name || (en ? 'Not set' : 'Sin poner')) + '</b>' +
+        (c.email ? '<span class="muted">' + esc(c.email) + '</span>' : '') + '</div>' +
+      '<div><span class="muted">🏠 ' + esc(en ? 'Place / tenant' : 'Lugar / inquilino') + '</span><b>' + esc((j.unit ? (en ? 'Unit ' : 'Unidad ') + j.unit + ' · ' : '') + (j.address || '')) + '</b>' +
+        (ten || tel ? '<span>' + esc(ten || '') + (ten && tel ? ' · ' : '') + tel + '</span>' : (!j.payerSet && j.contactName ? '<span>' + esc(j.contactName) + (tel ? ' · ' + tel : '') + '</span>' : '')) + '</div>' +
+      '</div>';
+  }
+  window.openPartiesEditor = async function (id) {
+    if (!canAssign()) return;
+    var j = jobs.find(function (x) { return x.id === id; }) || {};
+    try { var d = await db.collection('jobs').doc(id).get(); if (d.exists) j = Object.assign({ id: d.id }, d.data()); } catch (_) {}
+    await refreshClients();
+    var en = loginLang() === 'en';
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = '<div class="box" style="width:520px;max-width:96vw;max-height:90vh;overflow:auto">' +
+      partiesFormHtml('pe', j) + '<div class="err" id="peErr"></div>' +
+      '<button class="btn" onclick="savePartiesEditor(\'' + id + '\')">' + esc(uiT('save')) + '</button>' +
+      '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(uiT('close')) + '</button></div>';
+  };
+  window.savePartiesEditor = async function (id) {
+    var j = jobs.find(function (x) { return x.id === id; }) || {};
+    var b = buildings.find(function (x) { return x.id === j.buildingId; });
+    var r = readPartiesForm('pe', b);
+    if (r.error) { $('peErr').textContent = r.error; return; }
+    var d = r.data;
+    var patch = {
+      payerSet: d.payerSet, billClientId: d.billClientId, unit: d.unit,
+      tenantName: d.tenantName, tenantPhone: d.tenantPhone, tenantEmail: d.tenantEmail,
+      contactName: d.tenantName, contactPhone: d.tenantPhone, contactEmail: d.tenantEmail,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (d.payerSet) { patch.clientName = d.clientName; patch.clientEmail = d.clientEmail; patch.clientAddress = d.clientAddress; }
+    try {
+      await db.collection('jobs').doc(id).set(patch, { merge: true });
+      Object.assign(j, patch);
+      $('modal').classList.add('hidden');
+      openJobDetail(id);
+    } catch (e) { $('peErr').textContent = e.message || e; }
   };
 
   window.saveJobLines = async function (id, preset) {

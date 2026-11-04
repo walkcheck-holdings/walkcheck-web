@@ -42,8 +42,8 @@
     return {
       name: c.name || j.clientName || j.contactName || '',
       email: c.email || j.clientEmail || '',
-      phone: j.contactPhone || j.clientPhone || j.phone || '',
-      contact: j.contactName || '',
+      phone: j.tenantPhone || j.contactPhone || j.clientPhone || j.phone || '',
+      contact: j.tenantName || j.contactName || '',
       address: j.address || c.address || '',
       unit: j.unit || '',
       buildingId: j.buildingId || ''

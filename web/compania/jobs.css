@@ -60,3 +60,8 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
   .jobs-table td { display: block; padding: 2px 0; border: 0; }
   .line-row, .exp-row { grid-template-columns: 1fr 1fr; }
 }
+
+/* Job page: who pays vs. place / tenant */
+.party-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }
+.party-grid > div { background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; min-width:0; overflow-wrap:anywhere; }
+@media (max-width:640px){ .party-grid { grid-template-columns:1fr; } }

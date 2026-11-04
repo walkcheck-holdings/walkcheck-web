@@ -3563,7 +3563,7 @@ async function openJobView(id){
   if (!j) return;
   const r = j.report || {};
   const st = jobTime(j), en = jobEnd(j, st);
-  const phone = j.contactPhone || '';
+  const phone = j.tenantPhone || j.contactPhone || '';
   const done = requiredReportCount(r);
   const phoneHtml = phone
     ? `<a class="phone" href="tel:${esc(phone.replace(/[^\d+]/g,''))}">${esc(phone)}</a>`
@@ -3624,7 +3624,8 @@ async function openJobView(id){
   if (tab === 'walk' && isWt) body = wtWorkerHtml(j);
   else if (tab === 'checks') body = `<div class="vz-sec">${stepsHtml || `<p class="muted">${esc(L('Sin pasos', 'No steps'))}</p>`}</div>`;
   else if (tab === 'notes') body = `<div class="vz-sec">${notesHtml}<textarea id="jobNotes" rows="3" placeholder="${esc(L('Escribe una nota…', 'Write a note…'))}"></textarea><button class="btn ghost" onclick="saveJobNotes('${j.id}')">${esc(L('Agregar nota', 'Add note'))}</button></div>`;
-  else if (tab === 'client') body = `<div class="vz-sec"><h4>${esc(L('Cliente', 'Client'))}</h4><p><b>${esc(client || '—')}</b></p><p>${esc(j.address || '')}</p><p>${phoneHtml}</p></div>
+  else if (tab === 'client') body = `<div class="vz-sec"><h4>${esc(L('Inquilino / contacto en el lugar', 'Tenant / on-site contact'))}</h4><p><b>${esc(j.tenantName || j.contactName || '—')}</b></p><p>${esc((j.unit ? L('Unidad ', 'Unit ') + j.unit + ' · ' : '') + (j.address || ''))}</p><p>${phoneHtml}</p></div>
+      <div class="vz-sec"><h4>${esc(L('Cliente', 'Client'))}</h4><p><b>${esc(client || '—')}</b></p></div>
       <div class="vz-sec"><h4>${esc(L('Trabajo', 'Job'))}</h4><p>${esc(title)}${j.jobNumber ? ' · #' + esc(j.jobNumber) : ''}</p>
       ${j.lastReschedule && j.lastReschedule.reason ? `<p class="muted">${esc(L('Reprogramado', 'Rescheduled'))}: ${esc(j.lastReschedule.reason)}</p>` : ''}</div>`;
   else body = `<div class="vz-sec"><h4>${esc(L('Instrucciones', 'Instructions'))}</h4><p style="white-space:pre-wrap;margin:0">${esc(j.instructions || j.description || v0.instructions || '') || `<span class="muted">${esc(L('Sin instrucciones', 'No instructions'))}</span>`}</p></div>
@@ -3643,7 +3644,8 @@ async function openJobView(id){
       <div class="vz-st ${stInfo[0]}"><i></i>${esc(stInfo[1])}</div>
       <h2>${esc(L('Visita para ', 'Visit for ') + (client || title))}</h2>
       <div class="vz-sub">${esc((client ? client + ' - ' : '') + title)}</div>
-      <p class="vz-row">📍 ${esc(j.address || '—')}</p>
+      <p class="vz-row">📍 ${esc((j.unit ? L('Unidad ', 'Unit ') + j.unit + ' · ' : '') + (j.address || '—'))}</p>
+      ${(j.tenantName || (j.contactName && j.contactName !== client)) ? `<p class="vz-row">👤 ${esc(L('Inquilino: ', 'Tenant: ') + (j.tenantName || j.contactName))}${phone ? ` · <a href="tel:${esc(phone.replace(/[^\d+]/g, ''))}">${esc(phone)}</a>` : ''}</p>` : ''}
       <div class="vz-two">
         <a class="vz-btn ghost" target="_blank" rel="noopener" href="${maps}">${esc(L('Direcciones', 'Directions'))}</a>
         <button type="button" class="vz-btn ghost" onclick="visitOnMyWay('${j.id}')">${esc(j.onMyWayAt ? L('✓ En camino', '✓ On my way') : L('Voy en camino', 'On my way'))}</button>
