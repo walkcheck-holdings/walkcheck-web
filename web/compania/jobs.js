@@ -328,7 +328,7 @@
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Title' : 'Título') + '</label><input id="njTitle" type="text">' +
       '</div>' +
       partiesFormHtml('nj', {}) +
-      '<div class="job-sec"><h3>Product / Service</h3><p class="muted">' +
+      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Product / Service' : 'Producto / Servicio') + '</h3><p class="muted">' +
         esc(loginLang() === 'en' ? 'Lines inherit from an approved quote. Without a quote they start at $0 — type the price.' : 'Las líneas se heredan de un presupuesto aprobado. Sin quote salen en $0: pon el precio a mano.') +
         '</p><div id="njLines">' + lineEditorHtml([{ name: '', description: '', qty: 1, unitPrice: 0, total: 0 }]) + '</div></div>' +
       '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'First visit' : 'Primera visita') + '</h3>' +
@@ -336,7 +336,7 @@
       '<label class="muted">' + esc(uiT('start')) + '</label><select id="njStart">' + clockChoices('09:00') + '</select>' +
       '<label class="muted">' + esc(uiT('end')) + '</label><select id="njEnd">' + clockChoices('11:00') + '</select>' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="njT">' + topts + '</select>' +
-      '<p class="muted">Arrival window: Arrive at start time</p>' +
+      '<p class="muted">' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '</p>' +
       '<label class="muted">' + esc(uiT('instructions')) + '</label><textarea id="njInstr" rows="3"></textarea>' +
       '<label><input type="checkbox" id="njCkInsp" checked> Inspection Report</label>' +
       '<label><input type="checkbox" id="njCkJob" checked> Job Report</label>' +
@@ -473,7 +473,7 @@
       var vid = esc(v.id || 'primary');
       return '<div class="visit-row"><div><b>' + esc(v.scheduledDate || '') + ' ' + esc(loginLang() === 'en' ? 'window' : 'ventana') + ' ' +
         esc(v.startClock || '') + '–' + esc(v.endClock || '') +
-        '</b><div class="muted">' + esc(v.instructions || '') + '<br>Arrival window: Arrive at start time<br>Checklists: ' +
+        '</b><div class="muted">' + esc(v.instructions || '') + '<br>' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '<br>' + esc(loginLang() === 'en' ? 'Checklists: ' : 'Formularios: ') + '' +
         esc((v.checklists || []).join(', ') || 'Inspection Report, Job Report') + '</div>' +
         '<label class="muted">' + esc(loginLang() === 'en' ? 'Office hours (typed)' : 'Horas oficina (a mano)') + '</label>' +
         '<input type="time" data-os="' + vid + '" value="' + esc(v.officeStart || '') + '">' +
@@ -482,7 +482,7 @@
         (canAssign() && !jobArchived(j) ? '<button type="button" class="btn" style="margin-top:6px" onclick="openVisitDate(\'' + j.id + '\',\'' + vid + '\')">📅 ' + esc(loginLang() === 'en' ? 'Change date / time' : 'Cambiar fecha y hora') + '</button>' : '') +
         '</div>' +
         '<div>' + esc((tech && tech.name) || '') + '<br><b class="' + (done ? 'st-done' : 'st-pend') + '">' +
-        (done ? '✓ Completed' : statusWord({ status: v.status, scheduledDate: v.scheduledDate })) + '</b></div></div>';
+        (done ? '✓ ' + (loginLang() === 'en' ? 'Completed' : 'Completada') : statusWord({ status: v.status, scheduledDate: v.scheduledDate })) + '</b></div></div>';
     }).join('');
     pane.innerHTML =
       '<div class="job-actions">' +
@@ -497,17 +497,17 @@
       '</div>' +
       '<div class="job-sec"><h3>' + esc(j.title || j.kind || 'Job') + (j.jobNumber ? ' <span class="muted">#' + esc(j.jobNumber) + '</span>' : '') + '</h3>' +
       partiesViewHtml(j, phoneHtml) +
-      '<p><a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">Directions</a>' +
+      '<p><a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">' + esc(loginLang() === 'en' ? 'Directions' : 'Cómo llegar') + '</a>' +
       (canAssign() && !jobArchived(j) ? ' · <a href="#" onclick="openPartiesEditor(\'' + j.id + '\');return false">' + esc(loginLang() === 'en' ? 'Edit client / tenant' : 'Editar cliente / inquilino') + '</a>' : '') + '</p>' +
       '<p class="' + statusClass(j) + '">' + esc(statusWord(j)) + ' · ' + esc(durationLabel(j)) + '</p></div>' +
-      '<div class="job-sec"><h3>Product / Service</h3><div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
+      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Product / Service' : 'Producto / Servicio') + '</h3><div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
         return '<p><b>' + esc(l.name) + '</b> × ' + esc(l.qty) + (moneyOk ? ' · ' + usd(l.unitPrice) + ' = ' + usd(l.total) : '') +
           '<div class="muted" style="white-space:pre-wrap">' + esc(l.description || '') + '</div></p>';
       }).join('')) + '</div>' +
       (canAssign() ? '<button class="btn ghost" onclick="saveJobLines(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Save lines' : 'Guardar líneas') + '</button> <button type="button" class="btn ghost" onclick="reorderJobLines(\'' + j.id + '\')">Reorder</button>' : '') +
-      (j.quoteId ? '<p class="muted">Quote #' + esc(j.quoteNumber || j.quoteId) + '</p>' : '<p class="muted">' + esc(loginLang() === 'en' ? 'No quote — prices typed by hand ($0 until you enter them).' : 'Sin presupuesto — precio a mano ($0 hasta que lo pongas).') + '</p>') +
+      (j.quoteId ? '<p class="muted">' + esc(loginLang() === 'en' ? 'Quote #' : 'Cotización #') + esc(j.quoteNumber || j.quoteId) + '</p>' : '<p class="muted">' + esc(loginLang() === 'en' ? 'No quote — prices typed by hand ($0 until you enter them).' : 'Sin presupuesto — precio a mano ($0 hasta que lo pongas).') + '</p>') +
       (moneyOk ? '<p><b>Total ' + usd(billed) + '</b></p>' : '') + '</div>' +
-      (moneyOk ? '<div class="job-sec"><h3>Expenses</h3><p class="muted">Track all expenses for this job in one place</p>' + exps +
+      (moneyOk ? '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Expenses' : 'Gastos') + '</h3><p class="muted">' + esc(loginLang() === 'en' ? 'Track all expenses for this job in one place' : 'Todos los gastos de este trabajo en un solo lugar') + '</p>' + exps +
         (canAssign() && !jobArchived(j) ? '<button class="btn" onclick="openExpenseForm(\'' + j.id + '\')">+</button>' : '') +
         '<div class="margin-box"><div><span class="muted">' + esc(loginLang() === 'en' ? 'Invoiced' : 'Facturado') + '</span><b>' + usd(billed) +
         '</b></div><div><span class="muted">' + esc(loginLang() === 'en' ? 'Expenses' : 'Gastos') + '</span><b>' + usd(spent) +
@@ -515,7 +515,7 @@
       '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Scheduled visits' : 'Visitas') + '</h3>' + vis +
       (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="openAddVisit(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? '+ Visit' : '+ Visita') + '</button>' : '') + '</div>' +
       (typeof tradeStepsOfficeHtml === 'function' ? tradeStepsOfficeHtml(j).replace('<div class="card">', '<div class="job-sec">') : '') +
-      '<div class="job-sec"><h3>Notes</h3>' + notes +
+      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Notes' : 'Notas') + '</h3>' + notes +
       '<textarea id="jdNote" rows="2"></textarea><button class="btn ghost" onclick="addJobNote(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Add note' : 'Agregar nota') + '</button></div>';
   };
 
@@ -662,7 +662,7 @@
   window.openExpenseForm = function (id) {
     if (!canSeeMoney()) return;
     $('modal').classList.remove('hidden');
-    $('modal').innerHTML = '<div class="box"><h3>Expense</h3>' +
+    $('modal').innerHTML = '<div class="box"><h3>' + esc(loginLang() === 'en' ? 'Expense' : 'Gasto') + '</h3>' +
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Vendor' : 'Proveedor') + '</label><input id="exV" type="text">' +
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Items' : 'Ítems') + '</label><textarea id="exI" rows="2"></textarea>' +
       '<label class="muted">Subtotal</label><input id="exS" type="number" min="0" step="0.01">' +
@@ -718,7 +718,7 @@
       '<label class="muted">' + esc(uiT('start')) + '</label><select id="avStart">' + clockChoices('09:00') + '</select>' +
       '<label class="muted">' + esc(uiT('end')) + '</label><select id="avEnd">' + clockChoices('11:00') + '</select>' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="avT">' + topts + '</select>' +
-      '<p class="muted">Arrival window: Arrive at start time</p>' +
+      '<p class="muted">' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '</p>' +
       '<label class="muted">' + esc(uiT('instructions')) + '</label><textarea id="avInstr" rows="3"></textarea>' +
       '<button class="btn" onclick="saveAddVisit(\'' + id + '\')">' + esc(uiT('save')) + '</button>' +
       '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(uiT('cancel')) + '</button></div>';
