@@ -479,6 +479,7 @@
         '<input type="time" data-os="' + vid + '" value="' + esc(v.officeStart || '') + '">' +
         '<input type="time" data-oe="' + vid + '" value="' + esc(v.officeEnd || '') + '">' +
         (canAssign() ? '<button type="button" class="btn ghost" onclick="saveVisitOfficeHours(\'' + j.id + '\',\'' + vid + '\')">' + esc(uiT('save')) + '</button>' : '') +
+        (canAssign() && !jobArchived(j) ? '<button type="button" class="btn" style="margin-top:6px" onclick="openVisitDate(\'' + j.id + '\',\'' + vid + '\')">📅 ' + esc(loginLang() === 'en' ? 'Change date / time' : 'Cambiar fecha y hora') + '</button>' : '') +
         '</div>' +
         '<div>' + esc((tech && tech.name) || '') + '<br><b class="' + (done ? 'st-done' : 'st-pend') + '">' +
         (done ? '✓ Completed' : statusWord({ status: v.status, scheduledDate: v.scheduledDate })) + '</b></div></div>';
@@ -489,7 +490,8 @@
         (moneyOk && !jobArchived(j) && !j.invoiceId ? '<button class="btn" onclick="openInvoiceEditor(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Create Invoice' : 'Crear factura') + '</button>' : '') +
         (moneyOk && j.invoiceId ? '<button class="btn" onclick="openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(uiT('money')) + '</button>' : '') +
         (canAssign() && jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="reopenJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Reopen job' : 'Reabrir trabajo') + '</button>' : '') +
-        (canAssign() && !jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="closeJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Close job' : 'Cerrar trabajo') + '</button>' : '') +
+        (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="openVisitDate(\'' + j.id + '\')">📅 ' + esc(loginLang() === 'en' ? 'Change date' : 'Cambiar fecha') + '</button>' : '') +
+        (canAssign() && !jobDone(j) && !jobArchived(j) ? '<button class="btn" onclick="closeJob(\'' + j.id + '\')">✓ ' + esc(loginLang() === 'en' ? 'Complete job' : 'Completar trabajo') + '</button>' : '') +
         (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="askArchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Archive' : 'Archivar') + '</button>' : '') +
         (canAssign() && jobArchived(j) ? '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Unarchive' : 'Desarchivar') + '</button>' : '') +
       '</div>' +
@@ -783,7 +785,7 @@
   window.closeJob = async function (id) {
     if (!canAssign()) return;
     var en = loginLang() === 'en';
-    if (!confirm(en ? 'Close this job? You can reopen it anytime.' : '¿Cerrar este trabajo? Lo puedes reabrir cuando quieras.')) return;
+    if (!confirm(en ? 'Mark this job as completed now? You can reopen it anytime.' : '¿Marcar este trabajo como completado ahora? Lo puedes reabrir cuando quieras.')) return;
     try {
       var patch = {
         status: 'completed',
@@ -798,8 +800,70 @@
       var vs = await savedVisits(id);
       if (vs) patch.visits = vs.map(function (v) { return Object.assign({}, v, { status: 'completed' }); });
       await db.collection('jobs').doc(id).set(patch, { merge: true });
+      // Closed right now (no waiting for the end time): update the local copy so
+      // the schedule and lists show it completed at once.
+      var lj = (jobs || []).find(function (x) { return x.id === id; });
+      if (lj) Object.assign(lj, { status: 'completed', visitStatus: 'completed', needsReturn: false, visits: patch.visits || lj.visits });
+      if (typeof renderSchedule === 'function') renderSchedule();
       if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
     } catch (e) { alert(jobSaveError(e)); }
+  };
+  /* ===== Change the date / time of a visit (easy fix for a wrong date) ===== */
+  window.openVisitDate = async function (id, vid) {
+    if (!canAssign()) return;
+    var en = loginLang() === 'en';
+    var j = (jobs || []).find(function (x) { return x.id === id; }) || {};
+    try { var d = await db.collection('jobs').doc(id).get(); if (d.exists) j = Object.assign({ id: d.id }, d.data()); } catch (_) {}
+    var vs = jobVisits(j);
+    var i = Math.max(0, vs.findIndex(function (v) { return (v.id || 'primary') === (vid || (vs[0] && vs[0].id) || 'primary'); }));
+    var v = vs[i] || {};
+    var day = v.scheduledDate || j.scheduledDate || ymd(new Date());
+    var sc = snapClock(v.startClock || j.startClock || '09:00'), ec = snapClock(v.endClock || j.endClock || '11:00');
+    var who = v.assignedUid || assignedOf(j) || '';
+    var topts = '<option value="">' + esc(en ? '— Not assigned —' : '— Sin asignar —') + '</option>' +
+      techs.map(function (t) { return '<option value="' + t.uid + '"' + (t.uid === who ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join('');
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = '<div class="box">' +
+      '<h3>📅 ' + esc(en ? 'Change date and time' : 'Cambiar fecha y hora') + '</h3>' +
+      '<p class="muted">' + esc((j.title || j.kind || '') + (vs.length > 1 ? ' · ' + (en ? 'visit ' : 'visita ') + (i + 1) + '/' + vs.length : '')) + '</p>' +
+      '<label class="muted">' + esc(en ? 'Date' : 'Fecha') + '</label><input id="vdDay" type="date" value="' + esc(day) + '">' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><select id="vdStart">' + clockChoices(sc) + '</select>' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><select id="vdEnd">' + clockChoices(ec) + '</select>' +
+      '<label class="muted">' + esc(uiT('worker')) + '</label><select id="vdWho">' + topts + '</select>' +
+      '<div class="err" id="vdErr"></div>' +
+      '<button class="btn" id="vdGo" onclick="saveVisitDate(\'' + id + '\',' + i + ')">' + esc(uiT('save')) + '</button>' +
+      '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(uiT('cancel')) + '</button></div>';
+  };
+  window.saveVisitDate = async function (id, i) {
+    var en = loginLang() === 'en';
+    var day = $('vdDay').value;
+    var base = new Date(day + 'T12:00:00');
+    var start = clockToDate(snapClock($('vdStart').value), base);
+    var end = clockToDate(snapClock($('vdEnd').value), base);
+    if (!day || !start || !end) { $('vdErr').textContent = en ? 'Pick the date and times.' : 'Elige la fecha y las horas.'; return; }
+    if (!(end > start)) { $('vdErr').textContent = en ? 'End after start.' : 'La hora de fin va después del inicio.'; return; }
+    var who = $('vdWho').value;
+    var j = (jobs || []).find(function (x) { return x.id === id; }) || {};
+    try { var d = await db.collection('jobs').doc(id).get(); if (d.exists) j = Object.assign({ id: d.id }, d.data()); } catch (_) {}
+    var vs = jobVisits(j).map(function (v) { return Object.assign({}, v); });
+    if (!vs.length) vs = [{ id: 'primary', status: 'open' }];
+    vs[i] = Object.assign({}, vs[i], { scheduledDate: day, startClock: toClock(start), endClock: toClock(end), assignedUid: who });
+    var patch = { visits: vs, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (i === 0) {
+      Object.assign(patch, assignmentPatch(who), {
+        scheduledDate: day, startClock: toClock(start), endClock: toClock(end),
+        hour: start.getHours(), minute: start.getMinutes(), endHour: end.getHours(), endMinute: end.getMinutes(),
+        startTime: fmt(start), time: fmt(start), endTime: fmt(end),
+        appointment_start: firebase.firestore.Timestamp.fromDate(start),
+        appointment_end: firebase.firestore.Timestamp.fromDate(end)
+      });
+    }
+    $('vdGo').disabled = true;
+    try {
+      await db.collection('jobs').doc(id).set(patch, { merge: true });
+      $('modal').classList.add('hidden');
+      if (!(window.jvAfterJobChange && jvAfterJobChange(id))) openJobDetail(id);
+    } catch (e) { $('vdErr').textContent = jobSaveError(e); $('vdGo').disabled = false; }
   };
   window.reopenJob = async function (id) {
     if (!canAssign()) return;

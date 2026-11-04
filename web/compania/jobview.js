@@ -293,10 +293,11 @@
   function actionsHtml(j) {
     if (!canAssign()) return '';
     var id = j.id, b = [];
-    if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="jvEdit(\'' + id + '\')">' + esc(L('Editar trabajo', 'Edit job')) + '</button>');
     if (!jobArchived(j)) b.push(jobDone(j)
       ? '<button type="button" class="btn ghost" onclick="reopenJob(\'' + id + '\')">' + esc(L('Reabrir trabajo', 'Reopen job')) + '</button>'
-      : '<button type="button" class="btn" onclick="closeJob(\'' + id + '\')">' + esc(L('Cerrar trabajo', 'Close job')) + '</button>');
+      : '<button type="button" class="btn" onclick="closeJob(\'' + id + '\')">✓ ' + esc(L('Completar trabajo', 'Complete job')) + '</button>');
+    if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="openVisitDate(\'' + id + '\')">📅 ' + esc(L('Cambiar fecha', 'Change date')) + '</button>');
+    if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="jvEdit(\'' + id + '\')">' + esc(L('Editar trabajo', 'Edit job')) + '</button>');
     if (canSeeMoney() && !jobArchived(j)) b.push(j.invoiceId
       ? '<button type="button" class="btn ghost" onclick="closeJobVisit();openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(L('Ver factura', 'View invoice')) + '</button>'
       : '<button type="button" class="btn ghost" onclick="closeJobVisit();openInvoiceEditor(\'' + id + '\')">' + esc(L('Crear factura', 'Create invoice')) + '</button>');
