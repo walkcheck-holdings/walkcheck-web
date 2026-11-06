@@ -133,7 +133,8 @@ async function load(retried) {
     // sign-in email is VERIFIED. Say so instead of showing an empty list.
     var u = auth.currentUser || {};
     var denied = e && (e.code === 'permission-denied' || /permission/i.test(e.message || ''));
-    $('kpis').innerHTML = '';
+    // Keep the income cards on screen (with what we have) even if the list failed.
+    renderKpis();
     $('rows').innerHTML = '<tr><td colspan="7"><div class="pf-warn">' + (denied && !u.emailVerified
       ? '<b>Tu correo ' + esc(u.email || '') + ' no está verificado.</b><br>Por seguridad, la lista de compañías solo se muestra con el correo verificado. ' +
         '<button type="button" class="btn" id="pfVerify" style="width:auto;margin-top:8px">Enviarme el correo de verificación</button>' +
@@ -221,7 +222,7 @@ function render() {
       : '<span class="st-pill ' + (on ? 'on' : 'off') + '">' + (on ? 'Activa' : 'Suspendida') + '</span>';
     var btnLabel = pending ? 'Activar a mano' : (on ? 'Suspender' : 'Activar');
     return '<tr>' +
-      '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div>' + creditLine(c) + '</td>' +
+      '<td><b>' + esc(c.name || c.id) + '</b><div class="muted">' + esc(c.id) + '</div>' + whoLine(c) + creditLine(c) + '</td>' +
       '<td class="hide-sm">' + esc(plan) + '</td>' +
       '<td class="hide-sm">' + (PRICE[planId(c)] ? money(PRICE[planId(c)]) : '—') + '</td>' +
       '<td class="hide-sm"><span class="st-pill ' + bs.cls + '">' + esc(bs.txt) + '</span></td>' +
@@ -247,6 +248,17 @@ function render() {
 /* ===== Descuento / perdonar el mes (solo dueño de la app) =====
    Stripe guarda el crédito en el cliente y lo resta solo del PRÓXIMO cobro. */
 var FN = 'https://us-central1-walkcheck-a4f1e.cloudfunctions.net/';
+/* Who owns it and when it was created: to tell real companies from tests. */
+function whoLine(c) {
+  var mail = c.ownerEmail || c.adminEmail || c.email || c.contactEmail || '';
+  var when = day(c.createdAt || c.created_at || c.createdOn || '');
+  var bits = [];
+  if (mail) bits.push('👤 ' + esc(mail));
+  if (when) bits.push('📅 creada ' + esc(when));
+  if (c.phone) bits.push('📞 ' + esc(c.phone));
+  if (c.memberCount != null) bits.push(esc(c.memberCount) + ' en el equipo');
+  return bits.length ? '<div class="cr-hist">' + bits.join(' · ') + '</div>' : '<div class="cr-hist">Sin correo ni fecha guardados</div>';
+}
 function creditLine(c) {
   var cr = Array.isArray(c.credits) ? c.credits : [];
   if (!cr.length) return '';
