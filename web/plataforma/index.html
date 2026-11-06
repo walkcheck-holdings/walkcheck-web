@@ -33,7 +33,10 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 .st-pill.pend { background:#FFF4E2; color:#9A5B00; }
 .row-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .row-actions .btn { width:auto; padding:8px 12px; min-height:36px; font-size:13px; }
-.q { max-width:320px; margin:0 0 16px; }
+.q { max-width:320px; margin:0; }
+.q-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 16px; }
+.q-wrap .muted a { color:#166534; font-weight:700; }
+.pf-warn { background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:12px 14px; line-height:1.5; }
 /* Discount / forgive a month */
 .cr-bg { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
 .cr-box { background:#fff; border-radius:14px; padding:18px; width:420px; max-width:100%; }
@@ -78,7 +81,10 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
   <div class="kpis" id="kpis"></div>
   <h2 style="margin:0 0 6px">Compañías</h2>
   <p class="muted">Activa o suspende compañías. Por privacidad no se ven sus trabajos, clientes ni facturación.</p>
-  <input class="q" type="text" id="q" placeholder="Buscar compañía">
+  <!-- type=search + autocomplete off: Safari was filling this box with the
+       login email, which hid every company. -->
+  <div class="q-wrap"><input class="q" type="search" id="q" name="wk-company-filter" placeholder="Buscar compañía" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true">
+  <span class="muted" id="qInfo"></span></div>
   <div class="table-card">
     <table>
       <thead>
@@ -99,6 +105,8 @@ th { font-size:12px; color:#8E8E93; text-transform:uppercase; letter-spacing:.04
 <script>
 $('btnOut').onclick = function () { auth.signOut(); };
 $('q').oninput = function () { render(); };
+// If the browser autofilled the box with an email before load, clear it.
+setTimeout(function () { var q = $('q'); if (q && /@/.test(q.value)) { q.value = ''; render(); } }, 400);
 
 var list = [];
 
@@ -112,7 +120,28 @@ auth.onAuthStateChanged(async function (user) {
 });
 
 async function load() {
-  var snap = await db.collection('companies').limit(200).get();
+  var snap;
+  try {
+    snap = await db.collection('companies').limit(200).get();
+  } catch (e) {
+    // The database only lets the app owner read every company when the
+    // sign-in email is VERIFIED. Say so instead of showing an empty list.
+    var u = auth.currentUser || {};
+    var denied = e && (e.code === 'permission-denied' || /permission/i.test(e.message || ''));
+    $('kpis').innerHTML = '';
+    $('rows').innerHTML = '<tr><td colspan="7"><div class="pf-warn">' + (denied && !u.emailVerified
+      ? '<b>Tu correo ' + esc(u.email || '') + ' no está verificado.</b><br>Por seguridad, la lista de compañías solo se muestra con el correo verificado. ' +
+        '<button type="button" class="btn" id="pfVerify" style="width:auto;margin-top:8px">Enviarme el correo de verificación</button>' +
+        '<div class="muted" id="pfVerifyMsg" style="margin-top:6px">Abre el enlace del correo y luego vuelve a entrar aquí.</div>'
+      : '<b>No se pudo cargar la lista de compañías.</b><br>' + esc((e && (e.code || e.message)) || e)) + '</div></td></tr>';
+    var vb = $('pfVerify');
+    if (vb) vb.onclick = async function () {
+      vb.disabled = true;
+      try { await auth.currentUser.sendEmailVerification(); $('pfVerifyMsg').textContent = 'Listo, revisa ' + (u.email || 'tu correo') + ' (también Spam). Después de verificar, cierra sesión y vuelve a entrar.'; }
+      catch (err) { $('pfVerifyMsg').textContent = 'No se pudo enviar: ' + (err.message || err); vb.disabled = false; }
+    };
+    return;
+  }
   list = [];
   snap.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
   list.sort(function (a, b) {
@@ -163,10 +192,17 @@ function render() {
   renderKpis();
   var q = ($('q').value || '').toLowerCase().trim();
   var rows = list.filter(function (c) {
-    return !q || String(c.name || '').toLowerCase().indexOf(q) >= 0 || String(c.id).toLowerCase().indexOf(q) >= 0;
+    if (!q) return true;
+    return [c.name, c.id, c.email, c.ownerEmail, c.adminEmail, c.phone].join(' ').toLowerCase().indexOf(q) >= 0;
   });
+  $('qInfo').innerHTML = q
+    ? 'Mostrando ' + rows.length + ' de ' + list.length + ' · <a href="#" id="qClear">quitar búsqueda</a>'
+    : list.length + (list.length === 1 ? ' compañía registrada' : ' compañías registradas');
+  if ($('qClear')) $('qClear').onclick = function (e) { e.preventDefault(); $('q').value = ''; render(); };
   if (!rows.length) {
-    $('rows').innerHTML = '<tr><td colspan="7" class="muted">No hay compañías.</td></tr>';
+    $('rows').innerHTML = '<tr><td colspan="7" class="muted">' + (q && list.length
+      ? 'Ninguna compañía coincide con "' + esc(q) + '". <a href="#" onclick="document.getElementById(\'q\').value=\'\';render();return false">Ver todas (' + list.length + ')</a>'
+      : 'No hay compañías.') + '</td></tr>';
     return;
   }
   $('rows').innerHTML = rows.map(function (c) {
@@ -188,7 +224,7 @@ function render() {
       '<td><div class="row-actions">' +
         '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '"' +
           (pending ? ' data-confirm="1"' : '') + '>' + btnLabel + '</button>' +
-        (c.stripeCustomerId ? '<button type="button" class="btn ghost" data-credit="' + esc(c.id) + '">💸 Descuento</button>' : '') +
+        '<button type="button" class="btn ghost" data-credit="' + esc(c.id) + '">💸 Descuento</button>' +
       '</div></td></tr>';
   }).join('');
   $('rows').querySelectorAll('button[data-credit]').forEach(function (btn) {
@@ -216,6 +252,10 @@ function openCredit(id) {
   var c = list.filter(function (x) { return x.id === id; })[0];
   if (!c) return;
   var price = PRICE[planId(c)] || 0;
+  if (!c.stripeCustomerId) {
+    alert((c.name || c.id) + ' todavía no ha puesto tarjeta en Stripe (está en prueba o sin pagar), así que no hay cobro al que descontarle. Cuando empiece a pagar, aquí podrás perdonarle el mes o darle un descuento.');
+    return;
+  }
   var bg = document.createElement('div');
   bg.className = 'cr-bg';
   bg.innerHTML = '<div class="cr-box" role="dialog" aria-modal="true">' +
