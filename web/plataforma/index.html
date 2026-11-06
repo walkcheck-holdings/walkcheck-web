@@ -119,11 +119,16 @@ auth.onAuthStateChanged(async function (user) {
   await load();
 });
 
-async function load() {
+async function load(retried) {
   var snap;
   try {
     snap = await db.collection('companies').limit(200).get();
   } catch (e) {
+    // Just verified the email (link in Gmail)? The sign-in token still says
+    // "not verified" until it is refreshed: refresh it once and try again.
+    if (!retried && e && e.code === 'permission-denied' && auth.currentUser) {
+      try { await auth.currentUser.reload(); await auth.currentUser.getIdToken(true); return load(true); } catch (_) {}
+    }
     // The database only lets the app owner read every company when the
     // sign-in email is VERIFIED. Say so instead of showing an empty list.
     var u = auth.currentUser || {};
@@ -133,7 +138,8 @@ async function load() {
       ? '<b>Tu correo ' + esc(u.email || '') + ' no está verificado.</b><br>Por seguridad, la lista de compañías solo se muestra con el correo verificado. ' +
         '<button type="button" class="btn" id="pfVerify" style="width:auto;margin-top:8px">Enviarme el correo de verificación</button>' +
         '<div class="muted" id="pfVerifyMsg" style="margin-top:6px">Abre el enlace del correo y luego vuelve a entrar aquí.</div>'
-      : '<b>No se pudo cargar la lista de compañías.</b><br>' + esc((e && (e.code || e.message)) || e)) + '</div></td></tr>';
+      : '<b>No se pudo cargar la lista de compañías.</b><br>' + esc((e && (e.code || e.message)) || e) +
+        (denied ? '<br><span class="muted">Entraste como ' + esc(u.email || '') + '. Cierra sesión y vuelve a entrar; si sigue igual, avísale a soporte con este mensaje.</span>' : '')) + '</div></td></tr>';
     var vb = $('pfVerify');
     if (vb) vb.onclick = async function () {
       vb.disabled = true;
