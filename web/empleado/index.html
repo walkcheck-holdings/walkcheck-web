@@ -2143,7 +2143,7 @@ function monthLabel(ym){
   const [y,m] = String(ym||'').split('-');
   if (!y || !m) return ym || '';
   const d = new Date(Number(y), Number(m)-1, 1);
-  return d.toLocaleDateString(uiLang==='en'?'en-US':'es-ES', { month:'long', year:'numeric' });
+  return d.toLocaleDateString(loginLang()==='en'?'en-US':'es-ES', { month:'long', year:'numeric' });
 }
 function wtYearMonth(wt){
   if (wt.yearMonth) return String(wt.yearMonth);
@@ -2286,7 +2286,7 @@ async function openReports(){
     const bopts = blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('')
       || `<option value="">${esc(uiT('noSites'))}</option>`;
     pane.innerHTML = `<div class="rpt-kpis">
-        <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${uiLang==='en'?'of':'de'} ${blds.length}</b></div>
+        <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${loginLang()==='en'?'of':'de'} ${blds.length}</b></div>
         <div class="rpt-kpi"><span>${esc(uiT('pendingBld'))}</span><b>${Math.max(0, blds.length - inspected.length)}</b></div>
         <div class="rpt-kpi"><span>${esc(uiT('openFindings'))}</span><b>${openN}</b></div>
       </div>
@@ -2300,7 +2300,7 @@ async function openReports(){
         <button class="btn" style="margin-top:12px" onclick="generateClientReport()">${esc(uiT('genReport'))}</button>
       </div>
       <div id="rptOut"></div>`;
-    applyUiLang();
+    applyPanelLang();
   };
   paint();
   try { await loadReportWalks(); } catch(_){}
