@@ -324,6 +324,7 @@
     var job = {
       companyId: cid(), companyName: companyName || '', buildingId: q.buildingId || '',
       title: title, address: q.clientAddress || '', clientName: q.client || '', contactName: q.client || '',
+      clientEmail: q.clientEmail || '', clientAddress: q.clientAddress || '', payerSet: !!(q.client || q.clientEmail),
       contactPhone: q.clientPhone || '', contactEmail: q.clientEmail || '',
       kind: (lines[0] && lines[0].name) || q.title || 'Trabajo', description: q.title || '',
       instructions: [q.title, q.notes].filter(Boolean).join('\n'),
@@ -346,8 +347,14 @@
         tx.set(jobRef, Object.assign({}, job, { jobNumber: String(n) }));
       });
       await ref().doc(id).set({ status: 'converted', jobId: jobRef.id, convertedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      alert(T('Listo: se creó el trabajo sin técnico. Asígnalo con "Asignar trabajo".', 'Done: the job was created with no tech. Assign it with "Assign job".'));
+      // Created for today 9–11 with no tech: ask right away for the real date and worker.
       openQuote(id);
+      if (typeof openVisitDate === 'function') {
+        alert(T('✅ Listo: la cotización ya es un trabajo. Ahora elige la fecha, la hora y el trabajador.', '✅ Done: the quote is now a job. Now pick the date, time and worker.'));
+        openVisitDate(jobRef.id);
+      } else {
+        alert(T('Listo: se creó el trabajo sin técnico. Asígnalo con "Asignar trabajo".', 'Done: the job was created with no tech. Assign it with "Assign job".'));
+      }
     } catch (e) { alert(e.message || e); }
   };
 })();

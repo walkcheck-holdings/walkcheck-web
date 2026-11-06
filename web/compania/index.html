@@ -201,6 +201,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M17 11v6M14 14h6"/></svg>
         <span class="rail-label" data-i18n="clientsMenu">Clientes</span>
       </button>
+      <button type="button" class="rail-item" id="railTeam" onclick="navTeam()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/></svg>
+        <span class="rail-label" data-i18n="teamMenu">Trabajadores</span>
+      </button>
       <button type="button" class="rail-item" id="railRequests" onclick="openRequests()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4h10a2 2 0 0 1 2 2v14l-4-2-3 2-3-2-4 2V6a2 2 0 0 1 2-2z"/></svg>
         <span class="rail-label" data-i18n="requestsMenu">Solicitudes</span>
@@ -253,6 +257,7 @@
     </div>
     <button type="button" class="btn create-job" id="createJobBtn" onclick="openCreateJob()" data-i18n="createJob">+ Crear trabajo</button>
     <button type="button" class="btn ghost create-job" id="createTaskBtn" onclick="openCreateTask()" data-i18n="createTask">📋 + Crear tarea</button>
+    <button type="button" class="btn ghost create-job hidden" id="createQuoteBtn" onclick="navNewQuote()" data-i18n="createQuote" style="margin-top:8px">📝 + Crear cotización</button>
     <button type="button" class="btn ghost create-job" id="assignJobBtn" onclick="openAssign()" data-i18n="assignJob" style="margin-top:8px">+ Asignar trabajo</button>
     <button type="button" class="btn ghost create-job hidden" id="createWorkerBtn" onclick="openCreateWorker()" style="margin-top:8px">+ Crear trabajador</button>
     <div class="addbox hidden" id="addbox">
@@ -769,7 +774,7 @@ const UI_I18N = {
     assignJob:'+ Asignar trabajo', teamSchedule:'Horario del equipo', weekOf:'Semana del',
     mySchedule:'Mi horario', jobType:'Tipo de trabajo', chooseType:'Elegir tipo…',
     searchType:'Buscar tipo…', frequent:'Frecuentes', newType:'+ Nuevo tipo', noTypes:'Sin tipos',
-    createJob:'+ Crear trabajo', createTask:'📋 + Crear tarea',
+    createJob:'+ Crear trabajo', createTask:'📋 + Crear tarea', createQuote:'📝 + Crear cotización', teamMenu:'Trabajadores',
     todaySummary:'Resumen de hoy', upcoming:'Próximos',
     allBuildings:'Todos los edificios', newInvoice:'Nueva factura', invoices:'Facturas',
     jobsMenu:'Trabajos', paymentsMenu:'Pagos', clientsMenu:'Clientes', requestsMenu:'Solicitudes', quotesMenu:'Cotizaciones',
@@ -833,7 +838,7 @@ const UI_I18N = {
     assignJob:'+ Assign job', teamSchedule:'Team schedule', weekOf:'Week of',
     mySchedule:'My Schedule', jobType:'Job type', chooseType:'Choose type…',
     searchType:'Search type…', frequent:'Frequent', newType:'+ New type', noTypes:'No types',
-    createJob:'+ Create job', createTask:'📋 + Create task',
+    createJob:'+ Create job', createTask:'📋 + Create task', createQuote:'📝 + Create quote', teamMenu:'Workers',
     todaySummary:"Today's summary", upcoming:'Upcoming',
     allBuildings:'All buildings', newInvoice:'New invoice', invoices:'Invoices',
     jobsMenu:'Jobs', paymentsMenu:'Payments', clientsMenu:'Clients', requestsMenu:'Requests', quotesMenu:'Quotes',
@@ -2039,6 +2044,17 @@ async function resetWorkerPassword(uid){
     alert((en ? 'Could not change it: ' : 'No se pudo cambiar: ') + (e.message || e));
   }
 }
+/* Rail "Trabajadores": clean screen with the team list (tap a person → profile). */
+function navTeam(){
+  document.body.classList.remove('view-hours','view-reports','view-worker','view-companies','view-billing','view-archived','view-home','view-search','view-jobs','view-job','view-payments','view-clients','view-requests','view-quotes','sites-open');
+  openRolesPane();
+  markNav('');
+}
+/* "+ Crear cotización": straight to a new quote. */
+async function navNewQuote(){
+  if (typeof openQuotes === 'function') await openQuotes();
+  if (typeof openQuoteEditor === 'function') openQuoteEditor();
+}
 function openRolesPane(){
   if (!canManageRoles()) return;
   document.body.classList.add('view-roles');
@@ -2393,8 +2409,9 @@ function markNav(which){
   else if (body.contains('view-payments')) rail = 'payments';
   else if (body.contains('view-reports')) rail = 'reports';
   else if (body.contains('view-hours')) rail = 'hours';
-  else if (body.contains('view-search') || body.contains('view-roles') || body.contains('view-companies') || body.contains('view-worker')) rail = '';
-  const railMap = { home:'railHome', horario:'railHorario', clients:'railClients', requests:'railRequests', quotes:'railQuotes', jobs:'railJobs', money:'railMoney', payments:'railPayments', reports:'railReports', hours:'railHours' };
+  else if (body.contains('view-roles') || body.contains('view-worker')) rail = 'team';
+  else if (body.contains('view-search') || body.contains('view-companies')) rail = '';
+  const railMap = { team:'railTeam', home:'railHome', horario:'railHorario', clients:'railClients', requests:'railRequests', quotes:'railQuotes', jobs:'railJobs', money:'railMoney', payments:'railPayments', reports:'railReports', hours:'railHours' };
   Object.keys(railMap).forEach(k => {
     const el = $(railMap[k]);
     if (el) el.classList.toggle('on', k === rail);
@@ -2417,6 +2434,8 @@ function syncChrome(){
   if ($('railCreate')) $('railCreate').classList.toggle('hidden', !(canAssign() || canSeeMoney()));
   if ($('railJobs')) $('railJobs').classList.toggle('hidden', isWorker());
   if ($('railClients')) $('railClients').classList.toggle('hidden', !canSeeClients());
+  if ($('railTeam')) $('railTeam').classList.toggle('hidden', !canManageRoles());
+  if ($('createQuoteBtn')) $('createQuoteBtn').classList.toggle('hidden', !canSeeMoney());
   if ($('railRequests')) $('railRequests').classList.toggle('hidden', !canAssign());
   if ($('railQuotes')) $('railQuotes').classList.toggle('hidden', !canSeeMoney());
   if ($('railMoney')) $('railMoney').classList.toggle('hidden', !canSeeMoney());
@@ -3915,7 +3934,7 @@ async function loadMonths(buildingId){
 }
 </script>
 <script src="/web/compania/billing.js?v=20261104b"></script>
-<script src="/web/compania/quotes.js?v=20261030b"></script>
+<script src="/web/compania/quotes.js?v=20261105a"></script>
 <script src="/web/compania/jobs.js?v=20261105a"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>
 <script src="/web/compania/jobview.js?v=20261105a"></script>
