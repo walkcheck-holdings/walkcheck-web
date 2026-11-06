@@ -252,6 +252,7 @@
       </div>
     </div>
     <button type="button" class="btn create-job" id="createJobBtn" onclick="openCreateJob()" data-i18n="createJob">+ Crear trabajo</button>
+    <button type="button" class="btn ghost create-job" id="createTaskBtn" onclick="openCreateTask()" data-i18n="createTask">📋 + Crear tarea</button>
     <button type="button" class="btn ghost create-job" id="assignJobBtn" onclick="openAssign()" data-i18n="assignJob" style="margin-top:8px">+ Asignar trabajo</button>
     <button type="button" class="btn ghost create-job hidden" id="createWorkerBtn" onclick="openCreateWorker()" style="margin-top:8px">+ Crear trabajador</button>
     <div class="addbox hidden" id="addbox">
@@ -768,7 +769,7 @@ const UI_I18N = {
     assignJob:'+ Asignar trabajo', teamSchedule:'Horario del equipo', weekOf:'Semana del',
     mySchedule:'Mi horario', jobType:'Tipo de trabajo', chooseType:'Elegir tipo…',
     searchType:'Buscar tipo…', frequent:'Frecuentes', newType:'+ Nuevo tipo', noTypes:'Sin tipos',
-    createJob:'+ Crear trabajo',
+    createJob:'+ Crear trabajo', createTask:'📋 + Crear tarea',
     todaySummary:'Resumen de hoy', upcoming:'Próximos',
     allBuildings:'Todos los edificios', newInvoice:'Nueva factura', invoices:'Facturas',
     jobsMenu:'Trabajos', paymentsMenu:'Pagos', clientsMenu:'Clientes', requestsMenu:'Solicitudes', quotesMenu:'Cotizaciones',
@@ -832,7 +833,7 @@ const UI_I18N = {
     assignJob:'+ Assign job', teamSchedule:'Team schedule', weekOf:'Week of',
     mySchedule:'My Schedule', jobType:'Job type', chooseType:'Choose type…',
     searchType:'Search type…', frequent:'Frequent', newType:'+ New type', noTypes:'No types',
-    createJob:'+ Create job',
+    createJob:'+ Create job', createTask:'📋 + Create task',
     todaySummary:"Today's summary", upcoming:'Upcoming',
     allBuildings:'All buildings', newInvoice:'New invoice', invoices:'Invoices',
     jobsMenu:'Jobs', paymentsMenu:'Payments', clientsMenu:'Clients', requestsMenu:'Requests', quotesMenu:'Quotes',
@@ -1810,6 +1811,7 @@ async function openCompanyPortal(){
   if ($('rolesBtn')) $('rolesBtn').classList.add('hidden');
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('createTaskBtn')) $('createTaskBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
   if ($('createWorkerBtn')) { $('createWorkerBtn').classList.toggle('hidden', !canCreateWorkers()); $('createWorkerBtn').textContent = loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador'; }
   if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
@@ -2280,7 +2282,7 @@ function openHome(){
       <button type="button" class="${homeFilter==='late'?'on':''}" onclick="homeFilter='late';openHome()">${esc(en?'Late':'Atrasados')} (${lateN})</button>
       <button type="button" class="${homeFilter==='open'?'on':''}" onclick="homeFilter='open';openHome()">${esc(en?'Unscheduled':'Sin programar')} (${openN})</button>
     </div>
-    ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
+    ${canAssign()?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button class="btn" style="width:auto;flex:1" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openCreateTask()">${esc(uiT('createTask'))}</button><button class="btn ghost" style="width:auto;flex:1" onclick="openAssign()">${esc(uiT('assignJob'))}</button>${canCreateWorkers()?`<button class="btn ghost" style="width:auto;flex:1" onclick="openCreateWorker()">${esc(loginLang()==='en'?'+ Create worker':'+ Crear trabajador')}</button>`:''}</div>`:''}
     ${homeAttentionHtml()}
     ${cards}
   </div>`;
@@ -2348,6 +2350,7 @@ function navMore(){
   if (sh.classList.contains('open')) { closeMore(); return; }
   const items = [];
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openCreateJob()">${esc(uiT('createJob'))}</button>`);
+  if (canAssign()) items.push(`<button type="button" onclick="closeMore();openCreateTask()">${esc(uiT('createTask'))}</button>`);
   if (canAssign()) items.push(`<button type="button" onclick="closeMore();openAssign()">${esc(uiT('assignJob'))}</button>`);
   if (canCreateWorkers()) items.push(`<button type="button" onclick="closeMore();openCreateWorker()">${esc(loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador')}</button>`);
   if (!isWorker()) items.push(`<button type="button" onclick="closeMore();openJobs()">${esc(uiT('jobsMenu'))}</button>`);
@@ -2406,6 +2409,7 @@ function syncChrome(){
   if ($('addbox')) $('addbox').classList.toggle('hidden', !canAssign());
   if ($('typesBox')) $('typesBox').classList.toggle('hidden', isWorker());
   if ($('createJobBtn')) $('createJobBtn').classList.toggle('hidden', !canAssign());
+  if ($('createTaskBtn')) $('createTaskBtn').classList.toggle('hidden', !canAssign());
   if ($('assignJobBtn')) $('assignJobBtn').classList.toggle('hidden', !canAssign());
   if ($('createWorkerBtn')) { $('createWorkerBtn').classList.toggle('hidden', !canCreateWorkers()); $('createWorkerBtn').textContent = loginLang()==='en' ? '+ Create worker' : '+ Crear trabajador'; }
   if ($('mySubBtn')) $('mySubBtn').classList.toggle('hidden', !canSeeMoney());
@@ -3912,10 +3916,10 @@ async function loadMonths(buildingId){
 </script>
 <script src="/web/compania/billing.js?v=20261104b"></script>
 <script src="/web/compania/quotes.js?v=20261030b"></script>
-<script src="/web/compania/jobs.js?v=20261104d"></script>
+<script src="/web/compania/jobs.js?v=20261105a"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>
-<script src="/web/compania/jobview.js?v=20261104c"></script>
+<script src="/web/compania/jobview.js?v=20261105a"></script>
 <script src="/web/compania/dashboard.js?v=20261102a"></script>
-<script src="/web/compania/jobslist.js?v=20261102a"></script>
+<script src="/web/compania/jobslist.js?v=20261105a"></script>
 </body>
 </html>

@@ -207,6 +207,7 @@
     return false;
   }
   function jobNeedsInvoice(j) {
+    if (j && j.isTask === true) return false; // tasks are never invoiced
     return !jobArchived(j) && jobDone(j) && !j.invoiceId;
   }
   window.jobBuckets = function () {
@@ -437,6 +438,86 @@
       });
       openJobDetail(jobRef.id);
     } catch (e) { err.textContent = e.message || e; }
+  };
+
+  /* ===== Tasks (like Jobber): something quick to do — pick up a part, a
+     run to the office, a call. Title, when, who, optional place/client.
+     No forms, no invoice; the worker just taps "Completar tarea". ===== */
+  window.openCreateTask = async function () {
+    if (!canAssign()) return;
+    if (typeof closeMore === 'function') closeMore();
+    await refreshClients();
+    var en = loginLang() === 'en';
+    var L = function (es, e) { return en ? e : es; };
+    var topts = '<option value="">' + esc(L('— Sin asignar todavía —', '— Not assigned yet —')) + '</option>' +
+      techs.map(function (t) { return '<option value="' + t.uid + '">' + esc(t.name) + '</option>'; }).join('');
+    var copts = '<option value="">' + esc(L('— Ninguno —', '— None —')) + '</option>' +
+      CLIENTS.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name || c.email || c.id) + '</option>'; }).join('');
+    var bopts = '<option value="">' + esc(L('— Ninguno —', '— None —')) + '</option>' +
+      buildings.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+    var day = ymd(typeof selectedDay !== 'undefined' ? selectedDay : new Date());
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = '<div class="box" style="width:520px;max-width:96vw;max-height:90vh;overflow:auto">' +
+      '<h3>📋 ' + esc(L('Nueva tarea', 'New task')) + '</h3>' +
+      '<p class="muted">' + esc(L('Algo rápido para hacer: recoger material, una vuelta, una llamada. Sin formularios ni factura.', 'Something quick to do: pick up material, a run, a call. No forms, no invoice.')) + '</p>' +
+      '<label class="muted">' + esc(L('¿Qué hay que hacer? *', 'What needs to be done? *')) + '</label><input id="tkTitle" type="text" placeholder="' + esc(L('Ej. Recoger disposal en oficina downtown', 'e.g. Pick up disposal at downtown office')) + '">' +
+      '<label class="muted">' + esc(L('Fecha', 'Date')) + '</label><input id="tkDay" type="date" value="' + esc(day) + '">' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><select id="tkStart">' + clockChoices('09:00') + '</select>' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><select id="tkEnd">' + clockChoices('09:30') + '</select>' +
+      '<label class="muted">' + esc(uiT('worker')) + '</label><select id="tkWho">' + topts + '</select>' +
+      '<label class="muted">' + esc(L('Edificio (opcional)', 'Building (optional)')) + '</label><select id="tkB">' + bopts + '</select>' +
+      '<label class="muted">' + esc(L('Dirección (opcional)', 'Address (optional)')) + '</label><input id="tkAddr" type="text">' +
+      '<label class="muted">' + esc(L('Cliente (opcional)', 'Client (optional)')) + '</label><select id="tkClient">' + copts + '</select>' +
+      '<label class="muted">' + esc(uiT('instructions')) + '</label><textarea id="tkInstr" rows="3"></textarea>' +
+      '<div class="err" id="tkErr"></div>' +
+      '<button class="btn" id="tkGo" onclick="saveCreateTask()">' + esc(L('Crear tarea', 'Create task')) + '</button>' +
+      '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(uiT('cancel')) + '</button></div>';
+    setTimeout(function () { if ($('tkTitle')) $('tkTitle').focus(); }, 50);
+  };
+  window.saveCreateTask = async function () {
+    if (!canAssign()) return;
+    var en = loginLang() === 'en';
+    var err = $('tkErr');
+    var title = ($('tkTitle').value || '').trim();
+    if (!title) { err.textContent = en ? 'Write what needs to be done.' : 'Escribe qué hay que hacer.'; return; }
+    var day = $('tkDay').value;
+    var base = new Date(day + 'T12:00:00');
+    var start = clockToDate(snapClock($('tkStart').value), base);
+    var end = clockToDate(snapClock($('tkEnd').value), base);
+    if (!day || !start || !end || !(end > start)) { err.textContent = en ? 'Check the date and times (end after start).' : 'Revisa la fecha y las horas (la de fin va después).'; return; }
+    var who = $('tkWho').value;
+    var b = buildings.find(function (x) { return x.id === $('tkB').value; });
+    var cl = CLIENTS.find(function (x) { return x.id === $('tkClient').value; });
+    var addr = ($('tkAddr').value || '').trim() || (b && (b.address || b.name)) || '';
+    var visit = {
+      id: 'v1', scheduledDate: day, startClock: toClock(start), endClock: toClock(end),
+      hour: start.getHours(), minute: start.getMinutes(), endHour: end.getHours(), endMinute: end.getMinutes(),
+      assignedUid: who, status: 'open', instructions: ($('tkInstr').value || '').trim(),
+      arrivalWindow: 'start', checklists: [], title: title
+    };
+    var payload = Object.assign({
+      isTask: true,
+      companyId: cid(), companyName: companyName,
+      buildingId: b ? b.id : '',
+      title: title, kind: '📋 ' + title, address: addr,
+      clientName: cl ? (cl.name || '') : '', clientEmail: cl ? (cl.email || '') : '', billClientId: cl ? cl.id : '', payerSet: !!cl,
+      instructions: visit.instructions, description: '',
+      lines: [], visits: [visit], expenses: [], notesLog: [],
+      arrivalWindow: 'start', companyType: companyType, status: 'open',
+      scheduledDate: day, startClock: visit.startClock, endClock: visit.endClock,
+      hour: visit.hour, minute: visit.minute, endHour: visit.endHour, endMinute: visit.endMinute,
+      startTime: fmt(start), time: fmt(start), endTime: fmt(end),
+      appointment_start: firebase.firestore.Timestamp.fromDate(start),
+      appointment_end: firebase.firestore.Timestamp.fromDate(end),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(), createdBy: uid()
+    }, who ? assignmentPatch(who) : { assignedUid: '', workerId: '', assignedName: '', unassigned: true });
+    $('tkGo').disabled = true;
+    try {
+      await db.collection('jobs').add(payload);
+      $('modal').classList.add('hidden');
+      if (typeof selectedDay !== 'undefined') { selectedDay = new Date(day + 'T12:00:00'); }
+      if (typeof loadBoard === 'function') loadBoard();
+    } catch (e) { err.textContent = jobSaveError ? jobSaveError(e) : (e.message || e); $('tkGo').disabled = false; }
   };
 
   window.openJobDetail = async function (id) {

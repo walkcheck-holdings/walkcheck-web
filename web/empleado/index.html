@@ -3629,8 +3629,8 @@ async function openJobView(id){
       <div class="vz-sec"><h4>${esc(L('Trabajo', 'Job'))}</h4><p>${esc(title)}${j.jobNumber ? ' · #' + esc(j.jobNumber) : ''}</p>
       ${j.lastReschedule && j.lastReschedule.reason ? `<p class="muted">${esc(L('Reprogramado', 'Rescheduled'))}: ${esc(j.lastReschedule.reason)}</p>` : ''}</div>`;
   else body = `<div class="vz-sec"><h4>${esc(L('Instrucciones', 'Instructions'))}</h4><p style="white-space:pre-wrap;margin:0">${esc(j.instructions || j.description || v0.instructions || '') || `<span class="muted">${esc(L('Sin instrucciones', 'No instructions'))}</span>`}</p></div>
-      <div class="vz-sec"><h4>${esc(L('Formularios', 'Forms'))}</h4>${forms}</div>
-      <div class="vz-sec"><h4>${esc(L('Producto / Servicio', 'Product / Service'))}</h4>${items}</div>
+      ${j.isTask === true ? '' : `<div class="vz-sec"><h4>${esc(L('Formularios', 'Forms'))}</h4>${forms}</div>
+      <div class="vz-sec"><h4>${esc(L('Producto / Servicio', 'Product / Service'))}</h4>${items}</div>`}
       <div class="vz-sec"><h4>${esc(L('Horario', 'Schedule'))}</h4><p class="vz-row">📅 <b>${esc(dayLbl)}, ${fmt(st)} – ${fmt(en)}</b></p>
         <h4 style="margin-top:14px">${esc(L('Equipo', 'Team'))}</h4><p class="vz-row">👥 ${esc(workerNameOf(j) || L('Sin asignar', 'Not assigned'))}</p></div>`;
   const tabBtn = (t, label) => `<button type="button" class="${tab === t || (t === 'info' && tab === 'checks') ? 'on' : ''}" onclick="goVisitTab('${t}','${j.id}')">${esc(label)}</button>`;
@@ -3642,8 +3642,10 @@ async function openJobView(id){
     </div>
     <div class="vz-head">
       <div class="vz-st ${stInfo[0]}"><i></i>${esc(stInfo[1])}</div>
-      <h2>${esc(L('Visita para ', 'Visit for ') + (client || title))}</h2>
-      <div class="vz-sub">${esc((client ? client + ' - ' : '') + title)}</div>
+      ${j.isTask === true
+        ? `<h2>📋 ${esc(j.title || title)}</h2>${client ? `<div class="vz-sub">${esc(client)}</div>` : ''}`
+        : `<h2>${esc(L('Visita para ', 'Visit for ') + (client || title))}</h2>
+      <div class="vz-sub">${esc((client ? client + ' - ' : '') + title)}</div>`}
       <p class="vz-row">📍 ${esc((j.unit ? L('Unidad ', 'Unit ') + j.unit + ' · ' : '') + (j.address || '—'))}</p>
       ${(j.tenantName || (j.contactName && j.contactName !== client)) ? `<p class="vz-row">👤 ${esc(L('Inquilino: ', 'Tenant: ') + (j.tenantName || j.contactName))}${phone ? ` · <a href="tel:${esc(phone.replace(/[^\d+]/g, ''))}">${esc(phone)}</a>` : ''}</p>` : ''}
       <div class="vz-two">
@@ -3653,8 +3655,10 @@ async function openJobView(id){
       <p class="vz-row">📅 ${esc(dayLbl)}, ${fmt(st)} – ${fmt(en)}</p>
       <div class="vz-acts">
         ${completed
-          ? `<button type="button" class="vz-btn ghost grow" onclick="reopenVisit('${j.id}')">${esc(L('Reabrir visita', 'Reopen visit'))}</button>`
-          : `${started ? `<span class="vz-btn ghost grow vz-started">▶ ${esc(L('En curso', 'In progress'))}</span>` : `<button type="button" class="vz-btn ghost grow" onclick="startVisit('${j.id}')">▶ ${esc(L('Iniciar visita', 'Start visit'))}</button>`}
+          ? `<button type="button" class="vz-btn ghost grow" onclick="reopenVisit('${j.id}')">${esc(j.isTask === true ? L('Reabrir tarea', 'Reopen task') : L('Reabrir visita', 'Reopen visit'))}</button>`
+          : j.isTask === true
+            ? `<button type="button" class="vz-btn grow" onclick="completeVisit('${j.id}')">✓ ${esc(L('Completar tarea', 'Complete task'))}</button>`
+            : `${started ? `<span class="vz-btn ghost grow vz-started">▶ ${esc(L('En curso', 'In progress'))}</span>` : `<button type="button" class="vz-btn ghost grow" onclick="startVisit('${j.id}')">▶ ${esc(L('Iniciar visita', 'Start visit'))}</button>`}
              <button type="button" class="vz-btn grow" onclick="askCompleteVisit('${j.id}')">${esc(L('Completar visita', 'Complete visit'))}</button>`}
         <div class="jr-more-wrap"><button type="button" class="vz-btn ghost vz-more" aria-label="${esc(L('Más', 'More'))}" onclick="var m=document.getElementById('vzMore');if(m)m.classList.toggle('hidden')">⋯</button>
           <div id="vzMore" class="jr-menu vz-menu hidden">${completed ? '' : `<button type="button" onclick="openReschedule('${j.id}')">📅 ${esc(L('Reprogramar', 'Reschedule'))}</button>`}<button type="button" onclick="openJobReport('${j.id}')">📝 Job Report</button></div></div>
@@ -3738,7 +3742,7 @@ async function completeVisit(id){
   visitTab = 'info';
   await loadBoard();
   await openJobView(id);
-  wkToast(en ? '✓ Visit completed' : '✓ Visita completada');
+  wkToast(j.isTask === true ? (en ? '✓ Task completed' : '✓ Tarea completada') : (en ? '✓ Visit completed' : '✓ Visita completada'));
 }
 async function reopenVisit(id){
   const en = loginLang() === 'en';

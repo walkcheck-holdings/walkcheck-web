@@ -50,7 +50,7 @@
     var d = firstDay(j); if (!d) return false;
     return d >= ymd(new Date()) && d <= ymd(new Date(Date.now() + 30 * 86400000));
   }
-  function needsInvoice(j) { return !jobArchived(j) && jobDone(j) && !j.invoiceId; }
+  function needsInvoice(j) { return !j.isTask && !jobArchived(j) && jobDone(j) && !j.invoiceId; }
   function needsAction(j) {
     if (jobArchived(j) || jobDone(j)) return false;
     if (j.needsReturn === true) return true;

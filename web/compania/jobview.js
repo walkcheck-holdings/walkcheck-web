@@ -263,13 +263,16 @@
     var v = jobVisits(j)[0] || {};
     var when = [ymdLabel(v.scheduledDate || j.scheduledDate), [fmtClock(v.startClock || j.startClock), fmtClock(v.endClock || j.endClock)].filter(Boolean).join(' – ')].filter(Boolean).join(', ');
     var notesN = allNotes(j).length, ckN = checklistKeys(j).length;
-    var tabs = [['info', L('Info', 'Info'), null], ['client', L('Cliente', 'Client'), null], ['notes', L('Notas', 'Notes'), notesN], ['checklists', L('Checklists', 'Checklists'), ckN]];
+    var tabs = j.isTask === true
+      ? [['info', L('Tarea', 'Task'), null], ['notes', L('Notas', 'Notes'), notesN]]
+      : [['info', L('Info', 'Info'), null], ['client', L('Cliente', 'Client'), null], ['notes', L('Notas', 'Notes'), notesN], ['checklists', L('Checklists', 'Checklists'), ckN]];
+    if (j.isTask === true && (S.tab === 'client' || S.tab === 'checklists')) S.tab = 'info';
     var body = S.tab === 'client' ? clientTabHtml(j) : S.tab === 'notes' ? notesTabHtml(j) : S.tab === 'checklists' ? checklistsTabHtml(j) : infoTabHtml(j);
     m.innerHTML = '<div class="jv-box" role="dialog" aria-modal="true" aria-label="' + esc(j.title || 'Job') + '">' +
       '<button type="button" class="jv-x" onclick="closeJobVisit()" aria-label="' + esc(L('Cerrar', 'Close')) + '">×</button>' +
       '<div class="jv-head">' +
         '<div class="jv-head-main">' +
-          '<h2>' + esc(j.title || j.kind || L('Trabajo', 'Job')) + '</h2>' +
+          '<h2>' + (j.isTask === true ? '📋 ' : '') + esc(j.title || j.kind || L('Trabajo', 'Job')) + '</h2>' +
           (c.name ? '<div class="jv-client">' + esc(c.name) + '</div>' : '') +
           (c.address ? '<div class="muted">' + esc(c.address) + (c.unit ? ' · Unit ' + esc(c.unit) : '') + '</div>' : '') +
         '</div>' +
@@ -293,9 +296,15 @@
   function actionsHtml(j) {
     if (!canAssign()) return '';
     var id = j.id, b = [];
+    var isTask = j.isTask === true;
     if (!jobArchived(j)) b.push(jobDone(j)
-      ? '<button type="button" class="btn ghost" onclick="reopenJob(\'' + id + '\')">' + esc(L('Reabrir trabajo', 'Reopen job')) + '</button>'
-      : '<button type="button" class="btn" onclick="closeJob(\'' + id + '\')">✓ ' + esc(L('Completar trabajo', 'Complete job')) + '</button>');
+      ? '<button type="button" class="btn ghost" onclick="reopenJob(\'' + id + '\')">' + esc(isTask ? L('Reabrir tarea', 'Reopen task') : L('Reabrir trabajo', 'Reopen job')) + '</button>'
+      : '<button type="button" class="btn" onclick="closeJob(\'' + id + '\')">✓ ' + esc(isTask ? L('Completar tarea', 'Complete task') : L('Completar trabajo', 'Complete job')) + '</button>');
+    if (isTask) {
+      if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="openVisitDate(\'' + id + '\')">📅 ' + esc(L('Cambiar fecha', 'Change date')) + '</button>');
+      b.push('<button type="button" class="btn ghost" onclick="closeJobVisit();askArchiveJob(\'' + id + '\')">' + esc(L('Archivar', 'Archive')) + '</button>');
+      return '<div class="jv-actions">' + b.join('') + '</div>';
+    }
     if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="openVisitDate(\'' + id + '\')">📅 ' + esc(L('Cambiar fecha', 'Change date')) + '</button>');
     if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="jvEdit(\'' + id + '\')">' + esc(L('Editar trabajo', 'Edit job')) + '</button>');
     if (canSeeMoney() && !jobArchived(j)) b.push(j.invoiceId
