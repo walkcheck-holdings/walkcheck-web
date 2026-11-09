@@ -4,6 +4,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WalkCheck — Del trabajo a la factura, sin papeles</title>
 <meta name="description" content="WalkCheck organiza tu compañía de servicios: crea el trabajo, agenda la visita, tu técnico deja notas con fotos y la factura sale lista. 15 días gratis.">
+<link rel="canonical" href="https://walkcheck.app/">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="WalkCheck">
+<meta property="og:title" content="WalkCheck — Del trabajo a la factura, sin papeles">
+<meta property="og:description" content="Crea el trabajo, agenda la visita, tu técnico deja notas con fotos y la factura sale lista. Para compañías de servicios. 15 días gratis.">
+<meta property="og:url" content="https://walkcheck.app/">
+<meta property="og:image" content="https://walkcheck.app/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="WalkCheck: del trabajo a la factura, sin papeles ni llamadas">
+<meta property="og:locale" content="es_US">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="WalkCheck — Del trabajo a la factura, sin papeles">
+<meta name="twitter:description" content="Crea el trabajo, agenda la visita, tu técnico deja notas con fotos y la factura sale lista. 15 días gratis.">
+<meta name="twitter:image" content="https://walkcheck.app/assets/og-image.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"WalkCheck","url":"https://walkcheck.app/","applicationCategory":"BusinessApplication","operatingSystem":"Web, Android","inLanguage":["es","en"],"description":"Software para compañías de servicios: trabajos, visitas, notas con fotos, cotizaciones y facturas.","offers":{"@type":"AggregateOffer","priceCurrency":"USD","lowPrice":"99.99","highPrice":"299.99","offerCount":"3","description":"15 días gratis"},"publisher":{"@type":"Organization","name":"WalkCheck Holdings LLC","url":"https://walkcheck.app/","telephone":"+1-305-205-2128","email":"info@walkcheck.app","address":{"@type":"PostalAddress","addressLocality":"Miami","addressRegion":"FL","addressCountry":"US"}}}
+</script>
 <style>
 :root{
   --navy:#0E2A47; --navy2:#0A1F36; --navy3:#16467E;
@@ -47,6 +69,9 @@ nav.main a:hover{background:rgba(255,255,255,.08);color:#fff}
 .lang-toggle:hover{border-color:#fff}
 .btn-enter{color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;padding:9px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35)}
 .btn-enter:hover{border-color:#fff}
+.hd-call{color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;white-space:nowrap}
+nav.main a{white-space:nowrap}
+@media(max-width:1360px){.hd-call span{display:none}.hd-call{font-size:18px}}
 
 /* ===== Hero ===== */
 .hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(1200px 600px at 85% -10%,rgba(122,193,66,.18),transparent 60%),linear-gradient(165deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);padding:84px 0 110px}
@@ -323,6 +348,9 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
 /* AI assistant (unchanged behaviour) */
 .ai-float{position:fixed;right:22px;bottom:22px;z-index:60;width:60px;height:60px;border-radius:50%;background:var(--navy);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 10px 28px rgba(14,42,71,.45);transition:.15s}
 .ai-float:hover{transform:scale(1.08);background:var(--navy3)}
+.wa-float{position:fixed;left:22px;bottom:22px;z-index:60;width:60px;height:60px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(14,42,71,.28);transition:transform .2s}
+.wa-float:hover{transform:scale(1.08)}
+.wa-float svg{width:32px;height:32px}
 .ai-box{position:fixed;right:22px;bottom:94px;z-index:70;width:min(380px,calc(100vw - 32px));height:520px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(14,42,71,.28);display:none;flex-direction:column;overflow:hidden}
 .ai-box.on{display:flex}
 .ai-hd{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
@@ -410,6 +438,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
   footer{padding:40px 0 96px}
   .fcols{grid-template-columns:1fr;gap:22px;margin-bottom:24px}
   .ai-float{width:50px;height:50px;right:12px;bottom:12px;font-size:20px}
+  .wa-float{width:50px;height:50px;left:12px;bottom:12px}.wa-float svg{width:27px;height:27px}
   .ai-box{right:12px;width:min(320px,calc(100vw - 24px));bottom:70px;height:min(60vh,420px)}
   .ai-form input{font-size:16px}
 }
@@ -424,12 +453,13 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
     </a>
     <nav class="main">
       <a href="#flujo" data-i18n="navFlow">Cómo funciona</a>
-      <a href="#walkthrough" data-i18n="navWt">Walkcheck</a>
+      <a href="#walkthrough" data-i18n="navWt">WalkCheck</a>
       <a href="#roles" data-i18n="navRoles">Para tu equipo</a>
       <a href="#precios" data-i18n="navPrecios">Precios</a>
       <a href="#faq" data-i18n="navFaq">Preguntas</a>
     </nav>
     <div class="hd-right">
+      <a class="hd-call" href="tel:+13052052128" aria-label="Llámanos 305-205-2128">📞<span> 305-205-2128</span></a>
       <button class="lang-toggle" type="button" onclick="toggleLang()">EN</button>
       <a class="btn btn-green btn-sm" href="/register/" data-i18n="navTrial">15 días gratis</a>
       <a class="btn-enter" href="/app/" data-i18n="navEnter">Entrar</a>
@@ -453,6 +483,8 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
         <span class="chip"><i></i><span data-i18n="c2">Visitas</span></span>
         <span class="chip"><i></i><span data-i18n="c3">Notas con fotos</span></span>
         <span class="chip"><i></i><span data-i18n="c4">Facturas</span></span>
+        <span class="chip"><i></i><span data-i18n="c5">Cotizaciones</span></span>
+        <span class="chip"><i></i><span data-i18n="c6">Cobro con tarjeta</span></span>
       </div>
     </div>
 
@@ -461,7 +493,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <div class="float-tag t2"><em>✅</em><span data-i18n="ft2">Factura enviada</span></div>
       <div class="hphone-frame">
         <span class="hphone-notch"></span>
-        <video id="heroVid" src="/assets/hero.mp4" autoplay muted loop playsinline preload="auto"></video>
+        <video id="heroVid" src="/assets/hero.mp4" poster="/assets/hero-poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
         <!-- Sharp captions over the video (the video's own text is too small). -->
         <div class="hcap" id="heroCap">
           <span data-i18n="hv1">¿Papeles por todos lados?</span>
@@ -513,7 +545,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
         <button class="fstep rv d3" type="button" data-step="3" role="tab">
           <span class="n">4</span>
           <span><h3 data-i18n="f4t">Factura lista para enviar</h3><p data-i18n="f4s">Los materiales pasan solos a la factura; tú pones el precio del trabajo.</p>
-            <ul><li data-i18n="f4a">Borrador de factura con un toque al terminar el trabajo</li><li data-i18n="f4b">Revisas, ajustas y la envías al cliente</li><li data-i18n="f4c">Sabes qué está cobrado y qué no</li></ul></span>
+            <ul><li data-i18n="f4a">Borrador de factura con un toque al terminar el trabajo</li><li data-i18n="f4b">Revisas, ajustas y la envías al cliente</li><li data-i18n="f4c">Sabes qué está cobrado y qué no</li><li data-i18n="f4d">Cotizaciones que el cliente aprueba en línea con su firma, y facturas que cobra con tarjeta directo a tu cuenta</li></ul></span>
         </button>
       </div>
 
@@ -594,7 +626,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
 <section class="sec wt-sec" id="walkthrough">
   <div class="wrap">
     <div class="sec-hd rv">
-      <span class="eyebrow" data-i18n="wtEy">Walkcheck mensual</span>
+      <span class="eyebrow" data-i18n="wtEy">WalkCheck mensual</span>
       <h2 data-i18n="wtT">Cada edificio revisado igual, todos los meses</h2>
       <p data-i18n="wtS">Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.</p>
     </div>
@@ -607,11 +639,11 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
           <li data-i18n="wt2">Si hay un problema: dónde está, qué se vio y fotos de cerca</li>
           <li data-i18n="wt3">Objetos personales en pasillos, documentados con su ubicación exacta</li>
           <li data-i18n="wt4">Botón de peligro inmediato para avisar a la oficina en el momento, sin esperar el reporte</li>
-          <li data-i18n="wt5">Las instrucciones de tu compañía dentro de cada Walkcheck</li>
+          <li data-i18n="wt5">Las instrucciones de tu compañía dentro de cada walkthrough</li>
         </ul>
       </div>
       <div class="wtm rv d1" aria-hidden="true">
-        <div class="wtm-hd"><b data-i18n="wtmT">🚶 Walkcheck · Bayview Condominiums</b><small data-i18n="wtmS">Octubre · 5 de 8 áreas · 2 problemas</small><div class="wtm-bar"><i></i></div></div>
+        <div class="wtm-hd"><b data-i18n="wtmT">🚶 WalkCheck · Bayview Condominiums</b><small data-i18n="wtmS">Octubre · 5 de 8 áreas · 2 problemas</small><div class="wtm-bar"><i></i></div></div>
         <div class="wtm-body">
           <div class="wa"><span class="em">🏢</span><span class="nm" data-i18n="wa1">Entradas y lobby</span><span class="pill g" data-i18n="waOk">Todo bien</span></div>
           <div class="wa"><span class="em">💡</span><span class="nm" data-i18n="wa2">Luces</span><span class="pill g" data-i18n="waOk">Todo bien</span></div>
@@ -709,12 +741,12 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
           <div class="top" style="background:var(--navy)"><span>Office</span><em>EN</em></div>
           <div class="row"><b>Bathroom leak · 4B</b><small>Scheduled · Luis M.</small></div>
           <div class="row"><b>Hallway paint · Floor 7</b><small>On site · Ana R.</small></div>
-          <div class="row"><b>Walkcheck · Bayview</b><small>2 problems</small></div>
+          <div class="row"><b>WalkCheck · Bayview</b><small>2 problems</small></div>
         </div>
         <div class="mini">
           <div class="top" style="background:#0E7C66"><span>Técnico</span><em>ES</em></div>
           <div class="row"><b>Fuga en baño · 4B</b><small>9:00 – 11:00</small></div>
-          <div class="row"><b>Walkcheck · Bayview</b><small>5/8 áreas</small></div>
+          <div class="row"><b>WalkCheck · Bayview</b><small>5/8 áreas</small></div>
           <div class="row"><b>Notas y fotos</b><small>3 fotos nuevas</small></div>
         </div>
       </div>
@@ -799,7 +831,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
     <div class="flat">
       <span data-i18n="fl1">Precio por equipo, no por usuario</span>
       <span data-i18n="fl2">Soporte en español e inglés</span>
-      <span data-i18n="fl3">Walkcheck, facturas y fotos incluidos</span>
+      <span data-i18n="fl3">WalkCheck, facturas y fotos incluidos</span>
       <span data-i18n="fl4">Sin contratos</span>
     </div>
     <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. La app funciona en Android y el panel web en cualquier dispositivo.</p>
@@ -813,6 +845,8 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <details><summary data-i18n="fq1">¿Cómo empiezo?</summary><div class="a" data-i18n="fa1">Crea tu cuenta en esta página, elige tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.</div></details>
       <details><summary data-i18n="fq2">¿Necesito tarjeta de crédito?</summary><div class="a" data-i18n="fa2">Sí. Al registrarte activas tu plan con tarjeta en Stripe. Tienes 15 días gratis: no se cobra nada hasta el día 16 y, si cancelas antes, no pagas.</div></details>
       <details><summary data-i18n="fq3">¿Mis técnicos necesitan computadora?</summary><div class="a" data-i18n="fa3">No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.</div></details>
+      <details><summary data-i18n="fq9">¿Mis técnicos necesitan saber de tecnología?</summary><div class="a" data-i18n="fa9">No. Cada técnico ve solo su agenda del día en el teléfono: toca para marcar inicio, toma las fotos y deja sus notas. No necesita computadora.</div></details>
+      <details><summary data-i18n="fq10">¿Cuánto tarda mi compañía en empezar?</summary><div class="a" data-i18n="fa10">Poco. Al registrarte eliges tu oficio y el panel llega listo con tus tipos de trabajo, pasos y fotos. En el plan UNLIMITED te ayudamos a activar tu compañía.</div></details>
       <details><summary data-i18n="fq4">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa4">El panel web funciona en cualquier teléfono o computadora. La app está en Android y la versión para iPhone está en desarrollo.</div></details>
       <details><summary data-i18n="fq5">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa5">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
       <details><summary data-i18n="fq6">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa6">Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.</div></details>
@@ -852,6 +886,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
         <a href="tel:+13052052128">📞 305-205-2128</a>
         <a href="mailto:info@walkcheck.app">info@walkcheck.app</a>
         <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a>
+        <a href="https://www.instagram.com/walkcheckpro/" target="_blank" rel="noopener">Instagram @walkcheckpro</a>
       </div>
       <div>
         <h4 data-i18n="ftL">Legal</h4>
@@ -866,6 +901,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
   </div>
 </footer>
 
+<a class="wa-float" href="https://wa.me/13052052128?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20WalkCheck" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp al 305-205-2128"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.79-1.31l-.34-.2-3.56.93.95-3.47-.22-.36a9.38 9.38 0 0 1-1.44-5.01c0-5.19 4.23-9.42 9.43-9.42 2.52 0 4.88.98 6.66 2.76a9.36 9.36 0 0 1 2.76 6.67c0 5.2-4.23 9.42-9.43 9.42zm8.02-17.44A11.27 11.27 0 0 0 12.05.75C5.8.75.72 5.83.72 12.08c0 2 .52 3.95 1.52 5.66L.62 23.25l5.65-1.48a11.3 11.3 0 0 0 5.78 1.47h.01c6.25 0 11.33-5.08 11.33-11.33 0-3.03-1.18-5.87-3.32-8.01z"/></svg></a>
 <button class="ai-float" id="aiOpen" type="button" aria-label="Asistente IA">✦</button>
 <div class="ai-box" id="aiBox" role="dialog" aria-label="Asistente WalkCheck">
   <div class="ai-hd">
@@ -883,14 +919,14 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
 var lang = "es";
 var I18N = {
 es:{
-navWt:"Walkcheck",ctaCall:"Llámanos",ctaMail:"¿Prefieres escribir?",
+navWt:"WalkCheck",ctaCall:"Llámanos",ctaMail:"¿Prefieres escribir?",
 fdT:"Precio de fundador: tu precio no sube mientras sigas con nosotros",fdS:"Si te registras ahora, mantienes este precio mensual mientras tu suscripción siga activa sin interrupción, aunque WalkCheck suba sus planes más adelante. Si cancelas y vuelves después, aplica el precio de ese momento.",
-fl1:"Precio por equipo, no por usuario",fl2:"Soporte en español e inglés",fl3:"Walkcheck, facturas y fotos incluidos",fl4:"Sin contratos",
+fl1:"Precio por equipo, no por usuario",fl2:"Soporte en español e inglés",fl3:"WalkCheck, facturas y fotos incluidos",fl4:"Sin contratos",
 fq7:"¿El precio va a subir?",fa7:"No para ti. Con el precio de fundador mantienes el precio con el que te registraste mientras tu suscripción siga activa sin interrupción, y sin cobro extra por usuario. Si cancelas y vuelves después, aplica el precio de ese momento.",fq8:"¿Hay premio por recomendar WalkCheck?",fa8:"Sí. Cada compañía tiene su código de referido (WC-XXXX) en la app, en Más → Invitar y ganar. Si una compañía nueva se registra con tu código y paga su primer mes después de los 15 días gratis, te damos $50 de crédito que se descuenta solo de tu próxima factura de WalkCheck. Es una vez por cada compañía nueva y no se cambia por dinero.",
-wtEy:"Walkcheck mensual",wtT:"Cada edificio revisado igual, todos los meses",wtS:"Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.",
+wtEy:"WalkCheck mensual",wtT:"Cada edificio revisado igual, todos los meses",wtS:"Tu técnico recorre las áreas comunes con una lista guiada. Tu oficina ve el resultado sin llamar a nadie.",
 wtH:"Las mismas 8 áreas, el mismo estándar, sin importar quién vaya",wtP:"Pasillos, lobby, luces, paredes y concreto, equipos de seguridad, estacionamientos, cuartos de basura y áreas comunes. En cada una, el técnico sabe exactamente qué buscar.",
-wt1:'"Todo bien" o "Problema" en cada área, con un toque',wt2:"Si hay un problema: dónde está, qué se vio y fotos de cerca",wt3:"Objetos personales en pasillos, documentados con su ubicación exacta",wt4:"Botón de peligro inmediato para avisar a la oficina en el momento, sin esperar el reporte",wt5:"Las instrucciones de tu compañía dentro de cada Walkcheck",
-wtmT:"🚶 Walkcheck · Bayview Condominiums",wtmS:"Octubre · 5 de 8 áreas · 2 problemas",
+wt1:'"Todo bien" o "Problema" en cada área, con un toque',wt2:"Si hay un problema: dónde está, qué se vio y fotos de cerca",wt3:"Objetos personales en pasillos, documentados con su ubicación exacta",wt4:"Botón de peligro inmediato para avisar a la oficina en el momento, sin esperar el reporte",wt5:"Las instrucciones de tu compañía dentro de cada walkthrough",
+wtmT:"🚶 WalkCheck · Bayview Condominiums",wtmS:"Octubre · 5 de 8 áreas · 2 problemas",
 wa1:"Entradas y lobby",wa2:"Luces",wa3:"Pasillos y escaleras",wa4:"Paredes, techos y concreto",wa5:"Estacionamientos",wa6:"Equipos de seguridad",
 waOk:"Todo bien",waIss:"Problema",waDng:"Peligro",waPend:"Pendiente",waWhere:"Dónde:",waWhat:"Qué:",wa3w:"Piso 4, pasillo sur, frente a la 412",wa3q:"Zapatos y una bicicleta en el pasillo",
 mo1:"Ago",mo2:"Sep",mo3:"Oct",
@@ -905,7 +941,7 @@ heroEy:"Para compañías de servicios",
 heroT:'Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span>',
 heroS:"Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale con los materiales que registró el técnico. Todo en un solo lugar.",
 heroMain:"Empezar 15 días gratis",heroCta2:"Ver cómo funciona",heroNote:"Activas tu plan con tarjeta · No se cobra hasta el día 16 · Cancela cuando quieras",
-c1:"Trabajos",c2:"Visitas",c3:"Notas con fotos",c4:"Facturas",
+c1:"Trabajos",c2:"Visitas",c3:"Notas con fotos",c4:"Facturas",c5:"Cotizaciones",c6:"Cobro con tarjeta",
 ft1:"3 fotos nuevas",ft2:"Factura enviada",
 hv1:"¿Papeles por todos lados?",hv2:"Trabajo terminado → creas la factura en un toque",hv3:"✓ Factura enviada al cliente",hv4:"Todo sin salir de WalkCheck",hv5:"Prueba 15 días gratis",
 mkTitle:"Trabajo #1048",mkLive:"En vivo",s1:"Trabajo",s2:"Visita",s3:"Notas",s4:"Factura",
@@ -920,7 +956,7 @@ flEy:"Cómo funciona",flT:"Un solo flujo, de principio a fin",flS:"Cada trabajo 
 f1t:"Crea el trabajo",f1s:"Cliente, dirección, tipo de trabajo e instrucciones en un minuto.",f1a:"Lista de trabajos con filtros por estado y tipo",f1b:"Ves de un vistazo lo atrasado y lo que falta por facturar",f1c:"Plantillas por tipo de trabajo",
 f2t:"Agenda la visita",f2s:"Asígnala a un técnico con día y hora de inicio y fin.",f2a:"Horario del equipo por día, semana o lista",f2b:"Varias visitas por trabajo y varios trabajos por día",f2c:"El técnico ve solo lo suyo en su teléfono",
 f3t:"Notas con fotos en el sitio",f3s:"El técnico documenta el antes, el después y los materiales.",f3a:"Fotos y notas guardadas en el trabajo, no en un teléfono",f3b:"Recibos de materiales adjuntos",f3c:"Horas de cada visita en el reporte de horas",
-f4t:"Factura lista para enviar",f4s:"Los materiales pasan solos a la factura; tú pones el precio del trabajo.",f4a:"Borrador de factura con un toque al terminar el trabajo",f4b:"Revisas, ajustas y la envías al cliente",f4c:"Sabes qué está cobrado y qué no",
+f4t:"Factura lista para enviar",f4s:"Los materiales pasan solos a la factura; tú pones el precio del trabajo.",f4a:"Borrador de factura con un toque al terminar el trabajo",f4b:"Revisas, ajustas y la envías al cliente",f4c:"Sabes qué está cobrado y qué no",f4d:"Cotizaciones que el cliente aprueba en línea con su firma, y facturas que cobra con tarjeta directo a tu cuenta",
 st1:"Atrasados",st2:"Por facturar",st3:"Esta semana",pl1:"Trabajos",r1:"Fuga en baño · 4B",r2:"Pintura de pasillo · Piso 7",rs2:"Agendado",r3:"Cambio de luces · Lobby",rs3:"Por facturar",
 pl2:"Horario del equipo · Jueves",sc1:"9:00 – 11:00 · Fuga en baño · 4B",sc2:"10:00 – 2:00 · Pintura de pasillo",sc2s:"En sitio",sc3:"1:00 – 3:00 · Cambio de luces",sc3s:"Pendiente",
 pl2b:"Lo que ve el técnico",tk1:"Llegar y marcar inicio",tk2:"Fotos de antes",tk3:"Notas y fotos de después",
@@ -942,6 +978,8 @@ faqT:"Preguntas frecuentes",
 fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página, elige tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",
 fq2:"¿Necesito tarjeta de crédito?",fa2:"Sí. Al registrarte activas tu plan con tarjeta en Stripe. Tienes 15 días gratis: no se cobra nada hasta el día 16 y, si cancelas antes, no pagas.",
 fq3:"¿Mis técnicos necesitan computadora?",fa3:"No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.",
+fq9:"¿Mis técnicos necesitan saber de tecnología?",fa9:"No. Cada técnico ve solo su agenda del día en el teléfono: toca para marcar inicio, toma las fotos y deja sus notas. No necesita computadora.",
+fq10:"¿Cuánto tarda mi compañía en empezar?",fa10:"Poco. Al registrarte eliges tu oficio y el panel llega listo con tus tipos de trabajo, pasos y fotos. En el plan UNLIMITED te ayudamos a activar tu compañía.",
 fq4:"¿Funciona en iPhone?",fa4:"El panel web funciona en cualquier teléfono o computadora. La app está en Android y la versión para iPhone está en desarrollo.",
 fq5:"¿Puedo cambiar de plan o cancelar?",fa5:"Sí, cuando quieras. Sin contratos ni penalidades.",
 fq6:"¿Mis datos están seguros?",fa6:"Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.",
@@ -949,14 +987,14 @@ ctaT:"Tu próximo trabajo, de principio a fin en WalkCheck",ctaS:"Crea tu cuenta
 ftD:"Del trabajo a la factura para compañías de servicios. Hecho en Miami.",ftP:"Producto",ftC:"Contacto",ftL:"Legal",ftT:"Términos",ftPv:"Privacidad",ftM:"Hecho en Miami 🌴"
 },
 en:{
-navWt:"Walkcheck",ctaCall:"Call us",ctaMail:"Prefer to write?",
+navWt:"WalkCheck",ctaCall:"Call us",ctaMail:"Prefer to write?",
 fdT:"Founder pricing: your price does not go up while you stay with us",fdS:"Sign up now and keep this monthly price for as long as your subscription stays active without interruption, even if WalkCheck raises its plans later. If you cancel and come back later, the price at that time applies.",
-fl1:"Priced per team, not per user",fl2:"Support in Spanish and English",fl3:"Walkcheck, invoices and photos included",fl4:"No contracts",
+fl1:"Priced per team, not per user",fl2:"Support in Spanish and English",fl3:"WalkCheck, invoices and photos included",fl4:"No contracts",
 fq7:"Will the price go up?",fa7:"Not for you. With founder pricing you keep the price you signed up with for as long as your subscription stays active without interruption, with no per-user fees. If you cancel and come back later, the price at that time applies.",fq8:"Is there a reward for recommending WalkCheck?",fa8:"Yes. Every company has a referral code (WC-XXXX) in the app, under More → Invite and earn. If a new company signs up with your code and pays its first month after the 15-day free trial, you get a $50 credit taken off your next WalkCheck invoice automatically. Once per new company, not exchangeable for cash.",
-wtEy:"Monthly Walkcheck",wtT:"Every building checked the same way, every month",wtS:"Your tech walks the common areas with a guided checklist. Your office sees the result without calling anyone.",
+wtEy:"Monthly WalkCheck",wtT:"Every building checked the same way, every month",wtS:"Your tech walks the common areas with a guided checklist. Your office sees the result without calling anyone.",
 wtH:"The same 8 areas, the same standard, no matter who goes",wtP:"Hallways, lobby, lighting, walls and concrete, safety equipment, parking, trash rooms and common areas. In each one, the tech knows exactly what to look for.",
-wt1:'"All good" or "Problem" for each area, in one tap',wt2:"If there's a problem: where it is, what was seen and close-up photos",wt3:"Personal items in hallways, documented with their exact location",wt4:"Immediate-danger button to alert the office right away, without waiting for the report",wt5:"Your company's instructions inside every Walkcheck",
-wtmT:"🚶 Walkcheck · Bayview Condominiums",wtmS:"October · 5 of 8 areas · 2 problems",
+wt1:'"All good" or "Problem" for each area, in one tap',wt2:"If there's a problem: where it is, what was seen and close-up photos",wt3:"Personal items in hallways, documented with their exact location",wt4:"Immediate-danger button to alert the office right away, without waiting for the report",wt5:"Your company's instructions inside every walkthrough",
+wtmT:"🚶 WalkCheck · Bayview Condominiums",wtmS:"October · 5 of 8 areas · 2 problems",
 wa1:"Entrances & lobby",wa2:"Lighting",wa3:"Hallways & stairs",wa4:"Walls, ceilings & concrete",wa5:"Parking",wa6:"Safety equipment",
 waOk:"All good",waIss:"Problem",waDng:"Danger",waPend:"Pending",waWhere:"Where:",waWhat:"What:",wa3w:"Floor 4, south hallway, by unit 412",wa3q:"Shoes and a bike in the hallway",
 mo1:"Aug",mo2:"Sep",mo3:"Oct",
@@ -971,7 +1009,7 @@ heroEy:"For service companies",
 heroT:'From job to invoice, <span class="hl">no paper, no phone tag</span>',
 heroS:"Create the job, schedule it, your tech leaves notes and photos from their phone, and the invoice comes out with the materials your tech logged. All in one place.",
 heroMain:"Start 15-day free trial",heroCta2:"See how it works",heroNote:"Card required · Not charged until day 16 · Cancel anytime",
-c1:"Jobs",c2:"Visits",c3:"Notes with photos",c4:"Invoices",
+c1:"Jobs",c2:"Visits",c3:"Notes with photos",c4:"Invoices",c5:"Quotes",c6:"Card payments",
 ft1:"3 new photos",ft2:"Invoice sent",
 hv1:"Paperwork everywhere?",hv2:"Job done → create the invoice in one tap",hv3:"✓ Invoice sent to the client",hv4:"All without leaving WalkCheck",hv5:"Try it free for 15 days",
 mkTitle:"Job #1048",mkLive:"Live",s1:"Job",s2:"Visit",s3:"Notes",s4:"Invoice",
@@ -986,7 +1024,7 @@ flEy:"How it works",flT:"One flow, start to finish",flS:"Every job goes through 
 f1t:"Create the job",f1s:"Client, address, job type and instructions in a minute.",f1a:"Job list with filters by status and type",f1b:"See what's late and what's left to invoice at a glance",f1c:"Templates by job type",
 f2t:"Schedule the visit",f2s:"Assign it to a tech with a day plus start and end time.",f2a:"Team schedule by day, week or list",f2b:"Several visits per job and several jobs per day",f2c:"Techs only see their own work on their phone",
 f3t:"Notes with photos on site",f3s:"The tech documents the before, the after and the materials.",f3a:"Photos and notes saved on the job, not on a phone",f3b:"Materials receipts attached",f3c:"Hours for every visit in the timesheet",
-f4t:"Invoice ready to send",f4s:"Materials flow into the invoice; you set the price of the work.",f4a:"One-tap draft invoice when the job is done",f4b:"Review, adjust and send it to the client",f4c:"Know what's paid and what isn't",
+f4t:"Invoice ready to send",f4s:"Materials flow into the invoice; you set the price of the work.",f4a:"One-tap draft invoice when the job is done",f4b:"Review, adjust and send it to the client",f4c:"Know what's paid and what isn't",f4d:"Quotes your client approves online with their signature, and invoices they pay by card straight to your account",
 st1:"Late",st2:"To invoice",st3:"This week",pl1:"Jobs",r1:"Bathroom leak · 4B",r2:"Hallway paint · Floor 7",rs2:"Scheduled",r3:"Light replacement · Lobby",rs3:"To invoice",
 pl2:"Team schedule · Thursday",sc1:"9:00 – 11:00 · Bathroom leak · 4B",sc2:"10:00 – 2:00 · Hallway paint",sc2s:"On site",sc3:"1:00 – 3:00 · Light replacement",sc3s:"Pending",
 pl2b:"What the tech sees",tk1:"Arrive and clock in",tk2:"Before photos",tk3:"After notes and photos",
@@ -1008,6 +1046,8 @@ faqT:"Frequently asked questions",
 fq1:"How do I start?",fa1:"Create your account on this page, choose your plan and start your 15 free days. If you need help, email soporte@walkcheck.app.",
 fq2:"Do I need a credit card?",fa2:"Yes. You activate your plan with a card in Stripe when you sign up. You get 15 days free: nothing is charged until day 16, and if you cancel before then you pay nothing.",
 fq3:"Do my techs need a computer?",fa3:"No. They see their schedule, take photos and leave notes from their phone. The office uses the web panel.",
+fq9:"Do my techs need to be good with technology?",fa9:"No. Each tech sees only their schedule for the day on their phone: tap to mark the start, take the photos and leave notes. No computer needed.",
+fq10:"How long does it take my company to get started?",fa10:"Not long. When you sign up you choose your trade and the panel comes ready with your job types, steps and photos. On the UNLIMITED plan we help you set up your company.",
 fq4:"Does it work on iPhone?",fa4:"The web panel works on any phone or computer. The app is on Android and the iPhone version is in development.",
 fq5:"Can I change plans or cancel?",fa5:"Yes, anytime. No contracts or penalties.",
 fq6:"Is my data safe?",fa6:"Your jobs, photos and invoices are stored in the cloud and only your company can see them.",
@@ -1120,7 +1160,7 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, {
   model: "gemini-flash-latest",
   systemInstruction:
-    "Eres el closer de WalkCheck (walkcheck.app), de WalkCheck Holdings LLC en Miami. Responde siempre en el idioma en que te escriban (español o inglés), breve y claro. Escribe solo texto simple: sin asteriscos, sin negritas ni formato markdown. ESTILO DE VENTA: corto, como un mensaje de chat, no un manual. Si preguntan por los beneficios, abre con una frase gancho (por ejemplo: Con WalkCheck llevas tu compañía en el bolsillo), di para qué oficios es en una línea y da máximo 5 beneficios numerados de una o dos líneas cada uno, hablando de tiempo y dinero: 1) todo en un solo lugar, sin WhatsApp, notas ni Excel, la oficina asigna y el equipo lo ve al instante en su teléfono; 2) equipo controlado: fotos de antes y después, materiales con foto del recibo, y el técnico solo ve su trabajo, sin precios ni facturación; 3) cobras más rápido: factura en PDF con tu logo en segundos con extras y materiales, cotizaciones que el cliente aprueba en línea, y cobro con tarjeta directo a tu cuenta; 4) inspecciones mensuales guiadas con fotos y alerta de peligro, ideal para retener condominios y HOAs; 5) precio justo: sin cobro por usuario extra, el dueño no cuenta como trabajador y precio de fundador sin contratos. Cierra con la prueba de 15 días en walkcheck.app/register/ y una pregunta: en qué oficio está, para decirle cómo le queda el panel. SOLO hablas de WalkCheck. QUÉ ES: plataforma para compañías de servicios, sobre todo administración de propiedades, y también mantenimiento, handyman, limpieza, inspecciones, construcción, plomería, electricidad, aire acondicionado, techos, vidrios y ventanas, concreto y pavimento, pintura y jardinería, entre 36 oficios en total (también drywall, pisos, carpintería, impermeabilización, cercas, herrería, piscinas, control de plagas, cerrajería, cámaras y alarmas, paneles solares y más). Al registrarse eligen su oficio y el panel llega listo: tipos de trabajo, pasos que marca el técnico, qué fotos tomar, materiales comunes y la forma de cobrar (por visita, hora o pie cuadrado). FLUJO: la oficina crea el trabajo (o lo asigna rápido), agenda la visita con día y hora a un técnico; el técnico ve solo su agenda en el teléfono, deja notas y fotos de antes y después, registra gastos con recibo, puede reprogramar la visita con motivo y marcar Necesita volver; la oficina recibe el aviso. FACTURAS: se crean desde el trabajo; cada línea con su tipo de trabajo y precio editable; trabajo extra no programado en su propia línea; los materiales que registró el técnico pasan solos; el precio del trabajo lo pone la oficina (las horas quedan en el reporte de horas, no pasan solas a la factura). Facturar a: el cliente del edificio con nombre y correo. PDF con el logo de la compañía en español o inglés, y envío al cliente por correo. Estado pagada, pendiente o vencida. Las facturas y cotizaciones se hacen y se envían desde el panel web (no desde la app del teléfono). COBRO CON TARJETA: la compañía conecta su propia cuenta de Stripe y cada factura que envía trae un botón Pagar en línea; el cliente paga con tarjeta y el dinero va directo a la cuenta de la compañía; la factura se marca pagada sola. WalkCheck no cobra comisión por eso (Stripe cobra su tarifa normal). COTIZACIONES: numeradas (C-1001, C-1002...), con líneas, impuesto, fecha de validez e idioma del cliente; se envían por correo y el cliente las aprueba en línea escribiendo su nombre como firma, o las rechaza con un motivo; la compañía recibe un aviso por correo y con un botón convierte la cotización aprobada en trabajo. FIRMA: la única firma del cliente es al aprobar una cotización en línea; no hay firma del cliente en el trabajo terminado, no digas que existe. INICIO: pantalla de inicio con el resumen del día, trabajos completados y pendientes, y lo que necesita atención: trabajos atrasados con el motivo que puso el técnico, los que necesitan volver, reprogramados y sin asignar. ARCHIVAR: los trabajos cancelados o duplicados se archivan con un motivo (no se borran) y se pueden desarchivar. WALKTHROUGH MENSUAL: lista guiada de 8 áreas comunes, Todo bien o Problema con fotos y ubicación, botón de peligro inmediato para avisar a la oficina, historial de fotos mes a mes y reporte del mes para el cliente. ROLES: dueño, oficina y supervisores, y técnicos; cada compañía ve solo sus datos; los técnicos no entran a facturación y no pueden cambiar cliente, dirección ni precio. Cada persona elige español o inglés. DISPOSITIVOS: app en Android y panel web en cualquier teléfono o computadora. La app de iPhone está en desarrollo: no digas que está en la App Store. PRECIOS: CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, el más popular), UNLIMITED $299.99/mes (ilimitados). El dueño no cuenta como trabajador; el límite lo controla el sistema y para tener más se cambia de plan. Precio por equipo, sin cobro por usuario extra. No hay plan anual todavía. PRUEBA Y COBRO: 15 días gratis; para registrarse hay que poner tarjeta en Stripe (sin tarjeta no se puede usar); no se cobra hasta el día 16 y después cada mes hasta cancelar. Se cancela cuando quieran desde Mi suscripción en el panel; si cancelan durante la prueba no pagan nada; si cancelan después, siguen hasta el final del mes pagado. Sin contratos. PRECIO DE FUNDADOR: quien se registra ahora mantiene su precio mientras su suscripción siga activa sin interrupción; si cancela y vuelve, aplica el precio de ese momento. No digas que es para siempre. REFERIDOS: cada compañía tiene un código WC-XXXX en la app (Más, Invitar y ganar); si una compañía nueva se registra con ese código y paga su primer mes después de la prueba, quien la refirió recibe $50 de crédito que se descuenta solo de su próxima factura de WalkCheck; una vez por compañía, no se cambia por dinero. LEGAL: Términos en walkcheck.app/terminos/ y Privacidad en walkcheck.app/privacidad/. No vendemos datos. CONTACTO: ventas 305-205-2128 o info@walkcheck.app; soporte soporte@walkcheck.app. Nunca envíes a nadie a WhatsApp ni menciones un botón de WhatsApp. REGLAS: no inventes funciones, precios ni fechas; si no sabes algo, di que lo confirmen con soporte@walkcheck.app. No pidas datos de tarjeta ni contraseñas. Para cerrar, invita a crear la cuenta en walkcheck.app/register/. Si preguntan de otro tema, redirige a WalkCheck."
+    "Eres el closer de WalkCheck (walkcheck.app), de WalkCheck Holdings LLC en Miami. Responde siempre en el idioma en que te escriban (español o inglés), breve y claro. Escribe solo texto simple: sin asteriscos, sin negritas ni formato markdown. ESTILO DE VENTA: corto, como un mensaje de chat, no un manual. Si preguntan por los beneficios, abre con una frase gancho (por ejemplo: Con WalkCheck llevas tu compañía en el bolsillo), di para qué oficios es en una línea y da máximo 5 beneficios numerados de una o dos líneas cada uno, hablando de tiempo y dinero: 1) todo en un solo lugar, sin WhatsApp, notas ni Excel, la oficina asigna y el equipo lo ve al instante en su teléfono; 2) equipo controlado: fotos de antes y después, materiales con foto del recibo, y el técnico solo ve su trabajo, sin precios ni facturación; 3) cobras más rápido: factura en PDF con tu logo en segundos con extras y materiales, cotizaciones que el cliente aprueba en línea, y cobro con tarjeta directo a tu cuenta; 4) inspecciones mensuales guiadas con fotos y alerta de peligro, ideal para retener condominios y HOAs; 5) precio justo: sin cobro por usuario extra, el dueño no cuenta como trabajador y precio de fundador sin contratos. Cierra con la prueba de 15 días en walkcheck.app/register/ y una pregunta: en qué oficio está, para decirle cómo le queda el panel. SOLO hablas de WalkCheck. QUÉ ES: plataforma para compañías de servicios, sobre todo administración de propiedades, y también mantenimiento, handyman, limpieza, inspecciones, construcción, plomería, electricidad, aire acondicionado, techos, vidrios y ventanas, concreto y pavimento, pintura y jardinería, entre 36 oficios en total (también drywall, pisos, carpintería, impermeabilización, cercas, herrería, piscinas, control de plagas, cerrajería, cámaras y alarmas, paneles solares y más). Al registrarse eligen su oficio y el panel llega listo: tipos de trabajo, pasos que marca el técnico, qué fotos tomar, materiales comunes y la forma de cobrar (por visita, hora o pie cuadrado). FLUJO: la oficina crea el trabajo (o lo asigna rápido), agenda la visita con día y hora a un técnico; el técnico ve solo su agenda en el teléfono, deja notas y fotos de antes y después, registra gastos con recibo, puede reprogramar la visita con motivo y marcar Necesita volver; la oficina recibe el aviso. FACTURAS: se crean desde el trabajo; cada línea con su tipo de trabajo y precio editable; trabajo extra no programado en su propia línea; los materiales que registró el técnico pasan solos; el precio del trabajo lo pone la oficina (las horas quedan en el reporte de horas, no pasan solas a la factura). Facturar a: el cliente del edificio con nombre y correo. PDF con el logo de la compañía en español o inglés, y envío al cliente por correo. Estado pagada, pendiente o vencida. Las facturas y cotizaciones se hacen y se envían desde el panel web (no desde la app del teléfono). COBRO CON TARJETA: la compañía conecta su propia cuenta de Stripe y cada factura que envía trae un botón Pagar en línea; el cliente paga con tarjeta y el dinero va directo a la cuenta de la compañía; la factura se marca pagada sola. WalkCheck no cobra comisión por eso (Stripe cobra su tarifa normal). COTIZACIONES: numeradas (C-1001, C-1002...), con líneas, impuesto, fecha de validez e idioma del cliente; se envían por correo y el cliente las aprueba en línea escribiendo su nombre como firma, o las rechaza con un motivo; la compañía recibe un aviso por correo y con un botón convierte la cotización aprobada en trabajo. FIRMA: la única firma del cliente es al aprobar una cotización en línea; no hay firma del cliente en el trabajo terminado, no digas que existe. INICIO: pantalla de inicio con el resumen del día, trabajos completados y pendientes, y lo que necesita atención: trabajos atrasados con el motivo que puso el técnico, los que necesitan volver, reprogramados y sin asignar. ARCHIVAR: los trabajos cancelados o duplicados se archivan con un motivo (no se borran) y se pueden desarchivar. WALKTHROUGH MENSUAL: lista guiada de 8 áreas comunes, Todo bien o Problema con fotos y ubicación, botón de peligro inmediato para avisar a la oficina, historial de fotos mes a mes y reporte del mes para el cliente. ROLES: dueño, oficina y supervisores, y técnicos; cada compañía ve solo sus datos; los técnicos no entran a facturación y no pueden cambiar cliente, dirección ni precio. Cada persona elige español o inglés. DISPOSITIVOS: app en Android y panel web en cualquier teléfono o computadora. La app de iPhone está en desarrollo: no digas que está en la App Store. PRECIOS: CREW 5 $99.99/mes (hasta 5 trabajadores), CREW 10 $149.99/mes (hasta 10, el más popular), UNLIMITED $299.99/mes (ilimitados). El dueño no cuenta como trabajador; el límite lo controla el sistema y para tener más se cambia de plan. Precio por equipo, sin cobro por usuario extra. No hay plan anual todavía. PRUEBA Y COBRO: 15 días gratis; para registrarse hay que poner tarjeta en Stripe (sin tarjeta no se puede usar); no se cobra hasta el día 16 y después cada mes hasta cancelar. Se cancela cuando quieran desde Mi suscripción en el panel; si cancelan durante la prueba no pagan nada; si cancelan después, siguen hasta el final del mes pagado. Sin contratos. PRECIO DE FUNDADOR: quien se registra ahora mantiene su precio mientras su suscripción siga activa sin interrupción; si cancela y vuelve, aplica el precio de ese momento. No digas que es para siempre. REFERIDOS: cada compañía tiene un código WC-XXXX en la app (Más, Invitar y ganar); si una compañía nueva se registra con ese código y paga su primer mes después de la prueba, quien la refirió recibe $50 de crédito que se descuenta solo de su próxima factura de WalkCheck; una vez por compañía, no se cambia por dinero. LEGAL: Términos en walkcheck.app/terminos/ y Privacidad en walkcheck.app/privacidad/. No vendemos datos. CONTACTO: ventas 305-205-2128 o info@walkcheck.app; soporte soporte@walkcheck.app. También pueden escribir por WhatsApp al 305-205-2128 con el botón verde de WhatsApp de la página. REGLAS: no inventes funciones, precios ni fechas; si no sabes algo, di que lo confirmen con soporte@walkcheck.app. No pidas datos de tarjeta ni contraseñas. Para cerrar, invita a crear la cuenta en walkcheck.app/register/. Si preguntan de otro tema, redirige a WalkCheck."
 });
 const chat = model.startChat();
 let sent = 0;

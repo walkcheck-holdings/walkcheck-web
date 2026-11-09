@@ -862,11 +862,40 @@
       return Array.isArray(v) && v.length ? v : null;
     } catch (_) { return null; }
   }
+  // In-page confirm box. The browser's native confirm() can be silently blocked
+  // on desktop (e.g. "prevent this page from creating more dialogs" or an embedded
+  // browser), which made "Completar trabajo" do nothing. This one always shows.
+  function wkConfirm(msg, okLabel, cancelLabel) {
+    return new Promise(function (resolve) {
+      var old = document.getElementById('wkConfirm'); if (old) old.remove();
+      var bg = document.createElement('div');
+      bg.id = 'wkConfirm';
+      bg.setAttribute('role', 'dialog'); bg.setAttribute('aria-modal', 'true');
+      bg.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(17,24,39,.5);display:flex;align-items:center;justify-content:center;padding:20px';
+      bg.innerHTML = '<div style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25);font-size:16px;color:#111827">' +
+        '<p style="margin:0 0 18px;line-height:1.45">' + esc(msg) + '</p>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' +
+          '<button type="button" class="btn ghost" data-a="no">' + esc(cancelLabel) + '</button>' +
+          '<button type="button" class="btn" data-a="yes">' + esc(okLabel) + '</button>' +
+        '</div></div>';
+      function done(v) { document.removeEventListener('keydown', key, true); bg.remove(); resolve(v); }
+      function key(e) { if (e.key === 'Escape') { e.stopPropagation(); done(false); } }
+      bg.addEventListener('click', function (e) {
+        if (e.target === bg) return done(false);
+        var a = e.target.closest && e.target.closest('[data-a]');
+        if (a) done(a.getAttribute('data-a') === 'yes');
+      });
+      document.addEventListener('keydown', key, true);
+      document.body.appendChild(bg);
+      var y = bg.querySelector('[data-a="yes"]'); if (y) y.focus();
+    });
+  }
+  window.wkConfirm = wkConfirm;
   // Owner/office closes the whole job (same fields as the app's "Cerrar trabajo").
   window.closeJob = async function (id) {
-    if (!canAssign()) return;
+    if (!canAssign()) { alert(loginLang() === 'en' ? 'Your account cannot close jobs. Check your role in Team (owner, admin or manager).' : 'Tu cuenta no puede cerrar trabajos. Revisa tu rol en Equipo (dueño, admin o manager).'); return; }
     var en = loginLang() === 'en';
-    if (!confirm(en ? 'Mark this job as completed now? You can reopen it anytime.' : '¿Marcar este trabajo como completado ahora? Lo puedes reabrir cuando quieras.')) return;
+    if (!(await wkConfirm(en ? 'Mark this job as completed now? You can reopen it anytime.' : '¿Marcar este trabajo como completado ahora? Lo puedes reabrir cuando quieras.', en ? 'Yes, complete' : 'Sí, completar', en ? 'Cancel' : 'Cancelar'))) return;
     try {
       var patch = {
         status: 'completed',
@@ -949,7 +978,7 @@
   window.reopenJob = async function (id) {
     if (!canAssign()) return;
     var en = loginLang() === 'en';
-    if (!confirm(en ? 'Reopen this job?' : '¿Reabrir este trabajo?')) return;
+    if (!(await wkConfirm(en ? 'Reopen this job?' : '¿Reabrir este trabajo?', en ? 'Yes, reopen' : 'Sí, reabrir', en ? 'Cancel' : 'Cancelar'))) return;
     try {
       var patch = {
         status: 'open',

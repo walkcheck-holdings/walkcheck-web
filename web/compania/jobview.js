@@ -254,6 +254,17 @@
     return keys.length ? keys : ['inspection', 'jobReport'];
   }
 
+  // Real arrival / close times (from the app's "start" and the job close).
+  function realTimes(j, v) {
+    function hm(d) { return d ? fmtClock(d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0')) : ''; }
+    var a = toDate((v && (v.startedAt || v.visitStartedAt)) || j.visitStartedAt || j.startedAt);
+    var c = jobDone(j) ? toDate(j.completedAt || j.closedAt || (v && (v.completedAt || v.closedAt))) : null;
+    var out = [];
+    if (a) out.push(L('Llegó ', 'Arrived ') + hm(a));
+    if (c) out.push(L('Cerró ', 'Closed ') + hm(c));
+    return out.join(' · ');
+  }
+
   function render() {
     var m = modalEl(), j = S.job;
     if (!m || !j) return;
@@ -278,6 +289,7 @@
         '</div>' +
         '<div class="jv-head-side">' +
           (when ? '<div class="jv-meta"><span aria-hidden="true">📅</span> ' + esc(when) + '</div>' : '') +
+          (realTimes(j, v) ? '<div class="jv-meta"><span aria-hidden="true">🕐</span> ' + esc(realTimes(j, v)) + '</div>' : '') +
           (c.phone ? '<div class="jv-meta"><span aria-hidden="true">📞</span> <a href="' + esc(telHref(c.phone)) + '">' + esc(c.phone) + '</a></div>' : '') +
           (c.address ? '<div class="jv-meta"><span aria-hidden="true">📍</span> <a target="_blank" rel="noopener" href="' + esc(mapsUrl(c.address)) + '">' + esc(L('Cómo llegar', 'Directions')) + '</a></div>' : '') +
         '</div>' +
