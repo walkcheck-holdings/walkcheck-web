@@ -136,3 +136,19 @@ body.jv-open { overflow: hidden; }
 .jr-sheet .btn-ok { width: 100%; min-height: 50px; border: 0; border-radius: 10px; background: #16A34A; color: #fff; font-weight: 800; font-size: 17px; cursor: pointer; }
 .jr-sheet .btn-edit { width: 100%; min-height: 46px; border: 0; background: none; color: #0F2A3D; font-weight: 700; font-size: 16px; margin-top: 8px; cursor: pointer; }
 @keyframes jrUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Calendar: closed jobs look like the app (white card, crossed out, ✓ Cerrado),
+   not solid green. Pending cards stay as they are. */
+.jcard.done {
+  background: #F9FAFB; color: #6B7280;
+  border: 1px solid #E5E7EB; border-left: 4px solid #9CA3AF;
+  box-shadow: none; outline: none;
+}
+.jcard.done.warn { box-shadow: none; outline: none; }
+.jcard.done .jcard-kind,
+.jcard.done .jcard-meta,
+.jcard.done .jcard-addr,
+.jcard.done .jcard-t { text-decoration: line-through; color: #6B7280; opacity: 1; }
+.jcard.done .jcard-badge { background: #E5E7EB; color: #374151; font-size: 0; }
+.jcard.done .jcard-badge::after { content: '✓ Cerrado'; font-size: 11px; }
+html[lang="en"] .jcard.done .jcard-badge::after { content: '✓ Closed'; }
