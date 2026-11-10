@@ -1197,9 +1197,15 @@ function renderWeek(){
   const meses = loginLang()==='es'
     ? ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  if ($('weekTitle')) $('weekTitle').textContent = uiT('teamSchedule');
+  // The title is the month of the chosen day: it changes by itself when the
+  // days cross into another month (like the app).
+  const longM = loginLang()==='es'
+    ? ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  if ($('weekTitle')) $('weekTitle').textContent = longM[selectedDay.getMonth()] + ' ' + selectedDay.getFullYear();
   const letters = weekDayLabels();
-  let html = '';
+  const enW = loginLang()==='en';
+  let html = `<button type="button" class="wd-nav" aria-label="${enW?'Previous week':'Semana anterior'}" onclick="shiftWeek(-1)">‹</button>`;
   for (let i=0;i<7;i++){
     const d = new Date(ws); d.setDate(ws.getDate()+i);
     const sel = sameDay(d, selectedDay);
@@ -1208,8 +1214,26 @@ function renderWeek(){
       ? `<div class="wd on ${tod?'today':''}" onclick="pickDay(${d.getTime()})"><span class="wd-big">${esc(dayStamp(d))}</span></div>`
       : `<div class="wd ${tod?'today':''}" onclick="pickDay(${d.getTime()})"><div class="d">${letters[i]}</div>${d.getDate()}</div>`;
   }
+  html += `<button type="button" class="wd-nav" aria-label="${enW?'Next week':'Semana siguiente'}" onclick="shiftWeek(1)">›</button>`;
   const wd = schedEl('weekdays');
-  if (wd) wd.innerHTML = html;
+  if (wd) { wd.innerHTML = html; wireWeekSwipe(wd); }
+}
+// ‹ › and swipe: go back or forward one week, keeping the weekday.
+function shiftWeek(dir){
+  selectedDay = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate() + 7*dir, 12);
+  loadBoard();
+}
+function wireWeekSwipe(el){
+  if (el._wkSwipe) return;
+  el._wkSwipe = true;
+  let x0 = null;
+  el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 50) shiftWeek(dx > 0 ? -1 : 1);
+  }, { passive: true });
 }
 function pickDay(ms){ selectedDay = new Date(ms); loadBoard(); }
 function goToday(){ selectedDay = new Date(); loadBoard(); }
@@ -3174,11 +3198,17 @@ function renderMobileAgenda(){
       const worker = (tech && tech.name) || j.assignedName || '';
       const tp = typeOf(j.kind || 'Job');
       const addr = j.address || j.title || '';
-      return `<button type="button" class="daycard" onclick="openJobView('${j.id}')" style="border-left:6px solid ${esc(tp.color||'#34C759')}">
-        <div class="daycard-k">${esc(tp.icon||'')} ${esc(j.kind||'Job')}${jobDone(j)?' ✓':''}</div>
+      const isDone = jobDone(j);
+      const client = j.clientName || j.contactName || '';
+      const note = String(j.instructions || '').trim();
+      return `<button type="button" class="daycard${isDone?' is-done':''}" onclick="openJobView('${j.id}')" style="border-left:6px solid ${esc(isDone ? '#9CA3AF' : (tp.color||'#34C759'))}">
+        <div class="daycard-k">${esc(tp.icon||'')} ${esc(j.kind||'Job')}${isDone?'<span class="daycard-check" aria-hidden="true">✓</span>':''}</div>
+        ${client ? `<div class="daycard-c">${esc(client)}</div>` : ''}
         <div class="daycard-t">${fmt(st)} – ${fmt(en)}</div>
         <div class="daycard-a">${esc(addr)}${j.unit ? ' · Unit '+esc(j.unit) : ''}</div>
+        ${isDone && note ? `<div class="daycard-a">${esc(note)}</div>` : ''}
         <div class="daycard-w">${esc(worker)}</div>
+        ${isDone ? `<div class="daycard-st"><span class="dot">●</span> ${esc(loginLang()==='en'?'CLOSED':'CERRADO')}</div>` : ''}
       </button>`;
     }).join('');
   }

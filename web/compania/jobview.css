@@ -152,3 +152,24 @@ body.jv-open { overflow: hidden; }
 .jcard.done .jcard-badge { background: #E5E7EB; color: #374151; font-size: 0; }
 .jcard.done .jcard-badge::after { content: '✓ Cerrado'; font-size: 11px; }
 html[lang="en"] .jcard.done .jcard-badge::after { content: '✓ Closed'; }
+
+/* Week strip: ‹ › to go back / forward one week (title shows the month). */
+.wd-nav { flex: 0 0 auto; border: 0; background: none; color: #374151; font-size: 28px; line-height: 1;
+  padding: 0 6px; min-height: 44px; cursor: pointer; border-radius: 12px; }
+.wd-nav:hover { background: #F3F4F6; }
+.wd-nav:focus-visible { outline: 3px solid #16A34A; outline-offset: 2px; }
+
+/* Lista (phone): closed jobs look like the app — grey card, crossed out,
+   ✓ on the right and "● CERRADO". Open jobs keep their look. */
+.daycard { position: relative; }
+.daycard-c { font-size: 14px; color: #374151; margin-top: 2px; }
+.daycard.is-done { background: #F9FAFB; }
+.daycard.is-done .daycard-k,
+.daycard.is-done .daycard-c,
+.daycard.is-done .daycard-t,
+.daycard.is-done .daycard-a,
+.daycard.is-done .daycard-w { text-decoration: line-through; color: #4B5563; }
+.daycard.is-done .daycard-k { color: #111827; }
+.daycard-check { position: absolute; top: 12px; right: 14px; font-size: 18px; color: #111827; text-decoration: none; }
+.daycard-st { margin-top: 8px; font-size: 13px; font-weight: 800; color: #111827; letter-spacing: .02em; }
+.daycard-st .dot { color: #22C55E; }
