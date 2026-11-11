@@ -1428,7 +1428,8 @@ async function loadBoard(){
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
     companyType = String(raw).toLowerCase().replace(/\s+/g,'_');
     if (!(window.JOB_TEMPLATES||{})[companyType]) {
-      if (/electric/.test(companyType)) companyType = 'electrical';
+      if (/volt|camera|alarm/.test(companyType)) companyType = 'low_voltage';
+      else if (/electric/.test(companyType)) companyType = 'electrical';
       else if (/plumb/.test(companyType)) companyType = 'plumbing';
       else if (/hvac|air/.test(companyType)) companyType = 'hvac';
       else if (/roof/.test(companyType)) companyType = 'roofing';
