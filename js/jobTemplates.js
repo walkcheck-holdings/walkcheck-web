@@ -311,7 +311,7 @@
     ['electrical', 'Electricidad', 'Electrical'],
     ['plumbing', 'Plomería', 'Plumbing'],
     ['hvac', 'Aire acondicionado (HVAC)', 'Air conditioning (HVAC)'],
-    ['low_voltage', 'Cámaras, alarmas y redes', 'Cameras, alarms and networks'],
+    ['low_voltage', 'Low voltage (cámaras, alarmas y redes)', 'Low voltage (cameras, alarms and networks)'],
     ['fire_protection', 'Protección contra incendios', 'Fire protection'],
     ['other', 'Otra', 'Other']
   ];
