@@ -169,6 +169,8 @@ function day(t) {
 function billState(c) {
   var s = String(c.subscriptionStatus || '').toLowerCase();
   var st = String(c.status || '').toLowerCase();
+  // Free by decision of the app owner (family, friends): not counted as income.
+  if (c.comp === true) return { k: 'comp', txt: 'Gratis', cls: 'on' };
   if (st === 'pending' && !c.is_paid) return { k: 'nocard', txt: 'Sin tarjeta', cls: 'pend' };
   if (c.cancelAtPeriodEnd) return { k: 'cancel', txt: 'Cancela el ' + day(s === 'trialing' ? c.trialEnd : c.currentPeriodEnd), cls: 'off' };
   if (s === 'trialing') return { k: 'trial', txt: 'Prueba hasta ' + day(c.trialEnd), cls: 'pend' };
@@ -179,9 +181,10 @@ function billState(c) {
   return { k: 'none', txt: 'Sin suscripción', cls: 'off' };
 }
 function renderKpis() {
-  var mrr = 0, nAct = 0, trialMrr = 0, nTrial = 0, nCancel = 0, nFail = 0, nNoCard = 0;
+  var mrr = 0, nAct = 0, trialMrr = 0, nTrial = 0, nCancel = 0, nFail = 0, nNoCard = 0, nComp = 0;
   list.forEach(function (c) {
     var b = billState(c), price = PRICE[planId(c)] || 0;
+    if (b.k === 'comp') nComp++;
     if (b.k === 'active') { mrr += price; nAct++; }
     if (b.k === 'trial') { trialMrr += price; nTrial++; }
     if (b.k === 'cancel') nCancel++;
@@ -189,7 +192,7 @@ function renderKpis() {
     if (b.k === 'nocard') nNoCard++;
   });
   $('kpis').innerHTML =
-    '<div class="kpi main"><span>Entra cada mes</span><b>' + money(mrr) + '</b><small>' + nAct + ' compañías pagando</small></div>' +
+    '<div class="kpi main"><span>Entra cada mes</span><b>' + money(mrr) + '</b><small>' + nAct + ' compañías pagando' + (nComp ? ' · ' + nComp + ' gratis' : '') + '</small></div>' +
     '<div class="kpi"><span>En prueba</span><b>' + nTrial + '</b><small>' + money(trialMrr) + '/mes si se quedan</small></div>' +
     '<div class="kpi"><span>Al año (si siguen)</span><b>' + money(mrr * 12) + '</b><small>lo de cada mes × 12</small></div>' +
     '<div class="kpi"><span>Atención</span><b>' + (nFail + nCancel) + '</b><small>' + nFail + ' pago fallido · ' + nCancel + ' cancelando · ' + nNoCard + ' sin tarjeta</small></div>';
@@ -232,8 +235,12 @@ function render() {
         '<button type="button" class="btn ghost" data-id="' + esc(c.id) + '" data-st="' + (on ? 'suspended' : 'active') + '"' +
           (pending ? ' data-confirm="1"' : '') + '>' + btnLabel + '</button>' +
         '<button type="button" class="btn ghost" data-credit="' + esc(c.id) + '">💸 Descuento</button>' +
+        '<button type="button" class="btn ghost" data-comp="' + esc(c.id) + '">' + (c.comp === true ? 'Quitar gratis' : '🎁 Gratis') + '</button>' +
       '</div></td></tr>';
   }).join('');
+  $('rows').querySelectorAll('button[data-comp]').forEach(function (btn) {
+    btn.onclick = function () { toggleComp(btn.getAttribute('data-comp')); };
+  });
   $('rows').querySelectorAll('button[data-credit]').forEach(function (btn) {
     btn.onclick = function () { openCredit(btn.getAttribute('data-credit')); };
   });
@@ -321,6 +328,32 @@ function openCredit(id) {
       go.disabled = false; go.textContent = 'Dar descuento';
     }
   };
+}
+
+/* "Gratis": the company uses WalkCheck without paying, with no end date.
+   is_paid opens the app and the panel even after the 15-day trial date. */
+async function toggleComp(id) {
+  var c = list.filter(function (x) { return x.id === id; })[0];
+  if (!c) return;
+  var name = c.name || c.id;
+  var on = c.comp !== true;
+  if (on && c.stripeSubscriptionId && !['canceled', 'incomplete_expired'].includes(String(c.subscriptionStatus || ''))) {
+    alert(name + ' tiene una suscripción en Stripe. Cancélala primero en Stripe para que no se le cobre, y después márcala como Gratis.');
+    return;
+  }
+  if (!confirm(on
+    ? '¿Dejar ' + name + ' GRATIS? Podrá usar WalkCheck sin pagar y sin fecha de fin. No cuenta en tus ingresos.'
+    : '¿Quitar el gratis a ' + name + '? Le volverá a salir la pantalla de pago.')) return;
+  var patch = on
+    ? { comp: true, is_paid: true, status: 'active', compAt: firebase.firestore.FieldValue.serverTimestamp() }
+    : { comp: false, is_paid: false };
+  try {
+    await db.collection('companies').doc(id).update(patch);
+    c.comp = on; c.is_paid = on; if (on) c.status = 'active';
+    render();
+  } catch (e) {
+    alert('No se pudo cambiar: ' + (e.message || e));
+  }
 }
 
 async function setStatus(id, status) {
