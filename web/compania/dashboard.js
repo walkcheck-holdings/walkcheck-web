@@ -1,5 +1,6 @@
 /* Company dashboard on Inicio: money in vs money out for one month.
-   Entradas = payments recorded on invoices. Gastos = expenses logged on jobs.
+   Entradas = payments recorded on invoices. Gastos = expenses logged on jobs
+   plus the material cost (report.expensesTotal) from each Job Report.
    Owner / office only (canSeeMoney). Workers never load this file. */
 (function () {
   var month = null; // 'YYYY-MM'
@@ -35,6 +36,19 @@
     return invCache;
   }
 
+  function localYmd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function tsDay(t) {
+    if (!t) return '';
+    var d = typeof t.toDate === 'function' ? t.toDate() : new Date(t);
+    return isNaN(d) ? '' : localYmd(d);
+  }
+  // Day of a Job Report expense: the day the report was completed (that is when the
+  // material was bought), else the job's visit day, else when the report was last saved.
+  function reportDay(j) {
+    var r = j.report || {};
+    return tsDay(r.completedAt) || String(j.scheduledDate || j.date || '').slice(0, 10) || tsDay(r.updatedAt);
+  }
+
   function movesFor(m, invoices) {
     var moves = [];
     invoices.forEach(function (inv) {
@@ -48,14 +62,32 @@
       });
     });
     (typeof jobs !== 'undefined' ? jobs : []).forEach(function (j) {
+      // Archived jobs (e.g. a duplicate) do not count as expenses.
+      if (typeof jobArchived === 'function' && jobArchived(j)) return;
+      var jobName = j.number ? T('Trabajo #', 'Job #') + j.number : (j.title || T('Trabajo', 'Job'));
+      var openJob = function () { if (typeof openJobDetail === 'function') openJobDetail(j.id); };
       (Array.isArray(j.expenses) ? j.expenses : []).forEach(function (e) {
         if (String(e.date || '').slice(0, 7) !== m) return;
         moves.push({
           date: String(e.date).slice(0, 10), kind: 'out', amount: Number(e.total || 0),
-          label: (e.vendor || e.items || T('Gasto', 'Expense')) + ' · ' + T('Trabajo #', 'Job #') + (j.number || ''),
-          open: function () { if (typeof openJobDetail === 'function') openJobDetail(j.id); }
+          label: (e.vendor || e.items || T('Gasto', 'Expense')) + ' · ' + jobName,
+          open: openJob
         });
       });
+      // Material cost the worker typed in the Job Report (app or worker web),
+      // e.g. a Home Depot receipt. It lives in report.expensesTotal, not in expenses[].
+      var r = j.report;
+      var cost = r ? Number(r.expensesTotal) : 0;
+      if (cost > 0) {
+        var day = reportDay(j);
+        if (day.slice(0, 7) === m) {
+          moves.push({
+            date: day, kind: 'out', amount: cost,
+            label: ((r.supplier && String(r.supplier).trim()) || T('Materiales', 'Materials')) + ' · ' + jobName,
+            open: openJob
+          });
+        }
+      }
     });
     moves.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
     return moves;
@@ -117,7 +149,7 @@
             '<div class="dash-row dash-hdr"><span class="dash-d">' + esc(T('Fecha', 'Date')) + '</span><span class="dash-c">' + esc(T('Concepto', 'Item')) + '</span><span class="dash-a">' + esc(T('Importe', 'Amount')) + '</span></div>' +
             rows + '</div>' +
         '</div>' +
-        '<p class="muted dash-foot">' + esc(T('Entradas = pagos registrados en facturas. Gastos = gastos anotados en los trabajos.', 'Money in = payments recorded on invoices. Expenses = expenses logged on jobs.')) + '</p>' +
+        '<p class="muted dash-foot">' + esc(T('Entradas = pagos registrados en facturas. Gastos = gastos anotados en los trabajos y costo de materiales de los Job Reports.', 'Money in = payments recorded on invoices. Expenses = expenses logged on jobs and material cost from Job Reports.')) + '</p>' +
       '</div>';
   };
   window.dashMonth = function (k) {
