@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Phone = same screen as the computer (menu, columns, buttons). The phone shows the
+     desktop layout at 1024px wide and the user zooms with the fingers. -->
+<meta name="viewport" content="width=1024, viewport-fit=cover">
 <meta name="theme-color" content="#34C759">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2888,8 +2890,8 @@ function snapClock(v){
   const p = String(v||'09:00').split(':');
   let h = parseInt(p[0],10); if (isNaN(h)) h = 9;
   let m = parseInt(p[1],10); if (isNaN(m)) m = 0;
-  m = Math.round(m / STEP) * STEP;
-  if (m === 60) { h += 1; m = 0; }
+  // Any minute is allowed (times are typed by hand, e.g. 12:10); no rounding.
+  m = Math.max(0, Math.min(59, m));
   h = Math.max(0, Math.min(23, h));
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
@@ -3385,8 +3387,8 @@ function openAssignPick(pickId){
     <label class="muted">${esc(uiT('worker'))}</label><select id="apT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
     ${workers.length ? '' : `<p class="muted" style="color:#9A5B00">${esc(en ? 'You have no technicians yet: create them in More → + Create worker.' : 'Todavía no tienes técnicos: créalos en Más → + Crear trabajador.')}</p>`}
     <label class="muted">${esc(en ? 'Day' : 'Día')}</label><input id="apDate" type="date" value="${ymd(selectedDay)}">
-    <label class="muted">${esc(uiT('start'))}</label><select id="apStart">${clockChoices(startVal)}</select>
-    <label class="muted">${esc(uiT('end'))}</label><select id="apEnd">${clockChoices(endVal)}</select>
+    <label class="muted">${esc(uiT('start'))}</label><input id="apStart" type="time" step="60" value="${snapClock(startVal)}">
+    <label class="muted">${esc(uiT('end'))}</label><input id="apEnd" type="time" step="60" value="${snapClock(endVal)}">
     <div class="err" id="apErr"></div>
     <button class="btn" onclick="saveAssignPick()">${esc(uiT('assign'))}</button>
     <button class="btn ghost" onclick="preWorker='';preStartClock='';preEndClock='';$('modal').classList.add('hidden')">${esc(uiT('cancel'))}</button>
@@ -3456,8 +3458,8 @@ function openAssign(kindPref){
     <label class="muted">${esc(siteT('title'))}</label><select id="ajB">${bopts}</select>
     <label class="muted">${esc(uiT('address'))}</label><input id="ajAddr" type="text" value="${esc(existing&&existing.address||'')}">
     <label class="muted">${esc(uiT('worker'))}</label><select id="ajT">${topts || `<option value="">${esc(uiT('noTeam'))}</option>`}</select>
-    <label class="muted">${esc(uiT('start'))}</label><select id="ajStart">${clockChoices(startVal)}</select>
-    <label class="muted">${esc(uiT('end'))}</label><select id="ajEnd">${clockChoices(endVal)}</select>
+    <label class="muted">${esc(uiT('start'))}</label><input id="ajStart" type="time" step="60" value="${snapClock(startVal)}">
+    <label class="muted">${esc(uiT('end'))}</label><input id="ajEnd" type="time" step="60" value="${snapClock(endVal)}">
     ${typePickerHtml('aj', chosen)}
     <label class="muted">${esc(uiT('unit'))}</label><input id="ajUnit" type="text" value="${esc(existing&&existing.unit||'')}">
     <label class="muted">${esc(uiT('contact'))}</label><input id="ajContact" type="text" value="${esc(existing&&existing.contactName||'')}">

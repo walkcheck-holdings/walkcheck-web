@@ -23,6 +23,19 @@
     var v = (typeof jobVisits === 'function' ? jobVisits(j) : [])[0] || {};
     return v.scheduledDate || j.scheduledDate || '';
   }
+  // Start time of the first visit, "HH:MM" (24 h) or '' when there is none.
+  function firstClock(j) {
+    var v = (typeof jobVisits === 'function' ? jobVisits(j) : [])[0] || {};
+    var c = String(v.startClock || j.startClock || '');
+    var p = c.split(':');
+    if (p.length < 2 || isNaN(parseInt(p[0], 10))) return '';
+    return String(parseInt(p[0], 10)).padStart(2, '0') + ':' + String(parseInt(p[1], 10) || 0).padStart(2, '0');
+  }
+  function clockLabel12(c) {
+    if (!c) return '';
+    var h = parseInt(c.slice(0, 2), 10), m = c.slice(3, 5);
+    return (h % 12 || 12) + ':' + m + (h < 12 ? ' AM' : ' PM');
+  }
   function doneAt(j) {
     if (!jobDone(j)) return null;
     return toDate(j.completedAt) || toDate(j.closedAt) || toDate(j.report && j.report.updatedAt) || toDate(j.updatedAt);
@@ -116,7 +129,11 @@
     });
     list.sort(function (a, b) {
       var x = sortKey(a, ui.sort), y = sortKey(b, ui.sort);
-      return (x < y ? -1 : x > y ? 1 : 0) * ui.dir;
+      var r = (x < y ? -1 : x > y ? 1 : 0) * ui.dir;
+      if (r || ui.sort !== 'date') return r;
+      // Same day: always earliest first (8:00, 8:30, 9:30...), whatever the date order.
+      var ca = firstClock(a) || '99:99', cb = firstClock(b) || '99:99';
+      return ca < cb ? -1 : ca > cb ? 1 : 0;
     });
 
     var types = {};
@@ -132,10 +149,10 @@
         ' <span>' + (on ? (ui.dir > 0 ? '▲' : '▼') : '⇅') + '</span></button></th>';
     };
     var rows = list.slice(0, ui.show).map(function (j) {
-      var st = status(j), d = doneAt(j), day = firstDay(j);
+      var st = status(j), d = doneAt(j), day = firstDay(j), clk = clockLabel12(firstClock(j));
       var when = d
         ? '<span class="jl-done">' + esc(L('COMPLETADO', 'COMPLETED')) + '</span><br>' + esc(fmtDate(d))
-        : (day ? esc(fmtDay(day)) : '<span class="muted">' + esc(L('Sin programar', 'Unscheduled')) + '</span>');
+        : (day ? esc(fmtDay(day)) + (clk ? '<br><b class="jl-time">' + esc(clk) + '</b>' : '') : '<span class="muted">' + esc(L('Sin programar', 'Unscheduled')) + '</span>');
       return '<tr onclick="openJobView(\'' + j.id + '\')">' +
         '<td data-l="' + esc(L('Cliente', 'Client')) + '"><b>' + esc(clientName(j) || '—') + '</b></td>' +
         '<td data-l="' + esc(L('Trabajo', 'Job')) + '"><b>' + esc(j.jobNumber ? '#' + j.jobNumber : '—') + '</b><div class="muted">' + esc(j.title || j.kind || '') + '</div></td>' +
@@ -175,7 +192,7 @@
       '</div>' +
       '<table class="jobs-table jl-table"><thead><tr>' +
         th('client', L('Cliente', 'Client')) + th('num', L('Trabajo', 'Job number')) + th('addr', L('Dirección', 'Property')) +
-        th('date', L('Fecha', 'Schedule')) + th('status', L('Estado', 'Status')) + (money ? th('total', 'Total') : '') +
+        th('date', L('Fecha y hora', 'Date & time')) + th('status', L('Estado', 'Status')) + (money ? th('total', 'Total') : '') +
       '</tr></thead><tbody>' + rows + '</tbody></table>' +
       (list.length > ui.show ? '<button type="button" class="btn ghost jl-more" onclick="jlUi.show+=100;openJobs()">' + esc(L('Ver más', 'Show more')) + ' (' + (list.length - ui.show) + ')</button>' : '');
     if (keepFocus) { var s = $('jobSearch'); if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }

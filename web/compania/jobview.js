@@ -540,6 +540,8 @@
   }
   function receiptPhotosOf(j) { return photoList((j && j.report) || {}, 'receiptPhotos', 'receiptPhoto'); }
   function costFilled(v) { return v != null && String(v).trim() !== '' && !isNaN(Number(v)); }
+  // $0 in materials: no purchase, so supplier and receipt are not required.
+  function noCost(v) { return costFilled(v) && Number(v) === 0; }
   function reportFilled(r) {
     r = r || {};
     var solved = r.solved === true || r.solved === false || !!r.outcome;
@@ -547,8 +549,8 @@
       !!r.actualStart, !!r.actualEnd, !!(r.problem && String(r.problem).trim()),
       photoList(r, 'beforePhotos', 'beforePhoto').length > 0, solved,
       !!(r.solution && String(r.solution).trim()),
-      photoList(r, 'afterPhotos', 'afterPhoto').length > 0, costFilled(r.expensesTotal),
-      !!(r.supplier && String(r.supplier).trim()), receiptPhotosOf({ report: r }).length > 0
+      r.outcome === 'na' || photoList(r, 'afterPhotos', 'afterPhoto').length > 0, costFilled(r.expensesTotal),
+      noCost(r.expensesTotal) || !!(r.supplier && String(r.supplier).trim()), noCost(r.expensesTotal) || receiptPhotosOf({ report: r }).length > 0
     ].filter(Boolean).length;
   }
   function jobReportHtml(j) {
@@ -604,16 +606,17 @@
           '<option value="">' + esc(L('Seleccione…', 'Select…')) + '</option>' +
           '<option value="yes"' + (solved === 'yes' ? ' selected' : '') + '>Yes</option>' +
           '<option value="no"' + (solved === 'no' ? ' selected' : '') + '>No</option>' +
-          '<option value="return"' + (solved === 'return' ? ' selected' : '') + '>' + esc(L('Necesita volver', 'Need to return')) + '</option></select>' +
+          '<option value="return"' + (solved === 'return' ? ' selected' : '') + '>' + esc(L('Necesita volver', 'Need to return')) + '</option>' +
+          '<option value="na"' + (solved === 'na' ? ' selected' : '') + '>' + esc(L('N/A (sin reparación: walkthrough o inspección)', 'N/A (no repair: walkthrough or inspection)')) + '</option></select>' +
         mark(!!solved) +
         '<div id="rpRetBox" class="' + (solved === 'return' ? '' : 'hidden') + '"><label for="rpRet">' + esc(L('¿Qué falta para terminar? (pieza, material, acceso…)', 'What is missing to finish? (part, material, access…)')) + '</label>' +
           '<textarea id="rpRet" rows="2">' + esc(r.returnReason || '') + '</textarea></div>' +
         '<label for="rpS">Describe the actions taken to complete the repair/ If not completed state why</label><textarea id="rpS" rows="3">' + esc(r.solution || '') + '</textarea>' + mark(!!(r.solution && String(r.solution).trim())) +
-        slot('Attach AFTER Pictures', 'jrAfterN', jrThumbs(after), 'rpAfter', after.length > 0) + '</section>' +
+        slot('Attach AFTER Pictures', 'jrAfterN', jrThumbs(after), 'rpAfter', solved === 'na' || after.length > 0) + '</section>' +
       '<section class="jr-card"><h3>EXPENSES</h3>' +
         '<label for="rpEx">Total Material Cost</label><input id="rpEx" type="number" min="0" step="0.01" value="' + (r.expensesTotal != null && r.expensesTotal !== '' ? esc(r.expensesTotal) : '') + '">' + mark(costFilled(r.expensesTotal)) +
-        '<label for="rpSup">Supplier</label><input id="rpSup" type="text" value="' + esc(r.supplier || '') + '">' + mark(!!(r.supplier && String(r.supplier).trim())) +
-        slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts), 'rpRec', receipts.length > 0) + '</section>' +
+        '<label for="rpSup">Supplier</label><input id="rpSup" type="text" value="' + esc(r.supplier || '') + '">' + mark(noCost(r.expensesTotal) || !!(r.supplier && String(r.supplier).trim())) +
+        slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts), 'rpRec', noCost(r.expensesTotal) || receipts.length > 0) + '</section>' +
       '<section class="jr-card"><h3>Final Notes</h3><textarea id="rpN" rows="3" aria-label="Final Notes">' + esc(r.finalNotes || '') + '</textarea>' +
         '<div class="err" id="rpErr"></div><p class="muted" id="rpSaved"></p></section>' +
       '<div class="jr-foot">' + (n === 10
@@ -665,7 +668,7 @@
         receiptPhotos: receipts, receiptPhoto: receipts[0] || '',
         expensesTotal: costRaw.trim() === '' ? null : Number(costRaw),
         supplier: (($('rpSup') && $('rpSup').value) || '').trim(),
-        solved: solvedVal === '' ? null : solvedVal === 'yes',
+        solved: (solvedVal === '' || solvedVal === 'na') ? null : solvedVal === 'yes',
         outcome: solvedVal || null,
         returnReason: solvedVal === 'return' ? (($('rpRet') && $('rpRet').value) || '').trim() : '',
         solution: (($('rpS') && $('rpS').value) || '').trim(),
@@ -683,12 +686,12 @@
         if (!report.actualEnd) miss.push(L('hora de fin', 'ending time'));
         if (!report.problem) miss.push(L('descripción del problema', 'problem description'));
         if (!before.length) miss.push(L('fotos de ANTES', 'BEFORE pictures'));
-        if (report.solved !== true && report.solved !== false) miss.push(L('¿se resolvió?', 'was it solved?'));
+        if (!report.outcome) miss.push(L('¿se resolvió?', 'was it solved?'));
         if (!report.solution) miss.push(L('acciones hechas', 'actions taken'));
-        if (!after.length) miss.push(L('fotos de DESPUÉS', 'AFTER pictures'));
+        if (!after.length && report.outcome !== 'na') miss.push(L('fotos de DESPUÉS', 'AFTER pictures'));
         if (!costFilled(report.expensesTotal)) miss.push(L('costo de materiales', 'material cost'));
-        if (!report.supplier) miss.push(L('proveedor', 'supplier'));
-        if (!receipts.length) miss.push(L('foto del recibo', 'receipt picture'));
+        if (!report.supplier && !noCost(report.expensesTotal)) miss.push(L('proveedor', 'supplier'));
+        if (!receipts.length && !noCost(report.expensesTotal)) miss.push(L('foto del recibo', 'receipt picture'));
         var why = report.returnReason;
         if (!miss.length && solvedVal === 'return' && !why) miss.push(L('qué falta para terminar', 'what is missing to finish'));
         if (!miss.length) {

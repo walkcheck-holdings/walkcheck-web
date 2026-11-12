@@ -3094,6 +3094,8 @@ function reportCostFilled(v){
   const s = String(v).trim();
   return s !== '' && !isNaN(Number(s));
 }
+// $0 in materials: no purchase, so supplier and receipt are not required.
+function reportNoCost(v){ return reportCostFilled(v) && Number(v) === 0; }
 function requiredReportCount(r){
   r = r || {};
   const checks = [
@@ -3103,10 +3105,10 @@ function requiredReportCount(r){
     reportPhotoList(r, 'beforePhotos', 'beforePhoto').length > 0,
     r.solved === true || r.solved === false || !!r.outcome,
     !!(r.solution && String(r.solution).trim()),
-    reportPhotoList(r, 'afterPhotos', 'afterPhoto').length > 0,
+    r.outcome === 'na' || reportPhotoList(r, 'afterPhotos', 'afterPhoto').length > 0,
     reportCostFilled(r.expensesTotal),
-    !!(r.supplier && String(r.supplier).trim()),
-    reportPhotoList(r, 'receiptPhotos', 'receiptPhoto').length > 0
+    reportNoCost(r.expensesTotal) || !!(r.supplier && String(r.supplier).trim()),
+    reportNoCost(r.expensesTotal) || reportPhotoList(r, 'receiptPhotos', 'receiptPhoto').length > 0
   ];
   return checks.filter(Boolean).length;
 }
@@ -3374,6 +3376,7 @@ function jobReportScreenHtml(j){
           <option value="yes" ${solved==='yes'?'selected':''}>Yes</option>
           <option value="no" ${solved==='no'?'selected':''}>No</option>
           <option value="return" ${solved==='return'?'selected':''}>${esc(enL?'Need to return':'Necesita volver')}</option>
+          <option value="na" ${solved==='na'?'selected':''}>${esc(enL?'N/A (no repair: walkthrough or inspection)':'N/A (sin reparación: walkthrough o inspección)')}</option>
         </select>
         <div class="jr-req" data-jr="solved">${req}</div>
         <div id="rpRetBox" class="${solved==='return'?'':'hidden'}">
@@ -3506,12 +3509,12 @@ function jrMeter(){
     end: !!($('rpAE') && $('rpAE').value),
     problem: !!($('rpP') && $('rpP').value.trim()),
     before: pics('rpBeforeThumbs') > 0,
-    solved: solvedVal === 'yes' || solvedVal === 'no' || solvedVal === 'return',
+    solved: solvedVal === 'yes' || solvedVal === 'no' || solvedVal === 'return' || solvedVal === 'na',
     solution: !!($('rpS') && $('rpS').value.trim()),
-    after: pics('rpAfterThumbs') > 0,
+    after: solvedVal === 'na' || pics('rpAfterThumbs') > 0,
     cost: reportCostFilled($('rpEx') && $('rpEx').value),
-    supplier: !!($('rpSup') && $('rpSup').value.trim()),
-    receipt: pics('rpRecThumbs') > 0
+    supplier: reportNoCost($('rpEx') && $('rpEx').value) || !!($('rpSup') && $('rpSup').value.trim()),
+    receipt: reportNoCost($('rpEx') && $('rpEx').value) || pics('rpRecThumbs') > 0
   };
   let n = 0;
   Object.keys(flags).forEach(k => {
@@ -3802,7 +3805,7 @@ async function saveReportDraft(id){
     patch['report.actualStart'] = ($('rpAS') && $('rpAS').value) || '';
     patch['report.actualEnd'] = ($('rpAE') && $('rpAE').value) || '';
     patch['report.problem'] = ($('rpP').value || '').trim();
-    patch['report.solved'] = solvedVal === '' ? null : solvedVal === 'yes';
+    patch['report.solved'] = (solvedVal === '' || solvedVal === 'na') ? null : solvedVal === 'yes';
     patch['report.outcome'] = solvedVal || null;
     patch['report.returnReason'] = solvedVal === 'return' ? ((($('rpRet') && $('rpRet').value) || '').trim()) : '';
     patch['report.solution'] = (($('rpS') && $('rpS').value) || '').trim();
@@ -3947,8 +3950,8 @@ async function saveJobReport(id, complete, opt){
     receiptPhoto: receiptPhotos[0] || '',
     expensesTotal: costRaw.trim()==='' ? null : Number(costRaw),
     supplier: (($('rpSup') && $('rpSup').value) || '').trim(),
-    solved: solvedVal==='' ? null : solvedVal==='yes',
-    outcome: solvedVal || null,          // 'yes' | 'no' | 'return'
+    solved: (solvedVal===''||solvedVal==='na') ? null : solvedVal==='yes',
+    outcome: solvedVal || null,          // 'yes' | 'no' | 'return' | 'na'
     returnReason: solvedVal==='return' ? returnReason : '',
     solution: ($('rpS').value||'').trim(),
     finalNotes: ($('rpN').value||'').trim(),
@@ -3970,12 +3973,13 @@ async function saveJobReport(id, complete, opt){
     if (!report.actualEnd) miss.push(enS?'ending time':'hora de fin');
     if (!report.problem) miss.push(enS?'problem description':'descripción del problema');
     if (!beforePhotos.length) miss.push(enS?'BEFORE pictures':'fotos de ANTES');
-    if (report.solved !== true && report.solved !== false) miss.push(enS?'was it solved?':'¿se resolvió?');
+    if (!report.outcome) miss.push(enS?'was it solved?':'¿se resolvió?');
     if (!report.solution) miss.push(enS?'actions taken':'acciones hechas');
-    if (!afterPhotos.length) miss.push(enS?'AFTER pictures':'fotos de DESPUÉS');
+    if (!afterPhotos.length && report.outcome !== 'na') miss.push(enS?'AFTER pictures':'fotos de DESPUÉS');
     if (!reportCostFilled(report.expensesTotal)) miss.push(enS?'material cost':'costo de materiales');
-    if (!report.supplier) miss.push(enS?'supplier':'proveedor');
-    if (!receiptPhotos.length) miss.push(enS?'receipt picture':'foto del recibo');
+    const noCost = reportNoCost(report.expensesTotal);
+    if (!report.supplier && !noCost) miss.push(enS?'supplier':'proveedor');
+    if (!receiptPhotos.length && !noCost) miss.push(enS?'receipt picture':'foto del recibo');
     if (miss.length) {
       missing = (enS ? 'Saved. To complete, still missing: ' : 'Guardado. Para completar falta: ') + miss.join(', ') + '.';
     } else if (solvedVal === 'return' && !returnReason) {

@@ -334,8 +334,8 @@
         '</p><div id="njLines">' + lineEditorHtml([{ name: '', description: '', qty: 1, unitPrice: 0, total: 0 }]) + '</div></div>' +
       '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'First visit' : 'Primera visita') + '</h3>' +
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Date' : 'Fecha') + '</label><input id="njDate" type="date" value="' + ymd(selectedDay) + '">' +
-      '<label class="muted">' + esc(uiT('start')) + '</label><select id="njStart">' + clockChoices('09:00') + '</select>' +
-      '<label class="muted">' + esc(uiT('end')) + '</label><select id="njEnd">' + clockChoices('11:00') + '</select>' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><input id="njStart" type="time" step="60" value="' + snapClock('09:00') + '">' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><input id="njEnd" type="time" step="60" value="' + snapClock('11:00') + '">' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="njT">' + topts + '</select>' +
       '<p class="muted">' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '</p>' +
       '<label class="muted">' + esc(uiT('instructions')) + '</label><textarea id="njInstr" rows="3"></textarea>' +
@@ -462,8 +462,8 @@
       '<p class="muted">' + esc(L('Algo rápido para hacer: recoger material, una vuelta, una llamada. Sin formularios ni factura.', 'Something quick to do: pick up material, a run, a call. No forms, no invoice.')) + '</p>' +
       '<label class="muted">' + esc(L('¿Qué hay que hacer? *', 'What needs to be done? *')) + '</label><input id="tkTitle" type="text" placeholder="' + esc(L('Ej. Recoger disposal en oficina downtown', 'e.g. Pick up disposal at downtown office')) + '">' +
       '<label class="muted">' + esc(L('Fecha', 'Date')) + '</label><input id="tkDay" type="date" value="' + esc(day) + '">' +
-      '<label class="muted">' + esc(uiT('start')) + '</label><select id="tkStart">' + clockChoices('09:00') + '</select>' +
-      '<label class="muted">' + esc(uiT('end')) + '</label><select id="tkEnd">' + clockChoices('09:30') + '</select>' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><input id="tkStart" type="time" step="60" value="' + snapClock('09:00') + '">' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><input id="tkEnd" type="time" step="60" value="' + snapClock('09:30') + '">' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="tkWho">' + topts + '</select>' +
       '<label class="muted">' + esc(L('Edificio (opcional)', 'Building (optional)')) + '</label><select id="tkB">' + bopts + '</select>' +
       '<label class="muted">' + esc(L('Dirección (opcional)', 'Address (optional)')) + '</label><input id="tkAddr" type="text">' +
@@ -796,8 +796,8 @@
     $('modal').classList.remove('hidden');
     $('modal').innerHTML = '<div class="box"><h3>' + esc(loginLang() === 'en' ? 'Add visit' : 'Agregar visita') + '</h3>' +
       '<label class="muted">' + esc(loginLang() === 'en' ? 'Date' : 'Fecha') + '</label><input id="avDate" type="date" value="' + ymd(selectedDay) + '">' +
-      '<label class="muted">' + esc(uiT('start')) + '</label><select id="avStart">' + clockChoices('09:00') + '</select>' +
-      '<label class="muted">' + esc(uiT('end')) + '</label><select id="avEnd">' + clockChoices('11:00') + '</select>' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><input id="avStart" type="time" step="60" value="' + snapClock('09:00') + '">' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><input id="avEnd" type="time" step="60" value="' + snapClock('11:00') + '">' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="avT">' + topts + '</select>' +
       '<p class="muted">' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '</p>' +
       '<label class="muted">' + esc(uiT('instructions')) + '</label><textarea id="avInstr" rows="3"></textarea>' +
@@ -937,8 +937,8 @@
       '<h3>📅 ' + esc(en ? 'Change date and time' : 'Cambiar fecha y hora') + '</h3>' +
       '<p class="muted">' + esc((j.title || j.kind || '') + (vs.length > 1 ? ' · ' + (en ? 'visit ' : 'visita ') + (i + 1) + '/' + vs.length : '')) + '</p>' +
       '<label class="muted">' + esc(en ? 'Date' : 'Fecha') + '</label><input id="vdDay" type="date" value="' + esc(day) + '">' +
-      '<label class="muted">' + esc(uiT('start')) + '</label><select id="vdStart">' + clockChoices(sc) + '</select>' +
-      '<label class="muted">' + esc(uiT('end')) + '</label><select id="vdEnd">' + clockChoices(ec) + '</select>' +
+      '<label class="muted">' + esc(uiT('start')) + '</label><input id="vdStart" type="time" step="60" value="' + snapClock(sc) + '">' +
+      '<label class="muted">' + esc(uiT('end')) + '</label><input id="vdEnd" type="time" step="60" value="' + snapClock(ec) + '">' +
       '<label class="muted">' + esc(uiT('worker')) + '</label><select id="vdWho">' + topts + '</select>' +
       '<div class="err" id="vdErr"></div>' +
       '<button class="btn" id="vdGo" onclick="saveVisitDate(\'' + id + '\',' + i + ')">' + esc(uiT('save')) + '</button>' +
