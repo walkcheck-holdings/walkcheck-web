@@ -444,6 +444,20 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
   .ai-box{right:12px;width:min(320px,calc(100vw - 24px));bottom:70px;height:min(60vh,420px)}
   .ai-form input{font-size:16px}
 }
+/* La app del técnico: 3 pantallas */
+.tapp{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
+.tapp-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin-top:8px}
+.tapp-item{display:flex;flex-direction:column;align-items:center;text-align:center}
+.tapp-item img{width:100%;max-width:300px;height:auto;aspect-ratio:780/1540;object-fit:cover;object-position:top;display:block;filter:drop-shadow(0 26px 34px rgba(14,42,71,.22))}
+.tapp-item h3{margin:14px 0 6px;font-size:18px;color:var(--txt)}
+.tapp-item p{margin:0;color:var(--mut);font-size:15px;line-height:1.5;max-width:30ch}
+.tapp-item .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--green);color:var(--navy2);font-weight:800;font-size:14px;margin-top:6px}
+@media (max-width:820px){
+  .tapp-row{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:18px;padding:6px 4px 18px;margin:0 -16px;padding-left:16px;padding-right:16px;-webkit-overflow-scrolling:touch}
+  .tapp-item{flex:0 0 74%;scroll-snap-align:center}
+  .tapp-hint{display:block!important}
+}
+.tapp-hint{display:none;text-align:center;color:var(--mut);font-size:13px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -725,6 +739,37 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
   </div>
 </section>
 
+<section class="sec tapp" id="app-tecnico">
+  <div class="wrap">
+    <div class="sec-hd rv">
+      <span class="eyebrow" data-i18n="taEy">La app de tu técnico</span>
+      <h2 data-i18n="taT">Tu técnico entra y ya tiene su día listo</h2>
+      <p data-i18n="taS">Sin llamadas ni mensajes sueltos: sus trabajos por hora, los avisos de la oficina y su inventario, todo en el teléfono.</p>
+    </div>
+    <div class="tapp-row">
+      <div class="tapp-item rv">
+        <img src="/assets/tecnico/walkcheck-tecnico-entrar.png" width="780" height="1540" loading="lazy" decoding="async" alt="Pantalla de entrada de la app WalkCheck para técnicos: número de técnico y clave">
+        <span class="n">1</span>
+        <h3 data-i18n="ta1t">Entra con su número</h3>
+        <p data-i18n="ta1p">Número de técnico y clave. Cada quien ve solo lo suyo.</p>
+      </div>
+      <div class="tapp-item rv d1">
+        <img src="/assets/tecnico/walkcheck-tecnico-mis-trabajos.png" width="780" height="1540" loading="lazy" decoding="async" alt="Mis trabajos del día en la app WalkCheck, por horas, con el botón Ir al trabajo">
+        <span class="n">2</span>
+        <h3 data-i18n="ta2t">Sus trabajos del día</h3>
+        <p data-i18n="ta2p">Cada cita en su ventana de horas, con dirección, equipos y un botón para ir al trabajo.</p>
+      </div>
+      <div class="tapp-item rv d2">
+        <img src="/assets/tecnico/walkcheck-tecnico-inbox.png" width="780" height="1540" loading="lazy" decoding="async" alt="Inbox de la app WalkCheck con mensajes de despacho y del supervisor">
+        <span class="n">3</span>
+        <h3 data-i18n="ta3t">Avisos de la oficina</h3>
+        <p data-i18n="ta3p">Despacho y supervisores le escriben aquí: órdenes nuevas, cambios de ruta y qué recoger en la bodega.</p>
+      </div>
+    </div>
+    <p class="tapp-hint" data-i18n="taHint">Desliza para ver las 3 pantallas →</p>
+  </div>
+</section>
+
 <section class="sec roles" id="roles">
   <div class="wrap">
     <div class="sec-hd rv">
@@ -979,6 +1024,7 @@ pl2:"Horario del equipo · Jueves",sc1:"9:00 – 11:00 · Fuga en baño · 4B",s
 pl2b:"Lo que ve el técnico",tk1:"Llegar y marcar inicio",tk2:"Fotos de antes",tk3:"Notas y fotos de después",
 pl3:"Notas del trabajo #1048",nt1:"Recibo de materiales",nt1s:"Ferretería · $42.80",nt2:"Horas registradas",nt2s:"9:05 AM – 10:35 AM · 1.5 h",
 st4:"Cobrado este mes",st5:"Por cobrar",st6:"Borradores",
+taEy:"La app de tu técnico",taT:"Tu técnico entra y ya tiene su día listo",taS:"Sin llamadas ni mensajes sueltos: sus trabajos por hora, los avisos de la oficina y su inventario, todo en el teléfono.",ta1t:"Entra con su número",ta1p:"Número de técnico y clave. Cada quien ve solo lo suyo.",ta2t:"Sus trabajos del día",ta2p:"Cada cita en su ventana de horas, con dirección, equipos y un botón para ir al trabajo.",ta3t:"Avisos de la oficina",ta3p:"Despacho y supervisores le escriben aquí: órdenes nuevas, cambios de ruta y qué recoger en la bodega.",taHint:"Desliza para ver las 3 pantallas →",
 roEy:"Para tu equipo",roT:"Cada quien ve lo que le toca",roS:"La oficina, los técnicos y el dueño trabajan en el mismo sistema, cada uno con su propia pantalla.",
 ro1t:"Dueño de la compañía",ro1s:"Controla trabajos, equipo y dinero desde la computadora.",ro1a:"Clientes y lugares de trabajo",ro1b:"Facturación y reportes",ro1c:"Permisos del equipo",
 ro2t:"Oficina y supervisores",ro2s:"Agendan, mueven visitas y revisan lo que se hizo.",ro2a:"Horario de todo el equipo",ro2b:"Notas y fotos en tiempo real",ro2c:"Borradores de factura",
@@ -1047,6 +1093,7 @@ pl2:"Team schedule · Thursday",sc1:"9:00 – 11:00 · Bathroom leak · 4B",sc2:
 pl2b:"What the tech sees",tk1:"Arrive and clock in",tk2:"Before photos",tk3:"After notes and photos",
 pl3:"Notes for job #1048",nt1:"Materials receipt",nt1s:"Hardware store · $42.80",nt2:"Hours tracked",nt2s:"9:05 AM – 10:35 AM · 1.5 h",
 st4:"Collected this month",st5:"Outstanding",st6:"Drafts",
+taEy:"Your tech's app",taT:"Your tech logs in and the day is ready",taS:"No calls or scattered texts: jobs by the hour, office messages and their inventory, all on the phone.",ta1t:"Log in with their number",ta1p:"Tech number and password. Everyone sees only their own work.",ta2t:"Today's jobs",ta2p:"Each appointment in its time window, with address, equipment and a button to go to the job.",ta3t:"Messages from the office",ta3p:"Dispatch and supervisors write here: new orders, route changes and what to pick up at the warehouse.",taHint:"Swipe to see the 3 screens →",
 roEy:"For your team",roT:"Everyone sees what's theirs",roS:"Office, techs and owner work in the same system, each with their own screen.",
 ro1t:"Company owner",ro1s:"Runs jobs, team and money from the computer.",ro1a:"Clients and job sites",ro1b:"Billing and reports",ro1c:"Team permissions",
 ro2t:"Office and supervisors",ro2s:"Schedule, move visits and review the work done.",ro2a:"Whole-team schedule",ro2b:"Notes and photos in real time",ro2c:"Draft invoices",
