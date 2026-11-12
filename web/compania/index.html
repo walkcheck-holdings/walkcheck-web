@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/team.css?v=20261104a">
+<link rel="stylesheet" href="/web/compania/lowvolt.css?v=20261111b">
 </head>
 <body class="tab-agenda">
 <header id="siteHdr">
@@ -526,10 +527,10 @@ function pathPortal(){
   return '';
 }
 function isBoss(){
-  return isSuper() || ['owner','admin','manager','supervisor'].includes(normRole());
+  return isSuper() || ['owner','admin','manager','supervisor','dispatcher'].includes(normRole());
 }
 function canAssign(){
-  return isSuper() || ['owner','admin','manager'].includes(normRole());
+  return isSuper() || ['owner','admin','manager','dispatcher'].includes(normRole());
 }
 function canVerifyJobs(){
   return ['owner','admin','manager','supervisor'].includes(normRole());
@@ -796,7 +797,7 @@ const UI_I18N = {
     done:'completados', needBuilding:'Escribe el nombre del edificio',
     companies:'Compañías', noCompanies:'Sin compañías', workers:'Trabajadores',
     noBuildings:'Sin edificios', noSites:'Sin sitios', noPhone:'Sin teléfono', noInstr:'Sin instrucciones.',
-    owner:'Dueño', admin:'Administrador', manager:'Manager', supervisor:'Supervisor', workerRole:'Trabajador',
+    owner:'Dueño', admin:'Administrador', manager:'Manager', supervisor:'Supervisor', dispatcher:'Despachador', workerRole:'Trabajador',
     boss:'Jefe / Admin', searchBuildings:'Buscar edificio…', searchSites:'Buscar sitio…',
     needSite:'Escribe el nombre del sitio'
   },
@@ -860,7 +861,7 @@ const UI_I18N = {
     done:'done', needBuilding:'Enter the building name',
     companies:'Companies', noCompanies:'No companies', workers:'Workers',
     noBuildings:'No buildings', noSites:'No sites', noPhone:'No phone', noInstr:'No instructions.',
-    owner:'Owner', admin:'Admin', manager:'Manager', supervisor:'Supervisor', workerRole:'Worker',
+    owner:'Owner', admin:'Admin', manager:'Manager', supervisor:'Supervisor', dispatcher:'Dispatcher', workerRole:'Worker',
     boss:'Admin', searchBuildings:'Search building…', searchSites:'Search site…',
     needSite:'Enter the site name'
   }
@@ -875,7 +876,7 @@ function uiT(k){
 }
 function roleLabel(){
   const r = String((profile&&profile.role)||'').toLowerCase();
-  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), worker: uiT('workerRole') };
+  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), dispatcher: uiT('dispatcher'), worker: uiT('workerRole') };
   return map[r] || (typeof isBoss === 'function' && isBoss() ? uiT('boss') : uiT('workerRole'));
 }
 function setLoginLang(code){
@@ -1869,6 +1870,7 @@ function roleSelectHtml(uid, role){
   const opts = [
     ['worker', uiT('workerRole')],
     ['supervisor', uiT('supervisor')],
+    ['dispatcher', uiT('dispatcher')],
     ['manager', uiT('manager')]
   ];
   return `<select onchange="setMemberRole('${uid}', this.value)">${opts.map(([v,l]) =>
@@ -1921,12 +1923,12 @@ async function loadOwnerRoles(id){
   }).join('') || `<p class="muted">${esc(uiT('noTeam'))}</p>`;
 }
 function roleWord(r){
-  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), worker: uiT('workerRole') };
+  const map = { owner: uiT('owner'), admin: uiT('admin'), manager: uiT('manager'), supervisor: uiT('supervisor'), dispatcher: uiT('dispatcher'), worker: uiT('workerRole') };
   return map[r] || r;
 }
 async function setMemberRole(uid, role){
   if (!canManageRoles() && !isSuper()) return;
-  if (!['worker','manager','supervisor'].includes(role)) return;
+  if (!['worker','manager','supervisor','dispatcher'].includes(role)) return;
   try {
     await db.collection('users').doc(uid).set({ role }, {merge:true});
     try {
@@ -3971,5 +3973,6 @@ async function loadMonths(buildingId){
 <script src="/web/compania/jobview.js?v=20261105a"></script>
 <script src="/web/compania/dashboard.js?v=20261110a"></script>
 <script src="/web/compania/jobslist.js?v=20261105a"></script>
+<script src="/web/compania/lowvolt.js?v=20261111b"></script>
 </body>
 </html>
