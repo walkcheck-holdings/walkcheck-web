@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261112b">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112g">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112h">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261112d">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261112a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
@@ -2447,6 +2447,8 @@ function markNav(which){
     const el = $(railMap[k]);
     if (el) el.classList.toggle('on', k === rail);
   });
+  const hdr = { jobs: 'jobsBtn', money: 'moneyBtn', quotes: 'moneyBtn', payments: 'moneyBtn', reports: 'reportsBtn' };
+  ['jobsBtn', 'moneyBtn', 'reportsBtn'].forEach(id => { const el = $(id); if (el) el.classList.toggle('on', hdr[rail] === id); });
 }
 function syncChrome(){
   const hoursOk = canSeeTimesheet();
@@ -2660,7 +2662,9 @@ function siteInspectedInMonth(b, ym){
 async function openReports(){
   closeMore();
   document.body.classList.add('view-reports');
-  document.body.classList.remove('view-hours','view-roles','view-worker','view-companies','sites-open');
+  document.body.classList.remove('view-hours','view-roles','view-worker','view-companies','sites-open',
+    'view-billing','view-quotes','view-jobs','view-job','view-home','view-search','view-payments',
+    'view-clients','view-requests','view-archived');
   markNav('reports');
   const pane = $('reportsPane');
   if (!pane) return;
