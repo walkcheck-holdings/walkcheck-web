@@ -52,3 +52,5 @@
 .rcpt-btns .btn { width: auto; }
 .dash-rc { font-size: 13px; }
 @media (max-width: 640px) { .rcpt-meta { grid-template-columns: 1fr; } }
+
+.dash-nav .dash-pdf { width: auto; padding: 8px 14px; font-weight: 800; white-space: nowrap; }
