@@ -407,8 +407,8 @@
     var types = allTypes(true);
     var priceRows = types.map(function (t) {
       var amt = priceOfKind(t.name);
-      return '<div class="price-row"><span style="min-width:180px;font-weight:700">' + esc(t.name) + '</span>' +
-        '<input type="number" min="0" step="0.01" value="' + (amt || '') + '" data-kind="' + esc(t.name) + '">' +
+      return '<div class="bl-price"><span>' + esc(t.name) + '</span>' +
+        '<label class="bl-money"><i>$</i><input type="number" min="0" step="0.01" placeholder="0.00" value="' + (amt || '') + '" data-kind="' + esc(t.name) + '" aria-label="' + esc(t.name) + '"></label>' +
         '</div>';
     }).join('');
     window.invUi = window.invUi || { status: 'all' };
@@ -418,7 +418,7 @@
       return payStatus(inv) === f;
     });
     var invChip = function (key, label, n) {
-      return '<button type="button" class="btn ' + (window.invUi.status === key ? '' : 'ghost') + '" onclick="invUi.status=\'' + key + '\';openBilling()">' + esc(label) + ' (' + n + ')</button>';
+      return '<button type="button" class="bl-chip' + (window.invUi.status === key ? ' on' : '') + '" onclick="invUi.status=\'' + key + '\';openBilling()">' + esc(label) + ' <b>' + n + '</b></button>';
     };
     var invRows = invShown.map(function (inv) {
       var ps = payStatus(inv);
@@ -429,55 +429,66 @@
         '<td>' + esc(job && job.jobNumber ? '#' + job.jobNumber : (inv.jobNumber || '—')) + '</td>' +
         '<td>' + esc(fmtDay(inv.issueDate)) + '</td>' +
         '<td>' + esc(fmtDay(inv.dueDate || inv.issueDate)) + '</td>' +
-        '<td>' + money(inv.total) + '</td>' +
-        '<td><span class="st-pill ' + (ps === 'paid' ? 'on' : 'off') + '">' + esc(payStatusLabel(ps)) + '</span></td>' +
-        '<td><button type="button" class="btn ghost" onclick="openInvoice(\'' + inv.id + '\')">' + esc(T('Abrir', 'Open')) + '</button> ' +
-          '<button type="button" class="btn ghost" onclick="invoicePdf(\'' + inv.id + '\')">' + esc(T('Descargar PDF', 'Download PDF')) + '</button> ' +
-          '<button type="button" class="btn ghost" onclick="invoiceSend(\'' + inv.id + '\')">' + esc(T('Enviar al cliente', 'Send to client')) + '</button></td>' +
+        '<td class="bl-num">' + money(inv.total) + '</td>' +
+        '<td><span class="bl-st ' + ps + '">' + esc(payStatusLabel(ps)) + '</span></td>' +
+        '<td class="bl-acts"><button type="button" class="bl-act main" onclick="openInvoice(\'' + inv.id + '\')">' + esc(T('Abrir', 'Open')) + '</button>' +
+          '<button type="button" class="bl-act" title="' + esc(T('Descargar PDF', 'Download PDF')) + '" onclick="invoicePdf(\'' + inv.id + '\')">⬇ PDF</button>' +
+          '<button type="button" class="bl-act" title="' + esc(T('Enviar al cliente', 'Send to client')) + '" onclick="invoiceSend(\'' + inv.id + '\')">✉️ ' + esc(T('Enviar', 'Send')) + '</button></td>' +
         '</tr>';
     }).join('');
-    var list = '<div class="chip-row">' +
+    var list = '<div class="bl-chips">' +
         invChip('paid', T('Pagada', 'Paid'), invoices.filter(function (i) { return payStatus(i) === 'paid'; }).length) +
         invChip('pending', T('Pendiente', 'Pending'), invoices.filter(function (i) { return payStatus(i) === 'pending'; }).length) +
         invChip('overdue', T('Vencida', 'Overdue'), invoices.filter(function (i) { return payStatus(i) === 'overdue'; }).length) +
         invChip('all', T('Todas', 'All'), invoices.length) +
       '</div>' +
       (invRows
-        ? '<table class="jobs-table"><thead><tr><th>' + esc(T('Facturar a', 'Bill to')) + '</th><th>' + esc(T('N.º', '#')) + '</th><th>' + esc(T('Trabajo', 'Job')) + '</th><th>' + esc(T('Emisión', 'Issued')) + '</th><th>' + esc(T('Vence', 'Due')) + '</th><th>Total</th><th>' + esc(T('Estado', 'Status')) + '</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table>'
+        ? '<div class="bl-table-w"><table class="jobs-table bl-table"><thead><tr><th>' + esc(T('Facturar a', 'Bill to')) + '</th><th>' + esc(T('N.º', '#')) + '</th><th>' + esc(T('Trabajo', 'Job')) + '</th><th>' + esc(T('Emisión', 'Issued')) + '</th><th>' + esc(T('Vence', 'Due')) + '</th><th>Total</th><th>' + esc(T('Estado', 'Status')) + '</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table></div>'
         : '<p class="muted">' + esc(invoices.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin facturas.', 'No invoices.')) + '</p>');
     pane._quote = null;
-    pane.innerHTML = (window.billingTabsHtml ? billingTabsHtml('inv') : '') +
-      '<div class="inv-kpis">' +
-        '<div class="inv-kpi"><span>' + esc(T('Pagada', 'Paid')) + '</span><b>' + money(paid) + '</b></div>' +
-        '<div class="inv-kpi"><span>' + esc(T('Pendiente', 'Pending')) + '</span><b>' + money(pend) + '</b></div>' +
-        '<div class="inv-kpi"><span>' + esc(T('Vencida', 'Overdue')) + '</span><b>' + money(over) + '</b></div>' +
+    var kpi = function (key, label, amount, n, cls) {
+      return '<button type="button" class="bl-kpi ' + cls + (window.invUi.status === key ? ' on' : '') + '" onclick="invUi.status=\'' + key + '\';openBilling()">' +
+        '<span class="bl-kpi-l"><i></i>' + esc(label) + '</span><b>' + money(amount) + '</b>' +
+        '<span class="bl-kpi-n">' + n + ' ' + esc(n === 1 ? T('factura', 'invoice') : T('facturas', 'invoices')) + '</span></button>';
+    };
+    var logoBtn = '<label class="bl-btn ghost bl-file">' + esc(companyLogoData ? T('Cambiar logo', 'Change logo') : T('Subir logo', 'Upload logo')) +
+      '<input id="logoFile" type="file" accept="image/png,image/jpeg" onchange="saveCompanyLogo(this)" hidden></label>';
+    pane.innerHTML = '<div class="bl-page">' + (window.billingTabsHtml ? billingTabsHtml('inv') : '') +
+      '<div class="bl-head"><div><h2>' + esc(T('Facturación', 'Billing')) + '</h2><p class="muted">' +
+        esc(T('Tus facturas, lo que te deben y los datos que salen en cada factura.', 'Your invoices, what you are owed and the details on every invoice.')) + '</p></div></div>' +
+      '<div class="bl-kpis">' +
+        kpi('paid', T('Pagado', 'Paid'), paid, invoices.filter(function (i) { return payStatus(i) === 'paid'; }).length, 'k-paid') +
+        kpi('pending', T('Pendiente', 'Pending'), pend, invoices.filter(function (i) { return payStatus(i) === 'pending'; }).length, 'k-pend') +
+        kpi('overdue', T('Vencido', 'Overdue'), over, invoices.filter(function (i) { return payStatus(i) === 'overdue'; }).length, 'k-over') +
       '</div>' +
-      '<div class="card"><h3 style="margin:0 0 8px">' + esc(T('Logo de la compañía', 'Company logo')) + '</h3>' +
-        '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' + logoHtml(companyName, 56) +
-        '<div style="flex:1;min-width:180px"><p class="muted" style="margin:0 0 6px">' + esc(T('Sale en tus facturas y en el PDF. Usa un PNG o JPG cuadrado.', 'Shown on your invoices and PDF. Use a square PNG or JPG.')) + '</p>' +
-        '<input id="logoFile" type="file" accept="image/png,image/jpeg" onchange="saveCompanyLogo(this)"></div></div>' +
-        '<div class="err" id="logoErr"></div></div>' +
-      companyTypeCardHtml() +
-      '<div class="card"><h3 style="margin:0 0 8px">' + esc(T('Datos en tus facturas', 'Details on your invoices')) + '</h3>' +
-        '<p class="muted" style="margin:0 0 8px">' + esc(T('Salen en el cuadro "De" de cada factura. Cuando el cliente responde el correo de la factura, la respuesta llega a este correo.', 'Shown in the "From" box of every invoice. When the client replies to the invoice email, the reply goes to this email.')) + '</p>' +
-        '<label class="muted" for="coInvMail">' + esc(T('Correo para facturas', 'Invoice email')) + '</label>' +
-        '<input id="coInvMail" type="email" placeholder="info@tucompania.com" value="' + esc(companyInvoiceEmail || '') + '">' +
-        '<label class="muted" for="coInvPhone">' + esc(T('Teléfono de la compañía', 'Company phone')) + '</label>' +
-        '<input id="coInvPhone" type="text" inputmode="tel" placeholder="(305) 555-0100" value="' + esc(companyPhone || '') + '">' +
-        '<div class="err" id="coInvErr"></div>' +
-        '<button class="btn" style="margin-top:8px" id="coInvSave" onclick="saveInvoiceDetails()">' + esc(T('Guardar', 'Save')) + '</button></div>' +
-      // Card payments: each company connects its own Stripe (money goes to it).
-      '<div class="card" id="payCard"><h3 style="margin:0 0 8px">💳 ' + esc(T('Cobrar con tarjeta', 'Get paid by card')) + '</h3>' +
-        '<p class="muted" style="margin:0 0 8px">' + esc(T('Conecta tu cuenta de Stripe y cada factura que envíes llevará el botón "Pagar en línea". El dinero va directo a tu cuenta y la factura se marca Pagada sola.', 'Connect your Stripe account and every invoice you send gets a "Pay online" button. The money goes straight to you and the invoice is marked Paid by itself.')) + '</p>' +
-        '<div id="payState" class="muted">' + esc(T('Revisando…', 'Checking…')) + '</div></div>' +
-      '<div class="card"><h3 style="margin:0 0 8px">' + esc(uiT('money')) + '</h3>' +
-      '<p class="muted">' + esc(T('Precios por tipo de trabajo (solo dueño). El técnico no los ve.', 'Prices per job type (owner only). Technicians never see them.')) + '</p>' +
-      '<label class="muted">' + esc(T('Impuesto %', 'Tax %')) + '</label>' +
-      '<input id="taxPct" type="number" min="0" step="0.1" value="' + (Number(companyTaxRate || 0) * 100) + '">' +
-      priceRows +
-      '<button class="btn" style="margin-top:10px" onclick="saveBillingSettings()">' + esc(T('Guardar precios', 'Save prices')) + '</button></div>' +
-      list +
-      '<button class="btn ghost" onclick="document.body.classList.remove(\'view-billing\');renderSchedule()">' + esc(T('Volver al horario', 'Back to schedule')) + '</button>';
+      '<section class="bl-card"><div class="bl-card-h"><h3>' + esc(T('Facturas', 'Invoices')) + '</h3></div>' + list + '</section>' +
+      '<h3 class="bl-sec">' + esc(T('Ajustes', 'Settings')) + '</h3>' +
+      '<div class="bl-grid"><div class="bl-col">' +
+        '<section class="bl-card"><div class="bl-card-h"><h3>🏢 ' + esc(T('Tu compañía', 'Your company')) + '</h3></div>' +
+          '<p class="muted bl-help">' + esc(T('Sale en cada factura y en el PDF. Cuando el cliente responde el correo de la factura, la respuesta llega a tu correo.', 'Shown on every invoice and PDF. When the client replies to the invoice email, the reply goes to your email.')) + '</p>' +
+          '<div class="bl-logo">' + logoHtml(companyName, 64) + '<div><b>' + esc(companyName || '') + '</b>' +
+            '<div class="muted bl-small">' + esc(T('Logo: PNG o JPG cuadrado', 'Logo: square PNG or JPG')) + '</div>' + logoBtn + '</div></div>' +
+          '<div class="err" id="logoErr"></div>' +
+          '<div class="bl-fields"><div><label class="bl-lab" for="coInvMail">' + esc(T('Correo para facturas', 'Invoice email')) + '</label>' +
+            '<input id="coInvMail" type="email" placeholder="info@tucompania.com" value="' + esc(companyInvoiceEmail || '') + '"></div>' +
+          '<div><label class="bl-lab" for="coInvPhone">' + esc(T('Teléfono de la compañía', 'Company phone')) + '</label>' +
+            '<input id="coInvPhone" type="text" inputmode="tel" placeholder="(305) 555-0100" value="' + esc(companyPhone || '') + '"></div></div>' +
+          '<div class="err" id="coInvErr"></div>' +
+          '<div class="bl-row-end"><button class="bl-btn" id="coInvSave" onclick="saveInvoiceDetails()">' + esc(T('Guardar', 'Save')) + '</button></div>' +
+        '</section>' +
+        companyTypeCardHtml() +
+      '</div><div class="bl-col">' +
+        // Card payments: each company connects its own Stripe (money goes to it).
+        '<section class="bl-card" id="payCard"><div class="bl-card-h"><h3>💳 ' + esc(T('Cobrar con tarjeta', 'Get paid by card')) + '</h3></div>' +
+          '<p class="muted bl-help">' + esc(T('Conecta tu cuenta de Stripe y cada factura que envíes llevará el botón "Pagar en línea". El dinero va directo a tu cuenta y la factura se marca Pagada sola.', 'Connect your Stripe account and every invoice you send gets a "Pay online" button. The money goes straight to you and the invoice is marked Paid by itself.')) + '</p>' +
+          '<div id="payState" class="muted">' + esc(T('Revisando…', 'Checking…')) + '</div></section>' +
+        '<section class="bl-card"><div class="bl-card-h"><h3>🏷️ ' + esc(T('Precios e impuesto', 'Prices and tax')) + '</h3></div>' +
+          '<p class="muted bl-help">' + esc(T('Precio de cada tipo de trabajo. Solo lo ves tú; el técnico no lo ve.', 'Price of each job type. Only you see it; technicians never do.')) + '</p>' +
+          '<div class="bl-price bl-tax"><span>' + esc(T('Impuesto', 'Tax')) + '</span><label class="bl-money pct"><input id="taxPct" type="number" min="0" step="0.1" value="' + (Number(companyTaxRate || 0) * 100) + '" aria-label="' + esc(T('Impuesto %', 'Tax %')) + '"><i>%</i></label></div>' +
+          '<div class="bl-prices">' + (priceRows || '<p class="muted">' + esc(T('Todavía no hay tipos de trabajo.', 'No job types yet.')) + '</p>') + '</div>' +
+          '<div class="bl-row-end"><button class="bl-btn" onclick="saveBillingSettings()">' + esc(T('Guardar precios', 'Save prices')) + '</button></div>' +
+        '</section>' +
+      '</div></div></div>';
     refreshPayState();
   };
 
@@ -580,12 +591,13 @@
           return '<option value="' + esc(o.id) + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(en ? o.labelEn : o.label) + '</option>';
         }).join('') + '</optgroup>';
       }).join('') + '</select>';
-    return '<div class="card" id="coTypeCard"><h3 style="margin:0 0 8px">🏷️ ' + esc(T('Tipo de compañía', 'Company type')) + '</h3>' +
-      '<p class="muted" style="margin:0 0 8px">' + esc(T('Decide los tipos de trabajo y los pasos que marca el técnico. Si te equivocaste al registrarte, cámbialo aquí. Los trabajos que ya tienes no se borran.',
+    return '<section class="bl-card" id="coTypeCard"><div class="bl-card-h"><h3>🧰 ' + esc(T('Tipo de compañía', 'Company type')) + '</h3></div>' +
+      '<p class="muted bl-help">' + esc(T('Decide los tipos de trabajo y los pasos que marca el técnico. Si te equivocaste al registrarte, cámbialo aquí. Los trabajos que ya tienes no se borran.',
         'It sets the job types and the steps the technician checks. If you picked the wrong one when signing up, change it here. Your existing jobs are kept.')) + '</p>' +
-      '<label class="muted" for="coTypeSel">' + esc(T('Ahora: ', 'Now: ')) + '<b style="color:#111827">' + esc(typeLabel(cur)) + '</b></label>' + sel +
+      '<div class="bl-now">' + esc(T('Ahora', 'Now')) + ': <b>' + esc(typeLabel(cur)) + '</b></div>' +
+      '<label class="bl-lab" for="coTypeSel">' + esc(T('Cambiar a', 'Change to')) + '</label>' + sel +
       '<div class="err" id="coTypeErr"></div>' +
-      '<button class="btn" style="margin-top:8px" onclick="saveCompanyType()">' + esc(T('Cambiar tipo', 'Change type')) + '</button></div>';
+      '<div class="bl-row-end"><button class="bl-btn" onclick="saveCompanyType()">' + esc(T('Cambiar tipo', 'Change type')) + '</button></div></section>';
   }
   window.saveCompanyType = async function () {
     var next = ($('coTypeSel') && $('coTypeSel').value) || '';
