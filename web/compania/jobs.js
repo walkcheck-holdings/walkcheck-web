@@ -580,7 +580,8 @@
       partiesViewHtml(j, phoneHtml) +
       '<p><a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">' + esc(loginLang() === 'en' ? 'Directions' : 'Cómo llegar') + '</a>' +
       (canAssign() && !jobArchived(j) ? ' · <a href="#" onclick="openPartiesEditor(\'' + j.id + '\');return false">' + esc(loginLang() === 'en' ? 'Edit client / tenant' : 'Editar cliente / inquilino') + '</a>' : '') + '</p>' +
-      '<p class="' + statusClass(j) + '">' + esc(statusWord(j)) + ' · ' + esc(durationLabel(j)) + '</p></div>' +
+      '<p class="' + statusClass(j) + '">' + esc(statusWord(j)) + ' · ' + esc(durationLabel(j)) + '</p>' +
+      jobTechRowHtml(j) + '</div>' +
       '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Product / Service' : 'Producto / Servicio') + '</h3><div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
         return '<p><b>' + esc(l.name) + '</b> × ' + esc(l.qty) + (moneyOk ? ' · ' + usd(l.unitPrice) + ' = ' + usd(l.total) : '') +
           '<div class="muted" style="white-space:pre-wrap">' + esc(l.description || '') + '</div></p>';
@@ -663,6 +664,72 @@
       unit: v('Unit'), tenantName: v('Ten'), tenantPhone: v('TenPh'), tenantEmail: v('TenMail').toLowerCase()
     } };
   }
+  function jobTechUid(j) {
+    return (typeof accountUidOf === 'function' ? accountUidOf(j) : '') || j.assignedUid || j.workerId || '';
+  }
+  function jobTechRowHtml(j) {
+    var en = loginLang() === 'en';
+    var cur = jobTechUid(j);
+    var t = techs.find(function (x) { return x.uid === cur; });
+    var name = (t && t.name) || j.assignedName || (en ? 'Nobody yet' : 'Sin asignar');
+    var canMove = canAssign() && !jobArchived(j) && !jobDone(j);
+    return '<div class="job-tech"><span class="muted">👷 ' + esc(en ? 'Technician' : 'Técnico') + '</span><b>' + esc(name) + '</b>' +
+      (canMove ? '<button type="button" class="btn job-move-btn" onclick="openMoveJob(\'' + j.id + '\')">⇄ ' +
+        esc(en ? 'Move to another technician' : 'Mover a otro técnico') + '</button>' : '') + '</div>';
+  }
+  // Move the job: the window says what stays and what changes, then every field that names the tech changes.
+  window.openMoveJob = async function (id) {
+    if (!canAssign()) return;
+    var en = loginLang() === 'en';
+    var j = jobs.find(function (x) { return x.id === id; }) || {};
+    try { var d = await db.collection('jobs').doc(id).get(); if (d.exists) j = Object.assign({ id: d.id }, d.data()); } catch (_) {}
+    var cur = jobTechUid(j);
+    var curName = ((techs.find(function (x) { return x.uid === cur; }) || {}).name) || j.assignedName || (en ? 'nobody' : 'nadie');
+    var others = techs.filter(function (t) { return t.uid && t.uid !== cur; });
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = '<div class="box move-box"><h3>⇄ ' + esc(en ? 'Move to another technician' : 'Mover a otro técnico') + '</h3>' +
+      '<p class="muted">' + esc(en ? 'Now: ' : 'Ahora: ') + '<b>' + esc(curName) + '</b></p>' +
+      (others.length
+        ? '<label class="muted" for="mvTo">' + esc(en ? 'Move it to' : 'Pasarlo a') + '</label><select id="mvTo"><option value="">' + esc(en ? 'Pick a technician…' : 'Escoge un técnico…') + '</option>' +
+          others.map(function (t) { return '<option value="' + esc(t.uid) + '">' + esc(t.name || t.email || t.uid) + '</option>'; }).join('') + '</select>'
+        : '<p>' + esc(en ? 'There is no other technician in your company yet.' : 'Todavía no hay otro técnico en tu compañía.') + '</p>') +
+      '<div class="move-keep">✓ ' + esc(en ? 'Photos, notes and history stay with the job.' : 'Fotos, notas e historial se quedan en el trabajo.') + '<br>✓ ' +
+        esc(en ? 'Same date and time. Only the technician changes.' : 'Misma fecha y hora. Solo cambia el técnico.') + '</div>' +
+      '<div class="err" id="mvErr"></div>' +
+      (others.length ? '<button class="btn" id="mvGo" onclick="saveMoveJob(\'' + id + '\')">' + esc(en ? 'Move job' : 'Mover trabajo') + '</button>' : '') +
+      '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(uiT('cancel')) + '</button></div>';
+  };
+  window.saveMoveJob = async function (id) {
+    var en = loginLang() === 'en';
+    var to = ($('mvTo') && $('mvTo').value) || '';
+    var err = $('mvErr');
+    if (!to) { err.textContent = en ? 'Pick who gets it.' : 'Escoge a quién se lo pasas.'; return; }
+    var j = jobs.find(function (x) { return x.id === id; }) || {};
+    try { var d = await db.collection('jobs').doc(id).get(); if (d.exists) j = Object.assign({ id: d.id }, d.data()); } catch (_) {}
+    var from = jobTechUid(j);
+    var u = techs.find(function (x) { return x.uid === to; }) || {};
+    var visits = (Array.isArray(j.visits) ? j.visits : []).map(function (v) {
+      var x = Object.assign({}, v);
+      var s = String(x.status || '').toLowerCase();
+      var closed = ['completed', 'closed', 'done'].indexOf(s) >= 0;
+      if (!closed && (!x.assignedUid || x.assignedUid === from)) x.assignedUid = to;
+      return x;
+    });
+    var patch = Object.assign({}, assignmentPatch(to), {
+      unassigned: false,
+      assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      reassignLog: firebase.firestore.FieldValue.arrayUnion({ fromUid: from, fromName: j.assignedName || '', toUid: to, toName: u.name || '', byName: who(), at: new Date().toISOString() }),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if (visits.length) patch.visits = visits;
+    if (j.lv && ['enroute', 'arrived', 'started'].indexOf(j.lv.stage) >= 0) patch['lv.stage'] = 'dispatched';
+    $('mvGo').disabled = true;
+    try {
+      await db.collection('jobs').doc(id).update(patch);
+      $('modal').classList.add('hidden');
+      openJobDetail(id);
+    } catch (e) { err.textContent = e.message || e; $('mvGo').disabled = false; }
+  };
   function partiesViewHtml(j, phoneHtml) {
     var en = loginLang() === 'en';
     var c = typeof invoiceClientOf === 'function' ? invoiceClientOf(j) : { name: j.clientName || '' };
