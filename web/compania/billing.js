@@ -457,6 +457,7 @@
         '<div style="flex:1;min-width:180px"><p class="muted" style="margin:0 0 6px">' + esc(T('Sale en tus facturas y en el PDF. Usa un PNG o JPG cuadrado.', 'Shown on your invoices and PDF. Use a square PNG or JPG.')) + '</p>' +
         '<input id="logoFile" type="file" accept="image/png,image/jpeg" onchange="saveCompanyLogo(this)"></div></div>' +
         '<div class="err" id="logoErr"></div></div>' +
+      companyTypeCardHtml() +
       '<div class="card"><h3 style="margin:0 0 8px">' + esc(T('Datos en tus facturas', 'Details on your invoices')) + '</h3>' +
         '<p class="muted" style="margin:0 0 8px">' + esc(T('Salen en el cuadro "De" de cada factura. Cuando el cliente responde el correo de la factura, la respuesta llega a este correo.', 'Shown in the "From" box of every invoice. When the client replies to the invoice email, the reply goes to this email.')) + '</p>' +
         '<label class="muted" for="coInvMail">' + esc(T('Correo para facturas', 'Invoice email')) + '</label>' +
@@ -551,6 +552,71 @@
     };
     img.onerror = function () { if (err) err.textContent = T('No se pudo leer la imagen.', 'Could not read the image.'); };
     reader.readAsDataURL(f);
+  };
+
+  /* ---------- Company type (trade): the owner can fix it after sign-up ---------- */
+  function curTypeId() {
+    var opts = window.COMPANY_TYPE_OPTIONS || [];
+    var raw = String((typeof companyType !== 'undefined' && companyType) || '').toLowerCase();
+    var hit = opts.find(function (o) { return o.id === raw; }) ||
+      opts.find(function (o) { return raw && (String(o.label).toLowerCase().replace(/\s+/g, '_') === raw || String(o.labelEn).toLowerCase().replace(/\s+/g, '_') === raw); });
+    if (!hit && /low[\s_-]*volt/.test(raw)) hit = opts.find(function (o) { return o.id === 'low_voltage'; });
+    return hit ? hit.id : '';
+  }
+  function typeLabel(id) {
+    var o = (window.COMPANY_TYPE_OPTIONS || []).find(function (x) { return x.id === id; });
+    return o ? (loginLang() === 'en' ? o.labelEn : o.label) : (id || '—');
+  }
+  function companyTypeCardHtml() {
+    if (!(typeof isOwnerRole === 'function' ? isOwnerRole() : canSeeMoney())) return '';
+    var opts = window.COMPANY_TYPE_OPTIONS || [], groups = window.COMPANY_TYPE_GROUPS || [];
+    if (!opts.length) return '';
+    var cur = curTypeId(), en = loginLang() === 'en';
+    var sel = '<select id="coTypeSel">' + (cur ? '' : '<option value="">' + esc(T('Escoge…', 'Pick…')) + '</option>') +
+      groups.map(function (g) {
+        var inG = opts.filter(function (o) { return o.group === g.id; });
+        if (!inG.length) return '';
+        return '<optgroup label="' + esc(en ? g.labelEn : g.label) + '">' + inG.map(function (o) {
+          return '<option value="' + esc(o.id) + '"' + (o.id === cur ? ' selected' : '') + '>' + esc(en ? o.labelEn : o.label) + '</option>';
+        }).join('') + '</optgroup>';
+      }).join('') + '</select>';
+    return '<div class="card" id="coTypeCard"><h3 style="margin:0 0 8px">🏷️ ' + esc(T('Tipo de compañía', 'Company type')) + '</h3>' +
+      '<p class="muted" style="margin:0 0 8px">' + esc(T('Decide los tipos de trabajo y los pasos que marca el técnico. Si te equivocaste al registrarte, cámbialo aquí. Los trabajos que ya tienes no se borran.',
+        'It sets the job types and the steps the technician checks. If you picked the wrong one when signing up, change it here. Your existing jobs are kept.')) + '</p>' +
+      '<label class="muted" for="coTypeSel">' + esc(T('Ahora: ', 'Now: ')) + '<b style="color:#111827">' + esc(typeLabel(cur)) + '</b></label>' + sel +
+      '<div class="err" id="coTypeErr"></div>' +
+      '<button class="btn" style="margin-top:8px" onclick="saveCompanyType()">' + esc(T('Cambiar tipo', 'Change type')) + '</button></div>';
+  }
+  window.saveCompanyType = async function () {
+    var next = ($('coTypeSel') && $('coTypeSel').value) || '';
+    var cur = curTypeId(), err = $('coTypeErr');
+    err.textContent = '';
+    if (!next) { err.textContent = T('Escoge el tipo.', 'Pick the type.'); return; }
+    if (next === cur) { err.textContent = T('Ya es ese tipo.', 'It is already that type.'); return; }
+    var toLv = next === 'low_voltage', fromLv = cur === 'low_voltage';
+    var msg = T('¿Cambiar el tipo de compañía de "' + typeLabel(cur) + '" a "' + typeLabel(next) + '"?\n\n' +
+        '• Los trabajos, clientes y facturas que ya tienes SE QUEDAN.\n' +
+        '• Cambian los tipos de trabajo y los pasos que marca el técnico.',
+      'Change the company type from "' + typeLabel(cur) + '" to "' + typeLabel(next) + '"?\n\n' +
+        '• Your jobs, clients and invoices STAY.\n' +
+        '• The job types and the steps the technician checks change.');
+    if (toLv) msg += T('\n• Se abren el Despacho, los Equipos y la pantalla de Low Voltage del técnico.', '\n• Dispatch, Equipment and the Low Voltage technician screen turn on.');
+    if (fromLv) msg += T('\n• Se cierran el Despacho, los Equipos y la pantalla de Low Voltage del técnico.', '\n• Dispatch, Equipment and the Low Voltage technician screen turn off.');
+    msg += T('\n\nLa página se vuelve a cargar.', '\n\nThe page reloads.');
+    if (!confirm(msg)) return;
+    var o = (window.COMPANY_TYPE_OPTIONS || []).find(function (x) { return x.id === next; }) || {};
+    var patch = {
+      companyType: next, industry: o.label || next, trade: next, industries: [o.label || next],
+      companyTypeLog: firebase.firestore.FieldValue.arrayUnion({ from: cur, to: next, byUid: (auth.currentUser && auth.currentUser.uid) || '', at: new Date().toISOString() }),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (toLv) patch.equipmentEnabled = true;
+    if (fromLv) patch.equipmentEnabled = false;
+    try {
+      await db.collection('companies').doc(cid()).set(patch, { merge: true });
+      try { await db.collection('users').doc(auth.currentUser.uid).set({ companyType: next }, { merge: true }); } catch (_) {}
+      location.reload();
+    } catch (e) { err.textContent = T('No se pudo cambiar: ', 'Could not change: ') + (e.message || e); }
   };
 
   window.saveInvoiceDetails = async function () {
