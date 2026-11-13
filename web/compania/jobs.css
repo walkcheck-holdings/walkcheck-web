@@ -74,6 +74,34 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 .party-grid > div { background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; min-width:0; overflow-wrap:anywhere; }
 @media (max-width:640px){ .party-grid { grid-template-columns:1fr; } }
 
+/* Day schedule: only people with work, avatar headers, cards with a color bar. */
+.day-free { margin: 40px auto; max-width: 420px; text-align: center; background: #fff; border: 1px dashed #D1D5DB; border-radius: 18px; padding: 32px 20px; color: #4B5563; }
+.day-free-ic { font-size: 34px; margin-bottom: 6px; }
+.day-free b { display: block; font-size: 18px; color: #111827; }
+.day-free p { margin: 6px 0 16px; }
+.day-free-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.day-free-btns .btn { width: auto; }
+.col-head.col-head2 { flex-direction: row; justify-content: flex-start; gap: 10px; background: #fff; border: 1px solid #E5E7EB; box-shadow: 0 1px 2px rgba(0,0,0,.04); text-align: left; padding: 8px 12px; }
+.col-head.col-head2:hover { border-color: #34C759; }
+.col-head.is-none { cursor: default; background: #FFFBEB; border-color: #FDE68A; }
+.col-av { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; background: #1B7A36; color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.col-av.none { background: #F59E0B; }
+.col-txt { display: flex; flex-direction: column; min-width: 0; }
+.col-head2 .col-name { font-size: 14px; font-weight: 800; }
+.col-cnt { font-size: 12px; font-weight: 600; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jcard.jcard2 { border-radius: 10px; padding: 6px 8px 6px 12px; gap: 1px; box-shadow: 0 1px 3px rgba(0,0,0,.10); }
+.jcard.jcard2::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--bar, #34C759); }
+.jcard.jcard2.pend { border: 1px solid #E5E7EB; background: #fff; }
+.jcard.jcard2.done { border-left: 1px solid #E5E7EB; }
+.jcard2 .jcard-top { align-items: center; }
+.jcard2 .jcard-when { flex: 1 1 auto; min-width: 0; font-size: 12px; font-weight: 800; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jcard2.done .jcard-when { color: #6B7280; text-decoration: line-through; }
+.jcard2 .jcard-kind { text-transform: none; font-size: 13.5px; letter-spacing: 0; }
+.jcard2 .jcard-badge { font-size: 10.5px; padding: 2px 7px; }
+.jcard2:hover { box-shadow: 0 4px 12px rgba(0,0,0,.14); z-index: 4; }
+.jcard2.lane .jcard-badge { display: none; }
+.jcard2.lane .jcard-kind { -webkit-line-clamp: 3; }
+
 /* Job page: two columns like a field-service app (main work left, people right). */
 #jobPane { container-type: inline-size; }
 .job-page { max-width: 1240px; margin: 0 auto; }

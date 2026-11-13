@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261104b">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112b">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112c">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261112d">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
@@ -3056,13 +3056,17 @@ function jobCardHtml(j, extraClass, posStyle){
   const when = fmtCard(g.st)+'-'+fmtCard(g.en);
   const done = jobDone(j);
   const pos = posStyle || `top:${g.top}px;height:${Math.max(g.h, SLOT_H)}px`;
-  const meta = [addr, floor ? (loginLang()==='es' ? 'Piso '+floor : 'Floor '+floor) : '', when].filter(Boolean).join(' · ');
-  return `<div class="jcard ${done?'done':'pend'} ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="${pos}">
+  const meta = [addr, floor ? (loginLang()==='es' ? 'Unidad '+floor : 'Unit '+floor) : ''].filter(Boolean).join(' · ');
+  const tp = typeof typeOf === 'function' ? (typeOf(kind) || {}) : {};
+  const bar = done ? '#9CA3AF' : (j.needsReturn===true ? '#F59E0B' : (tp.color || '#34C759'));
+  const title = j.title && j.title !== kind ? j.title : kind;
+  return `<div class="jcard jcard2 ${done?'done':'pend'} ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="${pos};--bar:${esc(bar)}" title="${esc(title + ' · ' + when + (addr ? ' · ' + addr : ''))}">
     <div class="jcard-top">
-      <div class="jcard-kind">${esc(kind)}</div>
+      <span class="jcard-when">${esc(when)}</span>
       <span class="jcard-badge" ${j.needsReturn===true?'style="background:#FFF1DE;color:#9A5B00"':''}>${j.needsReturn===true ? '↩ '+esc(uiT('needsReturn')) : done ? '✓ '+esc(uiT('doneBadge')) : esc(uiT('pendBadge'))}</span>
     </div>
-    <div class="jcard-meta">${esc(meta)}</div>
+    <div class="jcard-kind">${j.isTask===true?'📋 ':''}${esc(title)}</div>
+    ${meta ? `<div class="jcard-meta">${esc(meta)}</div>` : ''}
   </div>`;
 }
 function quarterSlotsHtml(extraAttr){
@@ -3093,13 +3097,51 @@ function renderRows(){
   if (schedView === 'week') { renderWeekGrid(); return; }
   renderDayGrid(myTechCols());
 }
+/* Jobs that overlap in time share the column width (lanes), like a calendar. */
+function laneLayout(list){
+  const items = list.map(j => { const st = jobTime(j); return { j, s: st.getTime(), e: jobEnd(j, st).getTime() }; })
+    .sort((a,b) => a.s - b.s || b.e - a.e);
+  const out = new Map();
+  let group = [], groupEnd = -Infinity, lanesEnd = [];
+  const flush = () => { const n = lanesEnd.length || 1; group.forEach(x => out.set(x.it.j, { lane: x.lane, n })); group = []; lanesEnd = []; };
+  items.forEach(it => {
+    if (it.s >= groupEnd && group.length) { flush(); groupEnd = -Infinity; }
+    let lane = lanesEnd.findIndex(end => end <= it.s);
+    if (lane < 0) { lane = lanesEnd.length; lanesEnd.push(it.e); } else lanesEnd[lane] = it.e;
+    group.push({ it, lane });
+    groupEnd = Math.max(groupEnd, it.e);
+  });
+  flush();
+  return out;
+}
+function laneStyle(pos){
+  if (!pos || pos.n < 2) return '';
+  const w = 100 / pos.n;
+  return `left:calc(${(w * pos.lane).toFixed(3)}% + 6px);right:auto;width:calc(${w.toFixed(3)}% - 9px);`;
+}
 function renderDayGrid(cols){
-  const listCols = cols || myTechCols();
+  let listCols = cols || myTechCols();
+  // Office view: only the people who have work this day (the rest are free).
+  if (!isWorker()) {
+    listCols = listCols.filter(t => jobsForTech(t).length);
+    if (jobsForTech({ uid: '' }).length) listCols.push({ uid: '', name: loginLang()==='en' ? 'Not assigned' : 'Sin asignar', _unassigned: true });
+  }
   SLOT_H = liveSlotH();
   const H = gridTotalH();
   const hoursEl = schedEl('hours');
   const rowsEl = schedEl('rows');
   if (!rowsEl) return;
+  if (!listCols.length && !isWorker()) {
+    const en = loginLang()==='en';
+    if (hoursEl) hoursEl.innerHTML = '';
+    rowsEl.innerHTML = `<div class="day-free">
+      <div class="day-free-ic" aria-hidden="true">📅</div>
+      <b>${esc(en ? 'No jobs this day' : 'No hay trabajos este día')}</b>
+      <p>${esc(en ? 'Your whole team is free on ' : 'Todo tu equipo está libre el ')}${esc(dayLong(selectedDay))}.</p>
+      ${canAssign() ? `<div class="day-free-btns"><button type="button" class="btn" onclick="openCreateJob()">${esc(uiT('createJob'))}</button><button type="button" class="btn ghost" onclick="openAssign()">${esc(uiT('assignJob'))}</button></div>` : ''}
+    </div>`;
+    return;
+  }
   if (!listCols.length) {
     if (hoursEl) hoursEl.innerHTML = '';
     rowsEl.innerHTML = `<div class="daygrid" style="height:100%">
@@ -3111,16 +3153,25 @@ function renderDayGrid(cols){
     </div>`;
     return;
   }
+  const en = loginLang()==='en';
   const head = `<div class="gutter"></div>` + listCols.map(t => {
-    return `<button type="button" class="col-head" onclick="openWorker('${t.uid}')"><span class="col-name">${esc(t.name||'')} · ${esc(dayStamp(selectedDay))}</span></button>`;
+    const list = jobsForTech(t), done = list.filter(jobDone).length;
+    const ini = String(t.name||'?').trim().split(/\s+/).slice(0,2).map(x => x.charAt(0).toUpperCase()).join('');
+    const cnt = list.length + ' ' + (list.length === 1 ? (en ? 'job' : 'trabajo') : (en ? 'jobs' : 'trabajos')) + (done ? ' · ' + done + ' ' + (en ? 'done' : (done === 1 ? 'cerrado' : 'cerrados')) : '');
+    const inner = `<span class="col-av${t._unassigned ? ' none' : ''}">${esc(t._unassigned ? '?' : ini)}</span><span class="col-txt"><span class="col-name">${esc(t.name||'')}</span><span class="col-cnt">${esc(cnt)}</span></span>`;
+    return t._unassigned
+      ? `<div class="col-head col-head2 is-none">${inner}</div>`
+      : `<button type="button" class="col-head col-head2" onclick="openWorker('${t.uid}')">${inner}</button>`;
   }).join('');
   const bodies = listCols.map(t => {
     const list = jobsForTech(t);
+    const lanes = laneLayout(list);
     const q = quarterSlotsHtml(m => `data-uid="${t.uid}" data-min="${m}"`);
     let cards = '';
     list.forEach(j => {
       const g = cardGeom(j);
-      cards += jobCardHtml(j, overlapWarn(t.uid, j)?'warn':'', `top:${g.top}px;height:${Math.max(g.h, SLOT_H)}px`);
+      const pos = lanes.get(j);
+      cards += jobCardHtml(j, (overlapWarn(t.uid, j) && !(pos && pos.n > 1) ? 'warn' : '') + (pos && pos.n > 1 ? ' lane' : ''), `top:${g.top}px;height:${Math.max(g.h, SLOT_H * 2)}px;${laneStyle(pos)}`);
     });
     const empty = !list.length
       ? `<div class="col-empty"><b>${esc(uiT('noJobsCol'))}</b><div>${esc(uiT('freeDay'))}</div>
