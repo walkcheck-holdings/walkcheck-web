@@ -117,7 +117,7 @@
     if (jobArchived(j)) return loginLang() === 'en' ? 'Archived' : 'Archivado';
     if (j.needsReturn === true) return loginLang() === 'en' ? 'Needs return visit' : 'Necesita volver';
     if (jobDone(j)) return loginLang() === 'en' ? 'Completed' : 'Completado';
-    if (jobIsLate(j)) return 'Late';
+    if (jobIsLate(j)) return loginLang() === 'en' ? 'Late' : 'Atrasado';
     return loginLang() === 'en' ? 'Pending' : 'Pendiente';
   }
   function statusClass(j) {
@@ -176,7 +176,7 @@
     lines = lines && lines.length ? lines : [{ name: '', description: '', qty: 1, unitPrice: 0, total: 0 }];
     return lines.map(function (l, i) {
       return '<div class="line-row">' +
-        '<input data-ln="' + i + '" placeholder="' + esc(loginLang() === 'en' ? 'Item name' : 'Nombre del ítem') + '" value="' + esc(l.name || '') + '">' +
+        '<input type="text" data-ln="' + i + '" placeholder="' + esc(loginLang() === 'en' ? 'Item name' : 'Nombre del ítem') + '" value="' + esc(l.name || '') + '">' +
         '<textarea data-ld="' + i + '" rows="3" placeholder="' + esc(loginLang() === 'en' ? 'Scope' : 'Alcance') + '">' + esc(l.description || '') + '</textarea>' +
         '<input data-lq="' + i + '" type="number" min="0" step="1" value="' + esc(l.qty || 1) + '">' +
         '<input data-lp="' + i + '" type="number" min="0" step="0.01" value="' + (l.unitPrice != null ? esc(l.unitPrice) : '') + '">' +
@@ -547,58 +547,94 @@
       return '<div class="muted">' + esc(whoE) + ' · ' + esc(e.vendor || '') + ' · ' + esc(e.items || '') + ' · ' + usd(e.total) +
         (e.po ? ' · PO ' + esc(e.po) : '') + (e.date ? ' · ' + esc(e.date) : '') + '</div>';
     }).join('') || '<p class="muted">' + esc(loginLang() === 'en' ? 'No expenses' : 'Sin gastos') + '</p>';
+    var en = loginLang() === 'en';
+    var live = !jobArchived(j);
+    var formName = function (c) {
+      return ({ inspection: 'Inspection Report', jobReport: 'Job Report', walkthrough: 'Walkthrough' })[c] || c;
+    };
     var vis = jobVisits(j).map(function (v) {
       var tech = techs.find(function (t) { return t.uid === v.assignedUid; });
       var st = String(v.status || '').toLowerCase();
       var done = st === 'completed' || st === 'done';
       var vid = esc(v.id || 'primary');
-      return '<div class="visit-row"><div><b>' + esc(v.scheduledDate || '') + ' ' + esc(loginLang() === 'en' ? 'window' : 'ventana') + ' ' +
-        esc(v.startClock || '') + '–' + esc(v.endClock || '') +
-        '</b><div class="muted">' + esc(v.instructions || '') + '<br>' + esc(loginLang() === 'en' ? 'Arrival window: arrive at start time' : 'Llegada: a la hora de inicio') + '<br>' + esc(loginLang() === 'en' ? 'Checklists: ' : 'Formularios: ') + '' +
-        esc((v.checklists || []).join(', ') || 'Inspection Report, Job Report') + '</div>' +
-        '<label class="muted">' + esc(loginLang() === 'en' ? 'Office hours (typed)' : 'Horas oficina (a mano)') + '</label>' +
-        '<input type="time" data-os="' + vid + '" value="' + esc(v.officeStart || '') + '">' +
-        '<input type="time" data-oe="' + vid + '" value="' + esc(v.officeEnd || '') + '">' +
-        (canAssign() ? '<button type="button" class="btn ghost" onclick="saveVisitOfficeHours(\'' + j.id + '\',\'' + vid + '\')">' + esc(uiT('save')) + '</button>' : '') +
-        (canAssign() && !jobArchived(j) ? '<button type="button" class="btn" style="margin-top:6px" onclick="openVisitDate(\'' + j.id + '\',\'' + vid + '\')">📅 ' + esc(loginLang() === 'en' ? 'Change date / time' : 'Cambiar fecha y hora') + '</button>' : '') +
-        '</div>' +
-        '<div>' + esc((tech && tech.name) || '') + '<br><b class="' + (done ? 'st-done' : 'st-pend') + '">' +
-        (done ? '✓ ' + (loginLang() === 'en' ? 'Completed' : 'Completada') : statusWord({ status: v.status, scheduledDate: v.scheduledDate })) + '</b></div></div>';
+      return '<div class="jp-visit">' +
+        '<div class="jp-visit-top"><div><b>' + esc(niceDay(v.scheduledDate)) + '</b> · ' + esc(v.startClock || '') + '–' + esc(v.endClock || '') +
+          (v.instructions ? '<div class="muted">' + esc(v.instructions) + '</div>' : '') +
+          '<div class="muted jp-small">' + esc(en ? 'Forms: ' : 'Formularios: ') + esc((v.checklists || ['inspection', 'jobReport']).map(formName).join(', ')) + '</div></div>' +
+          '<div class="jp-visit-who">' + esc((tech && tech.name) || '') + '<br><b class="' + (done ? 'st-done' : 'st-pend') + '">' +
+          (done ? '✓ ' + (en ? 'Completed' : 'Completada') : statusWord({ status: v.status, scheduledDate: v.scheduledDate })) + '</b></div></div>' +
+        '<div class="jp-hours"><span class="muted">' + esc(en ? 'Office hours (typed)' : 'Horas oficina (a mano)') + '</span>' +
+          '<input type="time" data-os="' + vid + '" value="' + esc(v.officeStart || '') + '" aria-label="' + esc(en ? 'Start' : 'Inicio') + '">' +
+          '<span class="muted">–</span>' +
+          '<input type="time" data-oe="' + vid + '" value="' + esc(v.officeEnd || '') + '" aria-label="' + esc(en ? 'End' : 'Fin') + '">' +
+          (canAssign() ? '<button type="button" class="btn ghost" onclick="saveVisitOfficeHours(\'' + j.id + '\',\'' + vid + '\')">' + esc(uiT('save')) + '</button>' : '') +
+          (canAssign() && live ? '<button type="button" class="btn ghost" onclick="openVisitDate(\'' + j.id + '\',\'' + vid + '\')">📅 ' + esc(en ? 'Change date / time' : 'Cambiar fecha y hora') + '</button>' : '') +
+        '</div></div>';
     }).join('');
+    var fv = jobVisits(j)[0] || {};
+    var when = fv.scheduledDate ? niceDay(fv.scheduledDate) + (fv.startClock ? ' · ' + fv.startClock + '–' + (fv.endClock || '') : '') : (en ? 'No date' : 'Sin fecha');
+    // Secondary actions go in the ⋯ menu so the top stays clean.
+    var more = [];
+    if (canAssign() && live) more.push('<button type="button" onclick="openVisitDate(\'' + j.id + '\')">📅 ' + esc(en ? 'Change date' : 'Cambiar fecha') + '</button>');
+    if (canAssign() && live) more.push('<button type="button" onclick="openPartiesEditor(\'' + j.id + '\')">✏️ ' + esc(en ? 'Edit client / tenant' : 'Editar cliente / inquilino') + '</button>');
+    if (canAssign() && jobDone(j) && live) more.push('<button type="button" onclick="reopenJob(\'' + j.id + '\')">↺ ' + esc(en ? 'Reopen job' : 'Reabrir trabajo') + '</button>');
+    if (canAssign() && live) more.push('<button type="button" onclick="askArchiveJob(\'' + j.id + '\')">🗄 ' + esc(en ? 'Archive' : 'Archivar') + '</button>');
+    if (canAssign() && !live) more.push('<button type="button" onclick="unarchiveJob(\'' + j.id + '\')">↺ ' + esc(en ? 'Unarchive' : 'Desarchivar') + '</button>');
+    var photos = [].concat(jobBeforePhotos(j), jobAfterPhotos(j), (j.report && (j.report.receiptPhotos || (j.report.receiptPhoto ? [j.report.receiptPhoto] : []))) || [])
+      .filter(function (u, i, a) { return /^https?:/.test(String(u)) && a.indexOf(u) === i && (j.hiddenPhotos || []).indexOf(u) < 0; });
+    var photoCard = '<div class="job-sec"><h3>' + esc(en ? 'Photos' : 'Fotos') + ' <span class="jp-count">' + photos.length + '</span></h3>' +
+      (photos.length
+        ? '<div class="jp-photos">' + photos.slice(0, 6).map(function (u) {
+            return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img loading="lazy" src="' + esc(u) + '" alt=""></a>';
+          }).join('') + '</div>'
+        : '<p class="muted">' + esc(en ? 'No photos yet.' : 'Todavía no hay fotos.') + '</p>') +
+      (typeof openJobVisit === 'function' ? '<button type="button" class="btn ghost" onclick="openJobVisit(\'' + j.id + '\')">' + esc(en ? 'See all photos and forms' : 'Ver todas las fotos y formularios') + '</button>' : '') + '</div>';
+    var curTech = jobTechUid(j);
+    var techName = ((techs.find(function (x) { return x.uid === curTech; }) || {}).name) || j.assignedName || (en ? 'Nobody yet' : 'Sin asignar');
+    var techCard = '<div class="job-sec"><h3>👷 ' + esc(en ? 'Technician' : 'Técnico') + '</h3><p class="jp-tech">' + esc(techName) + '</p>' +
+      (canAssign() && live && !jobDone(j) ? '<button type="button" class="btn job-move-btn" onclick="openMoveJob(\'' + j.id + '\')">⇄ ' +
+        esc(en ? 'Move to another technician' : 'Mover a otro técnico') + '</button>' : '') + '</div>';
     pane.innerHTML =
-      '<div class="job-actions">' +
-        '<button class="btn ghost" onclick="openJobs()">← ' + esc(loginLang() === 'en' ? 'Jobs' : 'Trabajos') + '</button>' +
-        (moneyOk && !jobArchived(j) && !j.invoiceId ? '<button class="btn" onclick="openInvoiceEditor(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Create Invoice' : 'Crear factura') + '</button>' : '') +
-        (moneyOk && j.invoiceId ? '<button class="btn" onclick="openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(uiT('money')) + '</button>' : '') +
-        (canAssign() && jobDone(j) && !jobArchived(j) ? '<button class="btn ghost" onclick="reopenJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Reopen job' : 'Reabrir trabajo') + '</button>' : '') +
-        (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="openVisitDate(\'' + j.id + '\')">📅 ' + esc(loginLang() === 'en' ? 'Change date' : 'Cambiar fecha') + '</button>' : '') +
-        (canAssign() && !jobDone(j) && !jobArchived(j) ? '<button class="btn" onclick="closeJob(\'' + j.id + '\')">✓ ' + esc(loginLang() === 'en' ? 'Complete job' : 'Completar trabajo') + '</button>' : '') +
-        (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="askArchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Archive' : 'Archivar') + '</button>' : '') +
-        (canAssign() && jobArchived(j) ? '<button class="btn ghost" onclick="unarchiveJob(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Unarchive' : 'Desarchivar') + '</button>' : '') +
-      '</div>' +
-      '<div class="job-sec"><h3>' + esc(j.title || j.kind || 'Job') + (j.jobNumber ? ' <span class="muted">#' + esc(j.jobNumber) + '</span>' : '') + '</h3>' +
-      partiesViewHtml(j, phoneHtml) +
-      '<p><a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">' + esc(loginLang() === 'en' ? 'Directions' : 'Cómo llegar') + '</a>' +
-      (canAssign() && !jobArchived(j) ? ' · <a href="#" onclick="openPartiesEditor(\'' + j.id + '\');return false">' + esc(loginLang() === 'en' ? 'Edit client / tenant' : 'Editar cliente / inquilino') + '</a>' : '') + '</p>' +
-      '<p class="' + statusClass(j) + '">' + esc(statusWord(j)) + ' · ' + esc(durationLabel(j)) + '</p>' +
-      jobTechRowHtml(j) + '</div>' +
-      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Product / Service' : 'Producto / Servicio') + '</h3><div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
-        return '<p><b>' + esc(l.name) + '</b> × ' + esc(l.qty) + (moneyOk ? ' · ' + usd(l.unitPrice) + ' = ' + usd(l.total) : '') +
-          '<div class="muted" style="white-space:pre-wrap">' + esc(l.description || '') + '</div></p>';
-      }).join('')) + '</div>' +
-      (canAssign() ? '<button class="btn ghost" onclick="saveJobLines(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Save lines' : 'Guardar líneas') + '</button> <button type="button" class="btn ghost" onclick="reorderJobLines(\'' + j.id + '\')">Reorder</button>' : '') +
-      (j.quoteId ? '<p class="muted">' + esc(loginLang() === 'en' ? 'Quote #' : 'Cotización #') + esc(j.quoteNumber || j.quoteId) + '</p>' : '<p class="muted">' + esc(loginLang() === 'en' ? 'No quote — prices typed by hand ($0 until you enter them).' : 'Sin presupuesto — precio a mano ($0 hasta que lo pongas).') + '</p>') +
-      (moneyOk ? '<p><b>Total ' + usd(billed) + '</b></p>' : '') + '</div>' +
-      (moneyOk ? '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Expenses' : 'Gastos') + '</h3><p class="muted">' + esc(loginLang() === 'en' ? 'Track all expenses for this job in one place' : 'Todos los gastos de este trabajo en un solo lugar') + '</p>' + exps +
-        (canAssign() && !jobArchived(j) ? '<button class="btn" onclick="openExpenseForm(\'' + j.id + '\')">+</button>' : '') +
-        '<div class="margin-box"><div><span class="muted">' + esc(loginLang() === 'en' ? 'Invoiced' : 'Facturado') + '</span><b>' + usd(billed) +
-        '</b></div><div><span class="muted">' + esc(loginLang() === 'en' ? 'Expenses' : 'Gastos') + '</span><b>' + usd(spent) +
-        '</b></div><div><span class="muted">' + esc(loginLang() === 'en' ? 'Margin' : 'Margen') + '</span><b>' + usd(billed - spent) + '</b></div></div></div>' : '') +
-      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Scheduled visits' : 'Visitas') + '</h3>' + vis +
-      (canAssign() && !jobArchived(j) ? '<button class="btn ghost" onclick="openAddVisit(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? '+ Visit' : '+ Visita') + '</button>' : '') + '</div>' +
+      '<div class="job-page">' +
+      '<button type="button" class="jp-back" onclick="openJobs()">← ' + esc(en ? 'Jobs' : 'Trabajos') + '</button>' +
+      '<div class="job-sec jp-head"><div class="jp-head-l">' +
+        '<h2>' + esc(j.title || j.kind || 'Job') + (j.jobNumber ? ' <span class="muted">#' + esc(j.jobNumber) + '</span>' : '') + '</h2>' +
+        '<div class="jp-sub"><span class="jp-pill ' + statusClass(j) + '">' + esc(statusWord(j)) + '</span>' +
+          '<span>📅 ' + esc(when) + '</span><span>⏱ ' + esc(durationLabel(j)) + '</span></div></div>' +
+        '<div class="jp-head-r">' +
+          (moneyOk && live && !j.invoiceId ? '<button class="btn ghost" onclick="openInvoiceEditor(\'' + j.id + '\')">' + esc(en ? 'Create Invoice' : 'Crear factura') + '</button>' : '') +
+          (moneyOk && j.invoiceId ? '<button class="btn ghost" onclick="openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(uiT('money')) + '</button>' : '') +
+          (canAssign() && !jobDone(j) && live ? '<button class="btn" onclick="closeJob(\'' + j.id + '\')">✓ ' + esc(en ? 'Complete job' : 'Completar trabajo') + '</button>' : '') +
+          (more.length ? '<div class="jp-more-w"><button type="button" class="btn ghost jp-more" aria-label="' + esc(en ? 'More' : 'Más') + '" onclick="this.nextElementSibling.classList.toggle(\'hidden\')">⋯</button>' +
+            '<div class="jp-menu hidden">' + more.join('') + '</div></div>' : '') +
+        '</div></div>' +
+      '<div class="job-grid"><div class="job-main">' +
+      '<div class="job-sec"><h3>' + esc(en ? 'Product / Service' : 'Producto / Servicio') + '</h3>' +
+        (canAssign() ? '<div class="line-row line-head"><span>' + esc(en ? 'Item' : 'Producto') + '</span><span>' + esc(en ? 'Description' : 'Descripción') + '</span><span>' + esc(en ? 'Qty' : 'Cant.') + '</span><span>' + esc(en ? 'Price' : 'Precio') + '</span><span>Total</span><span></span></div>' : '') +
+        '<div id="jdLines">' + (canAssign() ? lineEditorHtml(lines) : lines.map(function (l) {
+          return '<p><b>' + esc(l.name) + '</b> × ' + esc(l.qty) + (moneyOk ? ' · ' + usd(l.unitPrice) + ' = ' + usd(l.total) : '') +
+            '<div class="muted" style="white-space:pre-wrap">' + esc(l.description || '') + '</div></p>';
+        }).join('')) + '</div>' +
+        (canAssign() ? '<div class="jp-btns"><button class="btn" onclick="saveJobLines(\'' + j.id + '\')">' + esc(en ? 'Save lines' : 'Guardar líneas') + '</button> <button type="button" class="btn ghost" onclick="reorderJobLines(\'' + j.id + '\')">' + esc(en ? 'Reorder' : 'Reordenar') + '</button></div>' : '') +
+        '<div class="jp-total">' + (j.quoteId ? '<span class="muted">' + esc(en ? 'Quote #' : 'Cotización #') + esc(j.quoteNumber || j.quoteId) + '</span>' : '<span class="muted">' + esc(en ? 'No quote — prices typed by hand.' : 'Sin presupuesto — precio a mano.') + '</span>') +
+        (moneyOk ? '<b>Total ' + usd(billed) + '</b>' : '') + '</div></div>' +
+      '<div class="job-sec"><h3>' + esc(en ? 'Scheduled visits' : 'Visitas') + '</h3>' + vis +
+        (canAssign() && live ? '<div class="jp-btns"><button class="btn ghost" onclick="openAddVisit(\'' + j.id + '\')">' + esc(en ? '+ Visit' : '+ Visita') + '</button></div>' : '') + '</div>' +
       (typeof tradeStepsOfficeHtml === 'function' ? tradeStepsOfficeHtml(j).replace('<div class="card">', '<div class="job-sec">') : '') +
-      '<div class="job-sec"><h3>' + esc(loginLang() === 'en' ? 'Notes' : 'Notas') + '</h3>' + notes +
-      '<textarea id="jdNote" rows="2"></textarea><button class="btn ghost" onclick="addJobNote(\'' + j.id + '\')">' + esc(loginLang() === 'en' ? 'Add note' : 'Agregar nota') + '</button></div>';
+      (moneyOk ? '<div class="job-sec"><h3>' + esc(en ? 'Expenses' : 'Gastos') + '</h3>' + exps +
+        (canAssign() && live ? '<div class="jp-btns"><button class="btn ghost" onclick="openExpenseForm(\'' + j.id + '\')">+ ' + esc(en ? 'Expense' : 'Gasto') + '</button></div>' : '') +
+        '<div class="margin-box"><div><span class="muted">' + esc(en ? 'Invoiced' : 'Facturado') + '</span><b>' + usd(billed) +
+        '</b></div><div><span class="muted">' + esc(en ? 'Expenses' : 'Gastos') + '</span><b>' + usd(spent) +
+        '</b></div><div><span class="muted">' + esc(en ? 'Margin' : 'Margen') + '</span><b>' + usd(billed - spent) + '</b></div></div></div>' : '') +
+      '</div><div class="job-side job-side-top">' +
+      '<div class="job-sec"><h3>' + esc(en ? 'Client' : 'Cliente') + '</h3>' + partiesViewHtml(j, phoneHtml) +
+        '<a class="job-maps" target="_blank" rel="noopener" href="' + mapsUrl(j) + '">📍 ' + esc(en ? 'Directions' : 'Cómo llegar') + '</a></div>' +
+      techCard + '</div><div class="job-side job-side-bottom">' +
+      '<div class="job-sec"><h3>' + esc(en ? 'Notes' : 'Notas') + '</h3>' + notes +
+        '<textarea id="jdNote" rows="2" placeholder="' + esc(en ? 'Write a note…' : 'Escribe una nota…') + '"></textarea>' +
+        '<div class="jp-btns"><button class="btn ghost" onclick="addJobNote(\'' + j.id + '\')">' + esc(en ? 'Add note' : 'Agregar nota') + '</button></div></div>' +
+      photoCard +
+      '</div></div></div>';
   };
 
   /* ===== Who pays vs. who is at the place =====
@@ -663,6 +699,12 @@
       clientName: payer ? payer.name : '', clientEmail: payer ? payer.email : '', clientAddress: payer ? payer.address : '',
       unit: v('Unit'), tenantName: v('Ten'), tenantPhone: v('TenPh'), tenantEmail: v('TenMail').toLowerCase()
     } };
+  }
+  function niceDay(d) {
+    if (!d) return '';
+    var x = new Date(d + 'T12:00:00');
+    if (isNaN(x)) return d;
+    return x.toLocaleDateString(loginLang() === 'en' ? 'en-US' : 'es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   }
   function jobTechUid(j) {
     return (typeof accountUidOf === 'function' ? accountUidOf(j) : '') || j.assignedUid || j.workerId || '';

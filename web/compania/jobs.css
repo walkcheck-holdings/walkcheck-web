@@ -73,3 +73,55 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 .party-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }
 .party-grid > div { background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; min-width:0; overflow-wrap:anywhere; }
 @media (max-width:640px){ .party-grid { grid-template-columns:1fr; } }
+
+/* Job page: two columns like a field-service app (main work left, people right). */
+#jobPane { container-type: inline-size; }
+.job-page { max-width: 1240px; margin: 0 auto; }
+.job-page .btn { width: auto; min-height: 40px; padding: 8px 14px; margin: 0; font-size: 14px; }
+.jp-back { border: 0; background: none; color: #1B7A36; font-weight: 700; font-size: 14px; padding: 4px 0 10px; cursor: pointer; }
+.jp-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.jp-head h2 { margin: 0 0 8px; font-size: 22px; line-height: 1.25; }
+.jp-head-l { min-width: 0; flex: 1 1 320px; }
+.jp-head-r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.jp-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: #4B5563; font-size: 14px; }
+.jp-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; background: #FEF3C7; }
+.jp-pill.st-done { background: #DCFCE7; }
+.jp-pill.st-late { background: #FEE2E2; }
+.jp-more-w { position: relative; }
+.job-page .jp-more { min-width: 44px; font-size: 18px; line-height: 1; }
+.jp-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.16); min-width: 230px; padding: 6px; }
+.jp-menu button { display: block; width: 100%; text-align: left; border: 0; background: #fff; min-height: 42px; font-weight: 600; font-size: 14px; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.jp-menu button:hover { background: #F3F4F6; }
+.job-grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "bottom"; column-gap: 12px; align-items: start; }
+.job-grid .job-sec { margin: 0 0 12px; }
+.job-main { grid-area: main; min-width: 0; }
+.job-side-top { grid-area: top; }
+.job-side-bottom { grid-area: bottom; }
+@container (min-width: 860px) {
+  .job-grid { grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "main top" "main bottom"; }
+}
+.job-page .job-sec h3 { font-size: 15px; }
+.line-head span { font-size: 11.5px; font-weight: 700; color: #8E8E93; text-transform: uppercase; }
+.line-row > span { align-self: center; }
+.jp-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.jp-total { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; border-top: 1px solid #F2F2F7; margin-top: 12px; padding-top: 10px; font-size: 13.5px; }
+.jp-total b { font-size: 17px; }
+.jp-visit { padding: 10px 0; border-bottom: 1px solid #F2F2F7; }
+.jp-visit:last-of-type { border-bottom: 0; }
+.jp-visit-top { display: flex; justify-content: space-between; gap: 12px; }
+.jp-visit-who { text-align: right; white-space: nowrap; font-size: 14px; }
+.jp-small { font-size: 12.5px; }
+.jp-hours { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
+.jp-hours .muted { font-size: 12.5px; }
+.jp-hours input[type="time"] { width: 130px; margin: 0; min-height: 38px; }
+.job-side .party-grid { grid-template-columns: 1fr; margin-top: 0; }
+.job-side .job-maps { display: inline-block; margin-top: 4px; }
+.jp-tech { font-size: 16px; font-weight: 700; margin: 0 0 10px; }
+.job-side .job-move-btn { width: 100%; }
+.job-side textarea { margin: 8px 0 0; }
+.jp-count { display: inline-block; min-width: 22px; padding: 1px 7px; border-radius: 999px; background: #F3F4F6; color: #4B5563; font-size: 12px; text-align: center; }
+.jp-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.jp-photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; background: #F3F4F6; }
+.job-side .jp-photos + .btn, .job-side .job-sec > .btn.ghost { width: 100%; }
+/* Job page uses the full width (the Sites column is for the schedule). */
+body.wk-pc.view-job #sidebar { display: none; }
