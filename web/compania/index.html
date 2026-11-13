@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261104b">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112d">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112f">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261112d">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
@@ -3060,6 +3060,13 @@ function jobCardHtml(j, extraClass, posStyle){
   const tp = typeof typeOf === 'function' ? (typeOf(kind) || {}) : {};
   const bar = done ? '#9CA3AF' : (j.needsReturn===true ? '#F59E0B' : (tp.color || '#34C759'));
   const title = j.title && j.title !== kind ? j.title : kind;
+  const short = g.h < 72;
+  if (short) {
+    return `<div class="jcard jcard2 short ${done?'done':'pend'} ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="${pos};--bar:${esc(bar)}" title="${esc(title + ' · ' + when + (addr ? ' · ' + addr : ''))}">
+    <div class="jcard-line"><span class="jcard-when">${esc(when)}</span><span class="jcard-kind">${j.isTask===true?'📋 ':''}${esc(title)}</span>${done ? '<span class="jcard-ok">✓</span>' : ''}</div>
+    ${meta ? `<div class="jcard-meta">${esc(meta)}</div>` : ''}
+  </div>`;
+  }
   return `<div class="jcard jcard2 ${done?'done':'pend'} ${extraClass||''}" ${canAssign()?'draggable="true" ondragstart="dragJob(event,\''+j.id+'\')"':''} onclick="event.stopPropagation();openJobView('${j.id}')" style="${pos};--bar:${esc(bar)}" title="${esc(title + ' · ' + when + (addr ? ' · ' + addr : ''))}">
     <div class="jcard-top">
       <span class="jcard-when">${esc(when)}</span>
@@ -3171,7 +3178,7 @@ function renderDayGrid(cols){
     list.forEach(j => {
       const g = cardGeom(j);
       const pos = lanes.get(j);
-      cards += jobCardHtml(j, (overlapWarn(t.uid, j) && !(pos && pos.n > 1) ? 'warn' : '') + (pos && pos.n > 1 ? ' lane' : ''), `top:${g.top}px;height:${Math.max(g.h, SLOT_H * 2)}px;${laneStyle(pos)}`);
+      cards += jobCardHtml(j, (overlapWarn(t.uid, j) && !(pos && pos.n > 1) ? 'warn' : '') + (pos && pos.n > 1 ? ' lane' : ''), `top:${g.top}px;height:${Math.max(g.h, 54)}px;${laneStyle(pos)}`);
     });
     const empty = !list.length
       ? `<div class="col-empty"><b>${esc(uiT('noJobsCol'))}</b><div>${esc(uiT('freeDay'))}</div>

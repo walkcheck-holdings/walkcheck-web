@@ -95,8 +95,14 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 .jcard.jcard2.done { border-left: 1px solid #E5E7EB; }
 .jcard2 .jcard-top { align-items: center; }
 .jcard2 .jcard-when { flex: 1 1 auto; min-width: 0; font-size: 12px; font-weight: 800; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.jcard2.done .jcard-when { color: #6B7280; text-decoration: line-through; }
-.jcard2 .jcard-kind { text-transform: none; font-size: 13.5px; letter-spacing: 0; }
+.jcard2 .jcard-kind { text-transform: none; font-size: 13.5px; letter-spacing: 0; flex: 0 0 auto; }
+/* Short jobs: one line with time + name, address below. */
+.jcard2.short { padding: 5px 8px 5px 12px; gap: 2px; justify-content: center; }
+.jcard2 .jcard-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.jcard2.short .jcard-when { flex: 0 0 auto; }
+.jcard2.short .jcard-kind { flex: 1 1 auto; min-width: 0; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.jcard2 .jcard-ok { flex: 0 0 auto; color: #16A34A; font-weight: 800; }
+.jcard2.short .jcard-meta { font-size: 11.5px; }
 .jcard2 .jcard-badge { font-size: 10.5px; padding: 2px 7px; }
 .jcard2:hover { box-shadow: 0 4px 12px rgba(0,0,0,.14); z-index: 4; }
 .jcard2.lane .jcard-badge { display: none; }
@@ -155,3 +161,7 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 body.wk-pc.view-job #sidebar { display: none; }
 /* Hours on the left of the day grid: centered in their column. */
 .time-axis .tmark { padding-left: 0; text-align: center; font-size: 11px; color: #6B7280; }
+.jcard2.done .jcard-when { color: #6B7280; text-decoration: line-through; }
+.jcard2.short.lane .jcard-line { flex-direction: column; align-items: stretch; gap: 0; }
+.jcard2.short.lane .jcard-kind { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; }
+.jcard2.short.lane .jcard-meta, .jcard2.short.lane .jcard-ok { display: none; }
