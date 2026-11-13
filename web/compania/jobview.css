@@ -92,6 +92,8 @@ body.jv-open { overflow: hidden; }
 .jv-warn { background: #FFF7ED; color: #9A3412; border-radius: 10px; padding: 10px 12px; font-size: 13.5px; }
 .jv-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; margin-bottom: 8px; }
 .jv-tile { display: block; text-decoration: none; color: #4B5563 !important; font-weight: 400 !important; }
+.jv-tile-w { position: relative; }
+.jv-tile-w .jr-ph-del { position: absolute; top: -7px; right: -7px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: #DC2626; color: #fff; font-size: 16px; font-weight: 800; line-height: 20px; padding: 0; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .jv-tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid #E5E7EB; background: #F3F4F6; }
 .jv-tile span { display: block; font-size: 11.5px; line-height: 1.3; margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .jv-report-open { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px; margin: 0 0 14px; cursor: pointer; font: inherit; color: inherit; }

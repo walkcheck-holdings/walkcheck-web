@@ -160,15 +160,18 @@
     } catch (_) {}
     // Worker photos live in several places depending on the app screen used.
     var photos = [], lost = 0;
-    function add(src, url) {
+    var hidden = Array.isArray(j.hiddenPhotos) ? j.hiddenPhotos : [];
+    // kind: 'before' / 'after' / 'receipt' come from the Job Report; others are only hidden.
+    function add(src, url, kind) {
       url = String(url || '').trim();
       if (!url) return;
       if (!/^https?:/.test(url)) { lost++; return; } // phone path: never uploaded
-      if (!photos.some(function (p) { return p.url === url; })) photos.push({ src: src, url: url });
+      if (hidden.indexOf(url) >= 0) return; // deleted from the panel
+      if (!photos.some(function (p) { return p.url === url; })) photos.push({ src: src, url: url, kind: kind || 'other' });
     }
-    jobBeforePhotos(j).forEach(function (u) { add(L('Reporte del trabajo · antes', 'Job report · before'), u); });
-    jobAfterPhotos(j).forEach(function (u) { add(L('Reporte del trabajo · después', 'Job report · after'), u); });
-    receiptPhotosOf(j).forEach(function (u) { add(L('Recibo', 'Receipt'), u); });
+    jobBeforePhotos(j).forEach(function (u) { add(L('Reporte del trabajo · antes', 'Job report · before'), u, 'before'); });
+    jobAfterPhotos(j).forEach(function (u) { add(L('Reporte del trabajo · después', 'Job report · after'), u, 'after'); });
+    receiptPhotosOf(j).forEach(function (u) { add(L('Recibo', 'Receipt'), u, 'receipt'); });
     try {
       var jr = await db.collection('jobReports').where('companyId', '==', cid()).where('jobId', '==', j.id).limit(30).get();
       jr.forEach(function (d) {
@@ -211,8 +214,10 @@
       S.lost + (S.lost === 1 ? ' photo stayed' : ' photos stayed') + ' only on the worker\'s phone: their app version did not upload them. The new app version uploads them.')) + '</p>' : '';
     if (!list.length) return lostMsg || '<p class="muted">' + esc(L('El trabajador todavía no ha subido fotos de este trabajo.', 'The worker has not uploaded photos for this job yet.')) + '</p>';
     return '<div class="jv-gallery">' + list.map(function (p) {
-      return '<a class="jv-tile" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="' + esc(p.src) + '">' +
-        '<img loading="lazy" src="' + esc(p.url) + '" alt="' + esc(p.src) + '"><span>' + esc(p.src) + '</span></a>';
+      return '<div class="jv-tile-w"><a class="jv-tile" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="' + esc(p.src) + '">' +
+        '<img loading="lazy" src="' + esc(p.url) + '" alt="' + esc(p.src) + '"><span>' + esc(p.src) + '</span></a>' +
+        '<button type="button" class="jr-ph-del" data-kind="' + esc(p.kind || 'other') + '" data-url="' + esc(p.url) + '" onclick="jvDelJobPhoto(this)" aria-label="' +
+        esc(L('Borrar foto', 'Delete photo')) + '">×</button></div>';
     }).join('') + '</div>' + lostMsg;
   }
 
@@ -587,27 +592,61 @@
     bg.querySelector('.btn-edit').onclick = close;
     bg.onclick = function (e) { if (e.target === bg) close(); };
   }
-  window.jvDelPhoto = function (btn) {
-    var j = S.job, kind = btn.getAttribute('data-kind'), url = btn.getAttribute('data-url'), keys = JR_PHOTO_KEYS[kind];
-    if (!j || !keys || !url) return;
-    jrAsk(L('¿Borrar esta foto?', 'Delete this photo?'), L('Sí, borrar', 'Yes, delete'), async function () {
-      var r = j.report || {};
-      var list = photoList(r, keys[0], keys[1]).filter(function (u) { return u !== url; });
+  async function jrRemovePhoto(j, kind, url) {
+    var keys = JR_PHOTO_KEYS[kind];
+    var patch = {
+      photoDeleteLog: firebase.firestore.FieldValue.arrayUnion({ kind: kind, url: url, byUid: uid(), byName: who(), at: new Date().toISOString() }),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    var r = j.report || {}, list = null;
+    if (keys) {
+      list = photoList(r, keys[0], keys[1]).filter(function (u) { return u !== url; });
       var rep = {};
       rep[keys[0]] = list;
       rep[keys[1]] = list[0] || '';
       rep.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       rep.updatedBy = uid();
+      patch.report = rep;
+    } else {
+      patch.hiddenPhotos = firebase.firestore.FieldValue.arrayUnion(url);
+    }
+    await db.collection('jobs').doc(j.id).set(patch, { merge: true });
+    if (keys) {
+      j.report = Object.assign({}, r);
+      j.report[keys[0]] = list;
+      j.report[keys[1]] = list[0] || '';
+    } else {
+      j.hiddenPhotos = (j.hiddenPhotos || []).concat([url]);
+    }
+    S.photos = (S.photos || []).filter(function (p) { return p.url !== url; });
+  }
+  // Delete from the "Fotos del trabajo" gallery of the job.
+  window.jvDelJobPhoto = function (btn) {
+    var j = S.job, kind = btn.getAttribute('data-kind'), url = btn.getAttribute('data-url');
+    if (!j || !url) return;
+    jrAsk(L('¿Borrar esta foto?', 'Delete this photo?'), L('Sí, borrar', 'Yes, delete'), async function () {
       btn.disabled = true;
       try {
-        await db.collection('jobs').doc(j.id).set({
-          report: rep,
-          photoDeleteLog: firebase.firestore.FieldValue.arrayUnion({ kind: kind, url: url, byUid: uid(), byName: who(), at: new Date().toISOString() }),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        j.report = Object.assign({}, r);
-        j.report[keys[0]] = list;
-        j.report[keys[1]] = list[0] || '';
+        await jrRemovePhoto(j, kind, url);
+        var w = btn.closest('.jv-tile-w');
+        var sec = w && w.closest('.jv-sec');
+        if (w) w.remove();
+        var c = sec && sec.querySelector('.jv-count');
+        if (c) c.textContent = (S.photos || []).length;
+        if (typeof toast === 'function') toast(L('Foto borrada.', 'Photo deleted.'));
+      } catch (e) {
+        btn.disabled = false;
+        alert(L('No se pudo borrar la foto: ', 'Could not delete the photo: ') + (e.message || e));
+      }
+    });
+  };
+  window.jvDelPhoto = function (btn) {
+    var j = S.job, kind = btn.getAttribute('data-kind'), url = btn.getAttribute('data-url'), keys = JR_PHOTO_KEYS[kind];
+    if (!j || !keys || !url) return;
+    jrAsk(L('¿Borrar esta foto?', 'Delete this photo?'), L('Sí, borrar', 'Yes, delete'), async function () {
+      btn.disabled = true;
+      try {
+        await jrRemovePhoto(j, kind, url);
         var box = btn.closest('.jr-thumbs'), ph = btn.closest('.jr-ph');
         if (ph) ph.remove();
         var n = box && box.previousElementSibling && box.previousElementSibling.querySelector('.jr-n');
