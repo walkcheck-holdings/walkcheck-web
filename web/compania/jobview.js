@@ -565,11 +565,62 @@
     var d = toDate(ts);
     return d ? fmtDateTime(d) : '-';
   }
-  function jrThumbs(urls) {
+  function jrThumbs(urls, kind) {
     return (urls || []).filter(function (u) { return /^https?:/.test(String(u)); }).map(function (u) {
-      return '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt=""></a>';
+      return '<span class="jr-ph"><a href="' + esc(u) + '" target="_blank" rel="noopener"><img src="' + esc(u) + '" alt=""></a>' +
+        '<button type="button" class="jr-ph-del" data-kind="' + kind + '" data-url="' + esc(u) + '" onclick="jvDelPhoto(this)" aria-label="' +
+        esc(L('Borrar foto', 'Delete photo')) + '">×</button></span>';
     }).join('');
   }
+  // Delete one Job Report photo: asks first, saves at once and keeps a history.
+  var JR_PHOTO_KEYS = { before: ['beforePhotos', 'beforePhoto'], after: ['afterPhotos', 'afterPhoto'], receipt: ['receiptPhotos', 'receiptPhoto'] };
+  function jrAsk(title, okText, onOk) {
+    var bg = document.createElement('div');
+    bg.className = 'jr-sheet-bg';
+    bg.innerHTML = '<div class="jr-sheet" role="dialog" aria-modal="true"><div class="grab"></div>' +
+      '<h3>' + esc(title) + '</h3>' +
+      '<button type="button" class="btn-ok jr-danger">' + esc(okText) + '</button>' +
+      '<button type="button" class="btn-edit">' + esc(L('Cancelar', 'Cancel')) + '</button></div>';
+    document.body.appendChild(bg);
+    var close = function () { bg.remove(); };
+    bg.querySelector('.btn-ok').onclick = function () { close(); onOk(); };
+    bg.querySelector('.btn-edit').onclick = close;
+    bg.onclick = function (e) { if (e.target === bg) close(); };
+  }
+  window.jvDelPhoto = function (btn) {
+    var j = S.job, kind = btn.getAttribute('data-kind'), url = btn.getAttribute('data-url'), keys = JR_PHOTO_KEYS[kind];
+    if (!j || !keys || !url) return;
+    jrAsk(L('¿Borrar esta foto?', 'Delete this photo?'), L('Sí, borrar', 'Yes, delete'), async function () {
+      var r = j.report || {};
+      var list = photoList(r, keys[0], keys[1]).filter(function (u) { return u !== url; });
+      var rep = {};
+      rep[keys[0]] = list;
+      rep[keys[1]] = list[0] || '';
+      rep.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      rep.updatedBy = uid();
+      btn.disabled = true;
+      try {
+        await db.collection('jobs').doc(j.id).set({
+          report: rep,
+          photoDeleteLog: firebase.firestore.FieldValue.arrayUnion({ kind: kind, url: url, byUid: uid(), byName: who(), at: new Date().toISOString() }),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        j.report = Object.assign({}, r);
+        j.report[keys[0]] = list;
+        j.report[keys[1]] = list[0] || '';
+        var box = btn.closest('.jr-thumbs'), ph = btn.closest('.jr-ph');
+        if (ph) ph.remove();
+        var n = box && box.previousElementSibling && box.previousElementSibling.querySelector('.jr-n');
+        if (n) n.textContent = box.querySelectorAll('img').length + '/50';
+        var saved = $('rpSaved');
+        if (saved) saved.textContent = L('Foto borrada.', 'Photo deleted.');
+      } catch (e) {
+        btn.disabled = false;
+        var err = $('rpErr');
+        if (err) err.textContent = L('No se pudo borrar la foto: ', 'Could not delete the photo: ') + (e.message || e);
+      }
+    });
+  };
   function jobReportFormHtml(j) {
     var r = j.report || {};
     var before = photoList(r, 'beforePhotos', 'beforePhoto');
@@ -599,7 +650,7 @@
         '<label for="rpAE">Ending Time</label><input id="rpAE" type="time" value="' + esc(r.actualEnd || '') + '">' + mark(!!r.actualEnd) + '</section>' +
       '<section class="jr-card"><h3>PROBLEM DESCRIPTION</h3>' +
         '<label for="rpP">Explain the current condition of the affected item</label><textarea id="rpP" rows="3">' + esc(r.problem || '') + '</textarea>' + mark(!!(r.problem && String(r.problem).trim())) +
-        slot('Attach BEFORE Pictures', 'jrBeforeN', jrThumbs(before), 'rpBefore', before.length > 0) + '</section>' +
+        slot('Attach BEFORE Pictures', 'jrBeforeN', jrThumbs(before, 'before'), 'rpBefore', before.length > 0) + '</section>' +
       '<section class="jr-card"><h3>SOLUTION DESCRIPTION</h3>' +
         '<label for="rpSolved">Were you able to solve the problem?</label>' +
         '<select id="rpSolved" onchange="var b=document.getElementById(\'rpRetBox\'); if(b) b.classList.toggle(\'hidden\', this.value!==\'return\')">' +
@@ -612,11 +663,11 @@
         '<div id="rpRetBox" class="' + (solved === 'return' ? '' : 'hidden') + '"><label for="rpRet">' + esc(L('¿Qué falta para terminar? (pieza, material, acceso…)', 'What is missing to finish? (part, material, access…)')) + '</label>' +
           '<textarea id="rpRet" rows="2">' + esc(r.returnReason || '') + '</textarea></div>' +
         '<label for="rpS">Describe the actions taken to complete the repair/ If not completed state why</label><textarea id="rpS" rows="3">' + esc(r.solution || '') + '</textarea>' + mark(!!(r.solution && String(r.solution).trim())) +
-        slot('Attach AFTER Pictures', 'jrAfterN', jrThumbs(after), 'rpAfter', solved === 'na' || after.length > 0) + '</section>' +
+        slot('Attach AFTER Pictures', 'jrAfterN', jrThumbs(after, 'after'), 'rpAfter', solved === 'na' || after.length > 0) + '</section>' +
       '<section class="jr-card"><h3>EXPENSES</h3>' +
         '<label for="rpEx">Total Material Cost</label><input id="rpEx" type="number" min="0" step="0.01" value="' + (r.expensesTotal != null && r.expensesTotal !== '' ? esc(r.expensesTotal) : '') + '">' + mark(costFilled(r.expensesTotal)) +
         '<label for="rpSup">Supplier</label><input id="rpSup" type="text" value="' + esc(r.supplier || '') + '">' + mark(noCost(r.expensesTotal) || !!(r.supplier && String(r.supplier).trim())) +
-        slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts), 'rpRec', noCost(r.expensesTotal) || receipts.length > 0) + '</section>' +
+        slot('Attach Picture of Receipt', 'jrRecN', jrThumbs(receipts, 'receipt'), 'rpRec', noCost(r.expensesTotal) || receipts.length > 0) + '</section>' +
       '<section class="jr-card"><h3>Final Notes</h3><textarea id="rpN" rows="3" aria-label="Final Notes">' + esc(r.finalNotes || '') + '</textarea>' +
         '<div class="err" id="rpErr"></div><p class="muted" id="rpSaved"></p></section>' +
       '<div class="jr-foot">' + (n === 10

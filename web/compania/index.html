@@ -27,7 +27,7 @@
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261104b">
 <link rel="stylesheet" href="/web/compania/jobs.css?v=20261104b">
-<link rel="stylesheet" href="/web/compania/jobview.css?v=20261104b">
+<link rel="stylesheet" href="/web/compania/jobview.css?v=20261112a">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/team.css?v=20261104a">
@@ -2984,7 +2984,8 @@ function assignmentPatch(uid){
   return {
     workerId: uid, assignedTo: uid, assignedUid: uid, assignedUserId: uid,
     assignedName: tech.name || '',
-    assignedEmail: String(tech.email || '').toLowerCase()
+    assignedEmail: String(tech.email || '').toLowerCase(),
+    assignedUserIds: [uid], assignedUids: [uid], workerIds: [uid], assignedUserNames: [tech.name || '']
   };
 }
 function jobDone(j){
@@ -3510,6 +3511,18 @@ async function saveAssign(){
   }
   const b = buildings.find(x=>x.id===bid);
   const tech = techs.find(t=>t.uid===uid);
+  const moving = editJobId ? (jobs.find(x => x.id === editJobId) || null) : null;
+  const fromUid = moving ? (accountUidOf(moving) || moving.assignedUid || moving.workerId || '') : '';
+  const isMove = !!(moving && fromUid && fromUid !== uid);
+  if (isMove) {
+    const en = loginLang() === 'en';
+    const fromName = moving.assignedName || (techs.find(t => t.uid === fromUid) || {}).name || (en ? 'nobody' : 'nadie');
+    const toName = (tech && tech.name) || '';
+    const ok = confirm(en
+      ? 'Move this job to ' + toName + '?\n\nPhotos, notes and history: STAY\nOnly the assignee changes: ' + fromName + ' → ' + toName
+      : '¿Mover este trabajo a ' + toName + '?\n\nFotos, notas e historial: SE QUEDAN\nSolo cambia el asignado: ' + fromName + ' → ' + toName);
+    if (!ok) return;
+  }
   const title = (b && b.name) || addrIn || kind || 'Job';
   const payload = {
     companyId: cid(), companyName: companyName,
@@ -3545,6 +3558,20 @@ async function saveAssign(){
   };
   if (vs.length) vs[0] = Object.assign({}, vs[0], vis);
   else vs.push(vis);
+  if (isMove) {
+    // Open visits of the old tech go to the new one too.
+    for (let i = 1; i < vs.length; i++) {
+      const st = String(vs[i].status || '').toLowerCase();
+      const closed = ['completed', 'closed', 'done'].indexOf(st) >= 0;
+      if (!closed && (!vs[i].assignedUid || vs[i].assignedUid === fromUid)) vs[i] = Object.assign({}, vs[i], { assignedUid: uid });
+    }
+    payload.unassigned = false;
+    payload.assignedAt = firebase.firestore.FieldValue.serverTimestamp();
+    payload.reassignLog = firebase.firestore.FieldValue.arrayUnion({
+      fromUid, fromName: moving.assignedName || '', toUid: uid, toName: (tech && tech.name) || '',
+      byName: (profile && (profile.displayName || profile.email)) || '', at: new Date().toISOString()
+    });
+  }
   payload.visits = vs;
   // Scheduling the return of a "Necesita volver" job: reopen it for the new
   // visit and keep the previous report in its history.
@@ -3972,7 +3999,7 @@ async function loadMonths(buildingId){
 <script src="/web/compania/quotes.js?v=20261105a"></script>
 <script src="/web/compania/jobs.js?v=20261105a"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>
-<script src="/web/compania/jobview.js?v=20261105a"></script>
+<script src="/web/compania/jobview.js?v=20261112a"></script>
 <script src="/web/compania/dashboard.js?v=20261110a"></script>
 <script src="/web/compania/jobslist.js?v=20261105a"></script>
 <script src="/web/compania/lowvolt.js?v=20261111b"></script>
