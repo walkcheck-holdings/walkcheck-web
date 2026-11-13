@@ -34,3 +34,21 @@
   .dash-grid { grid-template-columns: 1fr; }
   .dash-row { grid-template-columns: 56px 1fr auto; }
 }
+
+/* Receipt window from "Últimos movimientos". */
+.rcpt-box { width: 560px; max-width: 96vw; max-height: 92vh; overflow: auto; }
+.rcpt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px; margin: 6px 0 12px; }
+.rcpt-meta div { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.rcpt-meta .muted { font-size: 12px; }
+.rcpt-meta .rcpt-wide { grid-column: 1 / -1; }
+.rcpt-amt { color: #DC2626; }
+.rcpt-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.rcpt-photos img { width: 100%; max-height: 420px; object-fit: contain; background: #F3F4F6; border-radius: 10px; border: 1px solid #E5E7EB; display: block; }
+.rcpt-photos a:only-child img { max-height: 60vh; }
+.rcpt-photos:has(a:only-child) { grid-template-columns: 1fr; }
+.rcpt-tip { font-size: 12.5px; margin: 6px 0 0; }
+.rcpt-none { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; border-radius: 10px; padding: 14px; text-align: center; font-weight: 700; }
+.rcpt-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+.rcpt-btns .btn { width: auto; }
+.dash-rc { font-size: 13px; }
+@media (max-width: 640px) { .rcpt-meta { grid-template-columns: 1fr; } }

@@ -49,6 +49,32 @@
     return tsDay(r.completedAt) || String(j.scheduledDate || j.date || '').slice(0, 10) || tsDay(r.updatedAt);
   }
 
+  // Expense row → its receipt photo, with the job's address, date and amount.
+  function receiptWindow(x) {
+    var en = loginLang() === 'en';
+    var photos = (x.photos || []).filter(function (u) { return /^https?:/.test(String(u)); });
+    var where = [x.address, x.unit ? (en ? 'Unit ' : 'Unidad ') + x.unit : ''].filter(Boolean).join(' · ');
+    $('modal').classList.remove('hidden');
+    $('modal').innerHTML = '<div class="box rcpt-box">' +
+      '<h3>🧾 ' + esc(T('Recibo', 'Receipt')) + (x.vendor ? ' · ' + esc(x.vendor) : '') + '</h3>' +
+      '<div class="rcpt-meta">' +
+        (where ? '<div><span class="muted">' + esc(T('Dirección', 'Address')) + '</span><b>' + esc(where) + '</b></div>' : '') +
+        '<div><span class="muted">' + esc(T('Trabajo', 'Job')) + '</span><b>' + esc(x.job || '') + '</b></div>' +
+        '<div><span class="muted">' + esc(T('Fecha', 'Date')) + '</span><b>' + esc(dayLabel(x.date)) + '</b></div>' +
+        '<div><span class="muted">' + esc(T('Importe', 'Amount')) + '</span><b class="rcpt-amt">-' + esc(money(x.amount)) + '</b></div>' +
+        (x.items ? '<div class="rcpt-wide"><span class="muted">' + esc(T('Qué se compró', 'Items')) + '</span><b>' + esc(x.items) + '</b></div>' : '') +
+      '</div>' +
+      (photos.length
+        ? '<div class="rcpt-photos">' + photos.map(function (u) {
+            return '<a href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(T('Abrir en grande', 'Open full size')) + '"><img src="' + esc(u) + '" alt="' + esc(T('Foto del recibo', 'Receipt photo')) + '"></a>';
+          }).join('') + '</div><p class="muted rcpt-tip">' + esc(T('Toca la foto para verla en grande o guardarla.', 'Tap the photo to see it full size or save it.')) + '</p>'
+        : '<div class="rcpt-none">' + esc(T('Este gasto no tiene foto del recibo.', 'This expense has no receipt photo.')) + '</div>') +
+      '<div class="rcpt-btns">' +
+        (x.jobId && typeof openJobView === 'function' ? '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\');openJobView(\'' + esc(x.jobId) + '\')">' + esc(T('Ver el trabajo', 'See the job')) + '</button>' : '') +
+        '<button class="btn" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(T('Cerrar', 'Close')) + '</button>' +
+      '</div></div>';
+  }
+
   function movesFor(m, invoices) {
     var moves = [];
     invoices.forEach(function (inv) {
@@ -65,13 +91,19 @@
       // Archived jobs (e.g. a duplicate) do not count as expenses.
       if (typeof jobArchived === 'function' && jobArchived(j)) return;
       var jobName = j.number ? T('Trabajo #', 'Job #') + j.number : (j.title || T('Trabajo', 'Job'));
-      var openJob = function () { if (typeof openJobDetail === 'function') openJobDetail(j.id); };
+      var jobFull = (j.number || j.jobNumber ? '#' + (j.number || j.jobNumber) + ' · ' : '') + (j.title || j.kind || '');
       (Array.isArray(j.expenses) ? j.expenses : []).forEach(function (e) {
         if (String(e.date || '').slice(0, 7) !== m) return;
+        var x = {
+          date: String(e.date).slice(0, 10), amount: Number(e.total || 0), vendor: e.vendor || '', items: e.items || '',
+          photos: [e.receiptPhoto].concat(e.receiptPhotos || []).filter(Boolean),
+          address: j.address || '', unit: j.unit || '', job: jobFull, jobId: j.id
+        };
         moves.push({
-          date: String(e.date).slice(0, 10), kind: 'out', amount: Number(e.total || 0),
+          date: x.date, kind: 'out', amount: x.amount,
           label: (e.vendor || e.items || T('Gasto', 'Expense')) + ' · ' + jobName,
-          open: openJob
+          hasReceipt: x.photos.length > 0,
+          open: function () { receiptWindow(x); }
         });
       });
       // Material cost the worker typed in the Job Report (app or worker web),
@@ -81,10 +113,17 @@
       if (cost > 0) {
         var day = reportDay(j);
         if (day.slice(0, 7) === m) {
+          var rx = {
+            date: day, amount: cost, vendor: (r.supplier && String(r.supplier).trim()) || '', items: '',
+            photos: (Array.isArray(r.receiptPhotos) ? r.receiptPhotos : []).concat(r.receiptPhoto ? [r.receiptPhoto] : [])
+              .filter(function (u, i, a) { return u && a.indexOf(u) === i; }),
+            address: j.address || '', unit: j.unit || '', job: jobFull, jobId: j.id
+          };
           moves.push({
             date: day, kind: 'out', amount: cost,
             label: ((r.supplier && String(r.supplier).trim()) || T('Materiales', 'Materials')) + ' · ' + jobName,
-            open: openJob
+            hasReceipt: rx.photos.length > 0,
+            open: function () { receiptWindow(rx); }
           });
         }
       }
@@ -127,7 +166,7 @@
     var rows = moves.slice(0, 6).map(function (m, i) {
       return '<button type="button" class="dash-row" onclick="_dashMoves[' + i + '].open()">' +
         '<span class="dash-d">' + esc(dayLabel(m.date)) + '</span>' +
-        '<span class="dash-c">' + esc(m.label) + '</span>' +
+        '<span class="dash-c">' + (m.hasReceipt ? '<span class="dash-rc" title="' + esc(T('Tiene recibo', 'Has receipt')) + '">🧾</span> ' : '') + esc(m.label) + '</span>' +
         '<span class="dash-a ' + m.kind + '">' + (m.kind === 'in' ? '+' : '-') + esc(money(m.amount)) + '</span></button>';
     }).join('') || '<p class="muted" style="padding:12px 0">' + esc(T('Sin movimientos este mes.', 'No activity this month.')) + '</p>';
     var isNow = month === thisMonth();
