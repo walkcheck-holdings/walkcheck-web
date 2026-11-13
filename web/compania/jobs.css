@@ -153,3 +153,5 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 .job-side .jp-photos + .btn, .job-side .job-sec > .btn.ghost { width: 100%; }
 /* Job page uses the full width (the Sites column is for the schedule). */
 body.wk-pc.view-job #sidebar { display: none; }
+/* Hours on the left of the day grid: centered in their column. */
+.time-axis .tmark { padding-left: 0; text-align: center; font-size: 11px; color: #6B7280; }
