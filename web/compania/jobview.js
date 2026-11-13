@@ -215,9 +215,9 @@
       S.lost + (S.lost === 1 ? ' foto se quedó' : ' fotos se quedaron') + ' solo en el teléfono del trabajador: la versión de la app que tiene no las subía. Con la versión nueva de la app ya se suben solas.',
       S.lost + (S.lost === 1 ? ' photo stayed' : ' photos stayed') + ' only on the worker\'s phone: their app version did not upload them. The new app version uploads them.')) + '</p>' : '';
     if (!list.length) return lostMsg || '<p class="muted">' + esc(L('El trabajador todavía no ha subido fotos de este trabajo.', 'The worker has not uploaded photos for this job yet.')) + '</p>';
-    return '<div class="jv-gallery">' + list.map(function (p) {
+    return '<div class="jv-gallery">' + list.map(function (p, n) {
       return '<div class="jv-tile-w"><a class="jv-tile" href="' + esc(p.url) + '" target="_blank" rel="noopener" title="' + esc(p.src) + '">' +
-        '<img loading="lazy" src="' + esc(p.url) + '" alt="' + esc(p.src) + '"><span>' + esc(p.src) + '</span></a>' +
+        '<img loading="lazy" src="' + esc(p.url) + '" alt="' + esc(p.src) + '"><span><b>' + String(n + 1).padStart(2, '0') + '</b> · ' + esc(p.src) + '</span></a>' +
         '<button type="button" class="jr-ph-del" data-kind="' + esc(p.kind || 'other') + '" data-url="' + esc(p.url) + '" onclick="jvDelJobPhoto(this)" aria-label="' +
         esc(L('Borrar foto', 'Delete photo')) + '">×</button></div>';
     }).join('') + '</div>' + lostMsg;
@@ -276,6 +276,7 @@
     var m = modalEl(), j = S.job;
     if (!m || !j) return;
     if (S.view === 'client') { m.innerHTML = '<div class="jv-box" role="dialog" aria-modal="true">' + clientProfileHtml(j) + '</div>'; return; }
+    if (S.view === 'finding') { m.innerHTML = '<div class="jv-box jv-report" role="dialog" aria-modal="true">' + findingFormHtml(j) + '</div>'; return; }
     if (S.view === 'jobreport') { m.innerHTML = '<div class="jv-box jv-report" role="dialog" aria-modal="true" aria-label="Job Report">' + jobReportFormHtml(j) + '</div>'; return; }
     var c = clientInfo(j);
     var v = jobVisits(j)[0] || {};
@@ -369,6 +370,7 @@
         (canEdit ? '<button type="button" class="btn ghost jv-small" onclick="jvStartEdit()">✏️ ' + esc(L('Editar información', 'Edit information')) + '</button>' : '') + '</div>' +
         (ins ? '<p class="jv-pre jv-ins">' + esc(ins) + '</p>' : '<p class="muted">' + esc(L('Este trabajo no tiene instrucciones.', 'This job has no instructions.')) + '</p>') + '</section>' +
       '<section class="jv-sec"><h3>' + esc(L('Fotos del trabajo', 'Job photos')) + ' <span class="jv-count">' + (S.photos || []).length + '</span></h3>' + photosHtml() + '</section>' +
+      findingsSectionHtml(j) +
       '<div class="jv-cols">' +
         '<section class="jv-sec"><h3>' + esc(L('Trabajo', 'Job')) + '</h3><p>' + (j.jobNumber ? '<b>#' + esc(j.jobNumber) + '</b> · ' : '') + esc(j.title || j.kind || '') + '</p></section>' +
         '<section class="jv-sec"><h3>' + esc(L('Equipo', 'Team')) + '</h3>' +
@@ -566,8 +568,244 @@
       d.groups.map(function (g) { return h(g[0] + ' (' + g[1].length + ')') + '<div class="ph">' + g[1].map(img).join('') + '</div>'; }).join('') +
       (d.finalNotes ? h(L('Notas finales', 'Final notes')) + p(d.finalNotes) : '');
   }
+
+  /* ---------- Walkthrough report: findings the office puts together ---------- */
+  var WT_AREAS = ['Pasillos y escaleras', 'Entradas y lobby', 'Luces', 'Paredes, techos y concreto', 'Equipos de seguridad', 'Estacionamientos', 'Cuartos de basura y servicio', 'Piscina, patios y áreas comunes'];
+  var WT_AREA_HINTS = ['Pasillo', 'Escalera', 'Luces', 'Lobby', 'Entrada principal', 'Parqueo', 'Cuarto de basura', 'Lavandería', 'Techo', 'Paredes', 'Piscina', 'Seguridad', 'Elevador', 'Azotea'];
+  var PRIO = {
+    alta: { es: 'ALTA', en: 'HIGH', color: '#C0392B' },
+    media: { es: 'MEDIA', en: 'MEDIUM', color: '#C77C0E' },
+    baja: { es: 'BAJA', en: 'LOW', color: '#1E9E4A' }
+  };
+  function prioLabel(k) { var p = PRIO[k] || PRIO.media; return L(p.es, p.en); }
+  function isWalkJob(j) {
+    var WT = window.WK_WALKTHROUGH;
+    return !!((WT && WT.isWalkthrough(j)) || /walk/i.test(String((j.kind || '') + ' ' + (j.title || ''))) ||
+      (Array.isArray(j.reportFindings) && j.reportFindings.length) || (S.wt && (S.wt.findings || []).length));
+  }
+  function findingsOf(j) { return Array.isArray(j.reportFindings) ? j.reportFindings : []; }
+  // Photo number = its place in the job photos (01, 02…), the same in the panel and the PDF.
+  function photoNum(url) {
+    var i = (S.photos || []).findIndex(function (p) { return p.url === url; });
+    return i < 0 ? '' : String(i + 1).padStart(2, '0');
+  }
+  function photoRefs(urls) {
+    var n = (urls || []).map(photoNum).filter(Boolean);
+    if (!n.length) return '';
+    if (n.length === 1) return L('Foto ', 'Photo ') + n[0];
+    return L('Fotos ', 'Photos ') + n.slice(0, -1).join(', ') + L(' y ', ' and ') + n[n.length - 1];
+  }
+  function appFindings() {
+    return ((S.wt && S.wt.findings) || []).map(function (f, i) {
+      var area = WT_AREAS[f.areaIndex] || L('Área', 'Area');
+      var where = [f.floor ? L('Piso ', 'Floor ') + f.floor : '', f.location || ''].filter(Boolean).join(', ');
+      return {
+        id: 'app' + (f.id || i), area: area, title: f.itemLabel || '',
+        desc: [f.description || '', where ? '(' + where + ')' : ''].filter(Boolean).join(' '),
+        priority: f.urgent ? 'alta' : 'media', photos: (f.photoUrls || []).filter(function (u) { return /^https?:/.test(u); }).slice(0, 3)
+      };
+    });
+  }
+  function findingsSectionHtml(j) {
+    if (!isWalkJob(j)) return '';
+    var list = findingsOf(j), meta = j.reportMeta || {}, can = canAssign() && !jobArchived(j);
+    var fromApp = appFindings();
+    var counts = { alta: 0, media: 0, baja: 0 };
+    list.forEach(function (f) { counts[f.priority] = (counts[f.priority] || 0) + 1; });
+    return '<section class="jv-sec jv-find"><div class="jv-sec-head"><h3>' + esc(L('Hallazgos del reporte', 'Report findings')) + ' <span class="jv-count">' + list.length + '</span></h3>' +
+        (can ? '<button type="button" class="btn jv-small" onclick="jvFinding(-1)">+ ' + esc(L('Hallazgo', 'Finding')) + '</button>' : '') + '</div>' +
+      '<p class="muted jv-find-help">' + esc(L('Solo lo que necesita reparación. Cada foto va con su número (Foto 01, 02…) y sale igual en el PDF.', 'Only what needs repair. Each photo keeps its number (Photo 01, 02…), the same in the PDF.')) + '</p>' +
+      (list.length ? '<div class="jv-find-sum">' + ['alta', 'media', 'baja'].filter(function (k) { return counts[k]; }).map(function (k) {
+          return '<span style="color:' + PRIO[k].color + '">' + counts[k] + ' ' + esc(prioLabel(k)) + '</span>';
+        }).join(' · ') + '</div>' : '') +
+      list.map(function (f, i) {
+        var ph = (f.photos || [])[0];
+        return '<button type="button" class="jv-find-card" style="border-left-color:' + (PRIO[f.priority] || PRIO.media).color + '"' + (can ? ' onclick="jvFinding(' + i + ')"' : ' disabled') + '>' +
+          '<span class="jv-find-main"><span class="jv-find-k">' + esc(L('HALLAZGO ', 'FINDING ') + (i + 1)) +
+            ' <i style="background:' + (PRIO[f.priority] || PRIO.media).color + '">' + esc(prioLabel(f.priority)) + '</i></span>' +
+            '<b>' + esc([f.area, f.title].filter(Boolean).join(' — ')) + '</b>' +
+            (f.desc ? '<span class="muted">' + esc(f.desc) + '</span>' : '') +
+            (photoRefs(f.photos) ? '<span class="jv-find-ph">' + esc(photoRefs(f.photos)) + '</span>' : '') + '</span>' +
+          (ph ? '<img src="' + esc(ph) + '" alt="">' : '') + '</button>';
+      }).join('') +
+      (can && fromApp.length && !list.length ? '<button type="button" class="btn ghost jv-small" onclick="jvImportFindings()">⬇ ' +
+        esc(L('Traer los hallazgos de la app', 'Bring the findings from the app')) + ' (' + fromApp.length + ')</button>' : '') +
+      (can ? '<div class="jv-find-meta">' +
+        '<label class="jv-label" for="fmTo">' + esc(L('Para (quién recibe el reporte)', 'To (who gets the report)')) + '</label>' +
+        '<input id="fmTo" type="text" placeholder="' + esc(L('Ej.: Belkis, Avantage Property Management', 'E.g.: Belkis, Avantage Property Management')) + '" value="' + esc(meta.to || '') + '">' +
+        '<label class="jv-label" for="fmClean">' + esc(L('Áreas revisadas sin hallazgos', 'Areas checked with no findings')) + '</label>' +
+        '<input id="fmClean" type="text" placeholder="' + esc(L('Ej.: lobby, lavandería, cuarto de basura', 'E.g.: lobby, laundry, trash room')) + '" value="' + esc(meta.clean || '') + '">' +
+        '<div class="jv-noterow"><span id="fmMsg" class="muted"></span><button type="button" class="btn ghost jv-small" onclick="jvSaveReportMeta()">' + esc(L('Guardar', 'Save')) + '</button>' +
+        '<button type="button" class="btn jv-small" onclick="jvReportPdf()">⬇ ' + esc(L('PDF para WhatsApp', 'PDF for WhatsApp')) + '</button></div></div>' : '') +
+      '</section>';
+  }
+  async function saveFindings(j, list) {
+    await db.collection('jobs').doc(j.id).set({
+      reportFindings: list,
+      reportFindingsLog: firebase.firestore.FieldValue.arrayUnion({ byUid: uid(), byName: who(), at: new Date().toISOString(), n: list.length }),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    j.reportFindings = list;
+  }
+  window.jvImportFindings = async function () {
+    var j = S.job; if (!j) return;
+    try { await saveFindings(j, appFindings()); render(); }
+    catch (e) { alert(L('No se pudo guardar: ', 'Could not save: ') + (e.message || e)); }
+  };
+  window.jvSaveReportMeta = async function () {
+    var j = S.job; if (!j) return;
+    var meta = { to: ($('fmTo').value || '').trim(), clean: ($('fmClean').value || '').trim() };
+    try {
+      await db.collection('jobs').doc(j.id).set({ reportMeta: meta, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      j.reportMeta = meta;
+      $('fmMsg').textContent = L('✓ Guardado', '✓ Saved');
+    } catch (e) { $('fmMsg').textContent = L('No se pudo guardar: ', 'Could not save: ') + (e.message || e); }
+  };
+  // Finding editor inside the same window.
+  window.jvFinding = function (i) {
+    var j = S.job; if (!j) return;
+    var f = i >= 0 ? findingsOf(j)[i] : null;
+    S.fIdx = i;
+    S.fDraft = f ? JSON.parse(JSON.stringify(f)) : { id: 'f' + Date.now(), area: '', title: '', desc: '', priority: 'media', photos: [] };
+    S.view = 'finding'; render();
+  };
+  function keepFinding() {
+    var d = S.fDraft; if (!d) return;
+    if ($('fdArea')) d.area = $('fdArea').value.trim();
+    if ($('fdTitle')) d.title = $('fdTitle').value.trim();
+    if ($('fdDesc')) d.desc = $('fdDesc').value.trim();
+  }
+  window.jvFdPrio = function (k) { keepFinding(); S.fDraft.priority = k; render(); };
+  window.jvFdPhoto = function (n) {
+    keepFinding();
+    var u = (S.photos || [])[n] && S.photos[n].url, ps = S.fDraft.photos || [];
+    var at = ps.indexOf(u);
+    if (at >= 0) ps.splice(at, 1); else if (ps.length < 3) ps.push(u);
+    S.fDraft.photos = ps; render();
+  };
+  function findingFormHtml(j) {
+    var d = S.fDraft || {}, isNew = !(S.fIdx >= 0);
+    return '<div class="jr-top"><button type="button" class="jr-x" onclick="jvFindingBack()" aria-label="' + esc(L('Cerrar', 'Close')) + '">×</button><h2>' +
+        esc(isNew ? L('Nuevo hallazgo', 'New finding') : L('Hallazgo ', 'Finding ') + (S.fIdx + 1)) + '</h2><span></span></div>' +
+      '<section class="jr-card">' +
+        '<label for="fdArea">' + esc(L('Área', 'Area')) + '</label><input id="fdArea" type="text" list="fdAreas" placeholder="' + esc(L('Ej.: Escalera', 'E.g.: Stairs')) + '" value="' + esc(d.area || '') + '">' +
+        '<datalist id="fdAreas">' + WT_AREA_HINTS.map(function (a) { return '<option value="' + esc(a) + '">'; }).join('') + '</datalist>' +
+        '<label for="fdTitle">' + esc(L('Qué es', 'What it is')) + '</label><input id="fdTitle" type="text" placeholder="' + esc(L('Ej.: Lámpara colgante', 'E.g.: Hanging lamp')) + '" value="' + esc(d.title || '') + '">' +
+        '<label for="fdDesc">' + esc(L('Descripción', 'Description')) + '</label><textarea id="fdDesc" rows="3" placeholder="' + esc(L('Ej.: Base del techo abierta y cable expuesto.', 'E.g.: Ceiling base open and wire exposed.')) + '">' + esc(d.desc || '') + '</textarea>' +
+        '<label>' + esc(L('Prioridad', 'Priority')) + '</label><div class="fd-prio">' + ['alta', 'media', 'baja'].map(function (k) {
+          var on = d.priority === k;
+          return '<button type="button" onclick="jvFdPrio(\'' + k + '\')" style="' + (on ? 'background:' + PRIO[k].color + ';color:#fff;border-color:' + PRIO[k].color : 'color:' + PRIO[k].color + ';border-color:' + PRIO[k].color) + '">' + esc(prioLabel(k)) + '</button>';
+        }).join('') + '</div></section>' +
+      '<section class="jr-card"><h3>' + esc(L('Fotos (toca hasta 3)', 'Photos (tap up to 3)')) + '</h3>' +
+        ((S.photos || []).length ? '<div class="fd-photos">' + S.photos.map(function (p, n) {
+          var on = (d.photos || []).indexOf(p.url) >= 0;
+          return '<button type="button" class="' + (on ? 'on' : '') + '" onclick="jvFdPhoto(' + n + ')"><img src="' + esc(p.url) + '" alt=""><span>' + String(n + 1).padStart(2, '0') + (on ? ' ✓' : '') + '</span></button>';
+        }).join('') + '</div>' : '<p class="muted">' + esc(L('Este trabajo todavía no tiene fotos.', 'This job has no photos yet.')) + '</p>') +
+        '<div class="err" id="fdErr"></div></section>' +
+      '<div class="jr-foot"><button type="button" class="jr-done-main" id="fdSave" onclick="jvSaveFinding()">' + esc(L('Guardar hallazgo', 'Save finding')) + '</button>' +
+        (isNew ? '' : '<button type="button" class="jr-more fd-del" onclick="jvDelFinding()" aria-label="' + esc(L('Borrar hallazgo', 'Delete finding')) + '">🗑</button>') + '</div>';
+  }
+  window.jvFindingBack = function () { S.view = 'job'; S.fDraft = null; render(); };
+  window.jvSaveFinding = async function () {
+    var j = S.job; if (!j) return;
+    keepFinding();
+    var d = S.fDraft;
+    if (!d.area && !d.title) { $('fdErr').textContent = L('Pon el área o qué es.', 'Type the area or what it is.'); return; }
+    var list = findingsOf(j).slice();
+    if (S.fIdx >= 0) list[S.fIdx] = d; else list.push(d);
+    $('fdSave').disabled = true;
+    try { await saveFindings(j, list); S.view = 'job'; S.fDraft = null; render(); }
+    catch (e) { $('fdErr').textContent = L('No se pudo guardar: ', 'Could not save: ') + (e.message || e); $('fdSave').disabled = false; }
+  };
+  window.jvDelFinding = function () {
+    var j = S.job; if (!j || !(S.fIdx >= 0)) return;
+    jrAsk(L('¿Borrar este hallazgo?', 'Delete this finding?'), L('Sí, borrar', 'Yes, delete'), async function () {
+      var list = findingsOf(j).slice(); list.splice(S.fIdx, 1);
+      try { await saveFindings(j, list); S.view = 'job'; S.fDraft = null; render(); }
+      catch (e) { alert(L('No se pudo borrar: ', 'Could not delete: ') + (e.message || e)); }
+    });
+  };
+
+  // The walkthrough report page (print → "Save as PDF" → WhatsApp), in the company's own brand.
+  function longDate(d) {
+    return d ? d.toLocaleDateString(L('es-ES', 'en-US'), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  }
+  function walkReportHtml(j) {
+    var c = clientInfo(j), v = jobVisits(j)[0] || {}, meta = j.reportMeta || {};
+    var list = findingsOf(j);
+    var day = v.scheduledDate || j.scheduledDate;
+    var dObj = day ? new Date(day + 'T12:00:00') : new Date();
+    var win = [fmtClock(v.startClock || j.startClock), fmtClock(v.endClock || j.endClock)].filter(Boolean);
+    if (win.length === 2 && win[0].slice(-2) === win[1].slice(-2)) win[0] = win[0].slice(0, -3);
+    var team = [];
+    jobVisits(j).forEach(function (x) { var n = techName(x.assignedUid); if (n && team.indexOf(n) < 0) team.push(n); });
+    if (!team.length && techName(assignedOf(j))) team.push(techName(assignedOf(j)));
+    var counts = { alta: 0, media: 0, baja: 0 };
+    list.forEach(function (f) { counts[f.priority] = (counts[f.priority] || 0) + 1; });
+    var coName = companyName || '';
+    var coMail = (typeof companyInvoiceEmail !== 'undefined' && companyInvoiceEmail) || '';
+    var coPhone = (typeof companyPhone !== 'undefined' && companyPhone) || '';
+    var logo = (typeof companyLogoData !== 'undefined' && companyLogoData) || (typeof companyLogo !== 'undefined' && companyLogo) || '';
+    var nPhotos = (S.photos || []).length;
+    var to = meta.to || [c.contact && c.contact !== c.name ? c.contact : '', c.name].filter(Boolean).join(', ');
+    var cards = list.map(function (f, i) {
+      var p = PRIO[f.priority] || PRIO.media, ph = (f.photos || [])[0];
+      return '<div class="card" style="border-left-color:' + p.color + '"><div class="txt">' +
+        '<div class="k">' + esc(L('HALLAZGO ', 'FINDING ') + (i + 1)) + ' <span class="pill" style="background:' + p.color + '">' + esc(prioLabel(f.priority)) + '</span></div>' +
+        '<h3>' + esc([f.area, f.title].filter(Boolean).join(' — ')) + '</h3>' +
+        (f.desc ? '<p>' + esc(f.desc) + '</p>' : '') + '</div>' +
+        (ph ? '<div class="ph"><img src="' + esc(ph) + '" alt=""><div class="cap">' + esc(photoRefs(f.photos)) + '</div></div>' : '') + '</div>';
+    }).join('');
+    return '<!doctype html><html lang="' + L('es', 'en') + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + esc(L('Reporte Walkthrough', 'Walkthrough Report') + (j.jobNumber ? ' #' + j.jobNumber : '') + ' - ' + (c.address || j.title || '')) + '</title><style>' +
+      '*{box-sizing:border-box}html,body{margin:0;background:#E5E7EB;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      'body{font:15px/1.5 "DejaVu Sans",Verdana,Segoe UI,sans-serif;color:#1F2937}' +
+      '.tip{max-width:860px;margin:14px auto;background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;border-radius:8px;padding:10px 14px;font-size:14px}' +
+      '.page{max-width:860px;margin:0 auto 24px;background:#FAF6EC;border:3px double #16324F;outline:2px solid #16324F;outline-offset:-10px;padding:34px 34px 0}' +
+      '.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.brand{display:flex;align-items:center;gap:16px}' +
+      '.brand img{width:72px;height:72px;object-fit:contain}.mono{width:72px;height:72px;border-radius:14px;background:#16324F;color:#fff;font:700 36px Georgia,serif;display:flex;align-items:center;justify-content:center}' +
+      '.co{font:700 36px/1.05 Georgia,"DejaVu Serif",serif;color:#16324F;letter-spacing:.5px;text-transform:uppercase}.co-sub{color:#1E9E4A;font-weight:700;font-size:11.5px;letter-spacing:.8px;margin-top:6px;text-transform:uppercase}' +
+      '.rt{text-align:right}.rt .big{font:700 44px/1 Georgia,"DejaVu Serif",serif;color:#16324F}.rt .g{color:#1E9E4A;font-weight:700;letter-spacing:.8px;margin-top:8px}.rt .d{font-size:13.5px;margin-top:4px}' +
+      '.rule{border-top:3px solid #16324F;border-bottom:1px solid #16324F;height:5px;margin:22px 0}' +
+      '.info{display:grid;grid-template-columns:1fr 1fr;gap:20px}.info .lab{color:#1E9E4A;font-weight:700;font-size:11.5px;letter-spacing:.8px;margin-bottom:6px}.info b{font-size:15.5px}' +
+      '.sum{background:#EEF3EC;border:1px solid #16324F;padding:14px 20px;margin:24px 0 20px}.sum h2{margin:0 0 4px;font-size:18px;color:#16324F}.sum .cnt{font-weight:700;font-size:12px;letter-spacing:.6px}.sum .clean{font-size:13px;margin-top:6px}' +
+      '.card{display:flex;justify-content:space-between;gap:20px;background:#fff;border:1px solid #16324F;border-left:9px solid;padding:20px 20px 16px 24px;margin:0 0 22px;break-inside:avoid;page-break-inside:avoid}' +
+      '.card .k{color:#1E9E4A;font-weight:700;font-size:12px;letter-spacing:.8px}.pill{color:#fff;border-radius:999px;padding:4px 12px;margin-left:12px;font-size:11.5px}' +
+      '.card h3{font-size:19px;color:#16324F;margin:12px 0 14px}.card p{margin:0;max-width:390px}.card .txt{flex:1;min-width:0}' +
+      '.ph{width:172px;flex:none;text-align:center}.ph img{width:172px;height:228px;object-fit:cover;border:1px solid #16324F;display:block}.cap{color:#6B7280;font-size:12.5px;margin-top:6px}' +
+      '.gen{text-align:center;color:#6B7280;font-size:12.5px;margin:30px 0 8px}.foot{background:#16324F;color:#fff;text-align:center;font-weight:700;padding:18px;margin:0 -34px}' +
+      '@media (max-width:640px){.page{padding:20px 16px 0}.top{flex-direction:column}.rt{text-align:left}.co{font-size:28px}.rt .big{font-size:34px}.info{grid-template-columns:1fr}.card{flex-direction:column}.ph,.ph img{width:100%}.ph img{height:auto;max-height:360px}.foot{margin:0 -16px}}' +
+      '@media print{html,body{background:#FAF6EC}.tip{display:none}.page{margin:0;max-width:none;border-width:3px}@page{margin:10mm}}' +
+      '</style></head><body>' +
+      '<div class="tip">' + esc(L('Para mandarlo por WhatsApp: en la ventana de imprimir escoge "Guardar como PDF", guárdalo y mándalo como documento.', 'To send it by WhatsApp: in the print window pick "Save as PDF", save it and send it as a document.')) + '</div>' +
+      '<div class="page">' +
+        '<div class="top"><div class="brand">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '<div class="mono">' + esc((coName.charAt(0) || 'W').toUpperCase()) + '</div>') +
+          '<div><div class="co">' + esc(coName) + '</div>' + (coPhone || coMail ? '<div class="co-sub">' + esc([coPhone, coMail].filter(Boolean).join(' · ')) + '</div>' : '') + '</div></div>' +
+          '<div class="rt"><div class="big">' + esc(L('REPORTE', 'REPORT')) + '</div><div class="g">WALKTHROUGH' + (j.jobNumber ? ' #' + esc(j.jobNumber) : '') + '</div><div class="d">' + esc(longDate(new Date())) + '</div></div></div>' +
+        '<div class="rule"></div>' +
+        '<div class="info"><div><div class="lab">' + esc(L('EDIFICIO', 'BUILDING')) + '</div><b>' + esc((c.address || j.title || '') + (c.unit ? ' · Unit ' + c.unit : '')) + '</b>' +
+            '<div>' + esc(L('Técnico: ', 'Technician: ') + (team.join(', ') || '—')) + '</div><div>' + esc(L('Compañía: ', 'Company: ') + coName) + '</div></div>' +
+          '<div><div class="lab">WALKTHROUGH</div><b>' + esc(longDate(dObj) + (win.length ? ', ' + win.join('–') : '')) + '</b>' +
+            (to ? '<div>' + esc(L('Para: ', 'To: ') + to) + '</div>' : '') + '<div>' + esc(L('Fotos: ', 'Photos: ') + nPhotos) + '</div></div></div>' +
+        '<div class="sum"><h2>' + esc(list.length + ' ' + (list.length === 1 ? L('hallazgo que necesita reparación', 'finding that needs repair') : L('hallazgos que necesitan reparación', 'findings that need repair'))) + '</h2>' +
+          (list.length ? '<div class="cnt">' + ['alta', 'media', 'baja'].filter(function (k) { return counts[k]; }).map(function (k) {
+            return '<span style="color:' + PRIO[k].color + '">' + counts[k] + ' ' + esc(prioLabel(k)) + '</span>';
+          }).join(' &nbsp;·&nbsp; ') + '</div>' : '') +
+          (meta.clean ? '<div class="clean">' + esc(L('Áreas revisadas sin hallazgos: ', 'Areas checked with no findings: ') + meta.clean) + '</div>' : '') + '</div>' +
+        cards +
+        '<div class="gen">' + esc(L('Reporte generado con WalkCheck', 'Report made with WalkCheck')) + '</div>' +
+        '<div class="foot">' + esc([coName, coMail, coPhone].filter(Boolean).join('  ·  ')) + '</div>' +
+      '</div><script>window.onload=function(){setTimeout(function(){window.print()},900)}<\/script></body></html>';
+  }
+
   window.jvReportPdf = function () {
     var j = S.job; if (!j) return;
+    if (isWalkJob(j) && findingsOf(j).length) {
+      var ww = window.open('', '_blank');
+      if (!ww) { alert(L('Permite las ventanas emergentes para descargar el PDF.', 'Allow pop-ups to download the PDF.')); return; }
+      ww.document.open(); ww.document.write(walkReportHtml(j)); ww.document.close();
+      return;
+    }
     var d = reportData(j);
     var w = window.open('', '_blank');
     if (!w) { alert(L('Permite las ventanas emergentes para descargar el PDF.', 'Allow pop-ups to download the PDF.')); return; }
