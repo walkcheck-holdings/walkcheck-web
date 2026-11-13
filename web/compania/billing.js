@@ -185,92 +185,167 @@
     var JsPDF = window.jspdf && window.jspdf.jsPDF;
     if (!JsPDF) throw new Error(T('No se pudo cargar el generador de PDF. Recarga la página.', 'PDF generator did not load. Reload the page.'));
     var doc = new JsPDF({ unit: 'pt', format: 'letter' });
-    var W = doc.internal.pageSize.getWidth(), M = 48, y = 48;
-    var c = { name: inv.client || '', email: inv.clientEmail || '', address: inv.clientAddress || '' };
-    var green = [22, 101, 52], gray = [107, 114, 128], dark = [17, 24, 39];
-    // Header: company logo + name (never WalkCheck's logo)
+    var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 48, y = 44;
+    var navy = [15, 42, 68], gray = [107, 114, 128], dark = [17, 24, 39], line = [209, 213, 219], zebra = [243, 246, 249];
+    var c = { name: inv.client || '', email: inv.clientEmail || '', address: inv.clientAddress || '', phone: inv.clientPhone || '' };
+    var coName = String(inv.companyName || companyName || '');
+    var coEmail = inv.companyEmail || (auth.currentUser && auth.currentUser.email) || '';
+    var coPhone = inv.companyPhone || companyPhone || '';
+    function color(a) { doc.setTextColor(a[0], a[1], a[2]); }
+    function font(style, size) { doc.setFont('helvetica', style); doc.setFontSize(size); }
+
+    // Header: company logo + name (the company's own brand, never WalkCheck's).
+    var hasLogo = false;
     if (companyLogoData) {
-      try { doc.addImage(companyLogoData, companyLogoData.indexOf('image/png') > 0 ? 'PNG' : 'JPEG', M, y - 6, 56, 56, undefined, 'FAST'); } catch (_) {}
-    } else {
-      doc.setFillColor(green[0], green[1], green[2]); doc.roundedRect(M, y - 6, 56, 56, 8, 8, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(26);
-      doc.text(String(inv.companyName || 'W').charAt(0).toUpperCase(), M + 28, y + 31, { align: 'center' });
+      try { doc.addImage(companyLogoData, companyLogoData.indexOf('image/png') > 0 ? 'PNG' : 'JPEG', M, y, 60, 60, undefined, 'FAST'); hasLogo = true; } catch (_) {}
     }
-    doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
-    doc.text(String(inv.companyName || ''), M + 70, y + 14);
-    doc.setFontSize(24); doc.setTextColor(green[0], green[1], green[2]);
-    doc.text(T('FACTURA', 'INVOICE'), W - M, y + 14, { align: 'right' });
-    doc.setFontSize(10); doc.setTextColor(gray[0], gray[1], gray[2]); doc.setFont('helvetica', 'normal');
+    if (!hasLogo) {
+      doc.setFillColor(navy[0], navy[1], navy[2]); doc.roundedRect(M, y, 60, 60, 10, 10, 'F');
+      color([255, 255, 255]); font('bold', 28);
+      doc.text(coName.charAt(0).toUpperCase() || 'W', M + 30, y + 40, { align: 'center' });
+    }
+    color(navy); font('bold', 22);
+    var nameL = doc.splitTextToSize(coName.toUpperCase(), 230);
+    doc.text(nameL.slice(0, 2), M + 76, y + 26);
+    font('normal', 10); color(gray);
+    var sub = [coPhone, coEmail].filter(Boolean).join('  ·  ');
+    if (sub) doc.text(sub, M + 76, y + 26 + (nameL.length > 1 ? 24 : 0) + 18);
+
+    color(navy); font('bold', 34);
+    doc.text(T('FACTURA', 'INVOICE'), W - M, y + 30, { align: 'right' });
     var meta = [
-      [T('Número', 'Number'), '#' + (inv.number || '')],
-      [T('Emitida', 'Issued'), fmtDay(inv.issueDate)],
-      [T('Vence', 'Due'), fmtDay(inv.dueDate)],
-      [T('Estado', 'Status'), payStatusLabel(payStatus(inv))]
+      [T('Factura N.º', 'Invoice No.'), String(inv.number || '')],
+      [T('Fecha', 'Date'), fmtDay(inv.issueDate)],
+      [T('Vence', 'Due Date'), fmtDay(inv.dueDate)]
     ];
-    var my = y + 32;
+    var my = y + 56;
     meta.forEach(function (m) {
-      doc.setTextColor(gray[0], gray[1], gray[2]); doc.text(m[0] + ':', W - M - 110, my);
-      doc.setTextColor(dark[0], dark[1], dark[2]); doc.text(String(m[1]), W - M, my, { align: 'right' });
-      my += 14;
+      font('normal', 10.5); color(dark);
+      var vw = doc.getTextWidth(m[1]);
+      doc.text(m[1], W - M, my, { align: 'right' });
+      font('bold', 10.5); color(navy);
+      doc.text(m[0], W - M - vw - 8, my, { align: 'right' });
+      my += 17;
     });
-    y = Math.max(y + 90, my + 10);
-    // Bill to
-    doc.setDrawColor(229, 231, 235); doc.line(M, y, W - M, y); y += 20;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(gray[0], gray[1], gray[2]);
-    doc.text(T('FACTURAR A', 'BILL TO'), M, y);
-    doc.text(T('TRABAJO', 'JOB'), W / 2 + 10, y);
-    y += 14; doc.setFontSize(11); doc.setTextColor(dark[0], dark[1], dark[2]);
-    doc.text(c.name || '—', M, y);
-    doc.text((inv.kind || '') + (inv.jobNumber ? '  #' + inv.jobNumber : ''), W / 2 + 10, y);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(gray[0], gray[1], gray[2]);
-    var by = y + 14, jy = y + 14;
-    if (c.email) { doc.text(c.email, M, by); by += 13; }
-    if (c.address) { doc.splitTextToSize(c.address, W / 2 - M - 10).forEach(function (l) { doc.text(l, M, by); by += 13; }); }
+    y = Math.max(y + 110, my + 4);
+    doc.setDrawColor(navy[0], navy[1], navy[2]); doc.setLineWidth(2); doc.line(M, y, W - M, y);
+    doc.setLineWidth(0.8);
+    y += 22;
+
+    // Bill to / From boxes and the thank-you note.
+    var bw = 178, gap = 12;
+    function box(x, title, rows, bold) {
+      var lines = [];
+      rows.forEach(function (r, i) {
+        if (!r) return;
+        doc.splitTextToSize(String(r), bw - 24).forEach(function (t) { lines.push([t, i === 0 && bold]); });
+      });
+      var h = 34 + lines.length * 15 + 8;
+      return { x: x, title: title, lines: lines, h: h };
+    }
+    font('normal', 10.5);
     var ws = inv.workSite || {};
-    var site = [ws.unit ? T('Unidad ', 'Unit ') + ws.unit : '', ws.address || inv.address || inv.building || ''].filter(Boolean).join(', ');
-    doc.splitTextToSize(site, W / 2 - M - 10).forEach(function (l) { doc.text(l, W / 2 + 10, jy); jy += 13; });
-    if (ws.tenant) { doc.splitTextToSize(T('Inquilino: ', 'Tenant: ') + ws.tenant, W / 2 - M - 10).forEach(function (l) { doc.text(l, W / 2 + 10, jy); jy += 13; }); }
-    y = Math.max(by, jy) + 16;
-    // Lines table
-    var cols = [M, M + 150, W - M - 170, W - M - 95, W - M];
-    doc.setFillColor(243, 244, 246); doc.rect(M, y - 12, W - 2 * M, 22, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(dark[0], dark[1], dark[2]);
-    doc.text(T('TIPO DE TRABAJO', 'JOB TYPE'), cols[0] + 6, y + 2);
-    doc.text(T('DESCRIPCIÓN', 'DESCRIPTION'), cols[1], y + 2);
-    doc.text(T('CANT.', 'QTY'), cols[2] + 20, y + 2, { align: 'right' });
-    doc.text(T('PRECIO', 'PRICE'), cols[3] + 30, y + 2, { align: 'right' });
-    doc.text('SUBTOTAL', cols[4] - 6, y + 2, { align: 'right' });
-    y += 24; doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-    (inv.lines || []).forEach(function (l) {
-      var nameL = doc.splitTextToSize(String(l.name || inv.kind || ''), cols[1] - cols[0] - 12);
-      var descL = doc.splitTextToSize(String(l.desc || ''), cols[2] - cols[1] - 30);
-      var h = Math.max(nameL.length, descL.length, 1) * 13;
-      if (y + h > 700) { doc.addPage(); y = 60; }
-      doc.setTextColor(dark[0], dark[1], dark[2]);
-      doc.text(nameL, cols[0] + 6, y);
-      doc.setTextColor(gray[0], gray[1], gray[2]); doc.text(descL, cols[1], y);
-      doc.setTextColor(dark[0], dark[1], dark[2]);
-      doc.text(String(l.qty || 1), cols[2] + 20, y, { align: 'right' });
-      doc.text(money(l.unitPrice != null ? l.unitPrice : l.amount), cols[3] + 30, y, { align: 'right' });
-      doc.text(money(l.amount), cols[4] - 6, y, { align: 'right' });
-      y += h + 8; doc.setDrawColor(229, 231, 235); doc.line(M, y - 6, W - M, y - 6);
+    var site = [ws.unit ? T('Unidad ', 'Unit ') + ws.unit : '', ws.address || inv.address || ''].filter(Boolean).join(', ');
+    var b1 = box(M, T('FACTURAR A', 'BILL TO'), [c.name || '—', c.address, c.phone, c.email], true);
+    var b2 = box(M + bw + gap, T('DE', 'FROM'), [coName, coEmail, coPhone], true);
+    var bh = Math.max(b1.h, b2.h, 96);
+    [b1, b2].forEach(function (b) {
+      doc.setDrawColor(line[0], line[1], line[2]); doc.roundedRect(b.x, y, bw, bh, 6, 6, 'S');
+      font('bold', 8.5); color(navy); doc.text(b.title, b.x + 12, y + 18);
+      var ly = y + 36;
+      b.lines.forEach(function (l) {
+        font(l[1] ? 'bold' : 'normal', 10.5); color(dark);
+        doc.text(l[0], b.x + 12, ly); ly += 15;
+      });
     });
-    // Totals
-    y += 8;
-    var tx = W - M - 170;
+    var tx = M + 2 * (bw + gap) + 10;
+    doc.setFont('times', 'italic'); doc.setFontSize(24); color(navy);
+    doc.text(T('¡Gracias', 'Thank you'), W - M - 6, y + 40, { align: 'right' });
+    font('bold', 9); color(gray);
+    doc.text(T('POR SU PREFERENCIA', 'FOR YOUR BUSINESS!'), W - M - 6, y + 60, { align: 'right' });
+    if (site) {
+      font('normal', 9); color(gray);
+      var sl = doc.splitTextToSize(T('Lugar del trabajo: ', 'Job site: ') + site + (ws.tenant ? ' · ' + T('Inquilino: ', 'Tenant: ') + ws.tenant : ''), W - M - tx);
+      doc.text(sl.slice(0, 3), W - M - 6, y + 80, { align: 'right' });
+    }
+    y += bh + 24;
+
+    // Lines table with a navy header and striped rows.
+    var cx = { desc: M + 12, qty: W - M - 250, unit: W - M - 190, rate: W - M - 120, amt: W - M - 12 };
+    function head() {
+      doc.setFillColor(navy[0], navy[1], navy[2]); doc.rect(M, y, W - 2 * M, 30, 'F');
+      font('bold', 9.5); color([255, 255, 255]);
+      doc.text(T('Descripción', 'Description'), cx.desc, y + 19);
+      doc.text(T('Cant.', 'QTY'), cx.qty, y + 19, { align: 'right' });
+      doc.text(T('Unidad', 'Unit'), cx.unit, y + 19, { align: 'right' });
+      doc.text(T('Precio', 'Rate'), cx.rate, y + 19, { align: 'right' });
+      doc.text(T('Importe', 'Amount'), cx.amt, y + 19, { align: 'right' });
+      y += 30;
+    }
+    head();
+    (inv.lines || []).forEach(function (l, i) {
+      font('normal', 10.5);
+      var nm = doc.splitTextToSize(String(l.name || inv.kind || ''), cx.qty - cx.desc - 40);
+      font('normal', 8.5);
+      var ds = l.desc ? doc.splitTextToSize(String(l.desc), cx.qty - cx.desc - 40) : [];
+      var h = 14 + nm.length * 14 + ds.length * 11 + 8;
+      if (y + h > H - 190) { doc.addPage(); y = 54; head(); }
+      if (i % 2 === 1) { doc.setFillColor(zebra[0], zebra[1], zebra[2]); doc.rect(M, y, W - 2 * M, h, 'F'); }
+      var ry = y + 18;
+      font('normal', 10.5); color(dark); doc.text(nm, cx.desc, ry);
+      doc.text(String(l.qty || 1), cx.qty, ry, { align: 'right' });
+      doc.text(String(l.unit || T('trabajo', 'job')), cx.unit, ry, { align: 'right' });
+      doc.text(money(l.unitPrice != null ? l.unitPrice : l.amount), cx.rate, ry, { align: 'right' });
+      font('bold', 10.5); doc.text(money(l.amount), cx.amt, ry, { align: 'right' });
+      if (ds.length) { font('normal', 8.5); color(gray); doc.text(ds, cx.desc, ry + nm.length * 14 - 2); }
+      y += h;
+      doc.setDrawColor(229, 231, 235); doc.line(M, y, W - M, y);
+    });
+    y += 24;
+    if (y > H - 190) { doc.addPage(); y = 60; }
+
+    // Payment terms (left) and totals (right).
+    var pw = 235, terms = [
+      T('Términos: ', 'Terms: ') + termsLabel(inv.paymentTerms) + '.',
+      T('Vence el ', 'Due on ') + fmtDay(inv.dueDate) + '.'
+    ];
+    if (inv.notes) terms.push(String(inv.notes));
+    font('normal', 10.5);
+    var tl = [];
+    terms.forEach(function (t) { doc.splitTextToSize(t, pw - 24).forEach(function (x) { tl.push(x); }); });
+    var th = 36 + tl.length * 15 + 8;
+    doc.setDrawColor(line[0], line[1], line[2]); doc.roundedRect(M, y, pw, th, 6, 6, 'S');
+    font('bold', 8.5); color(navy); doc.text(T('TÉRMINOS DE PAGO', 'PAYMENT TERMS'), M + 12, y + 18);
+    font('normal', 10.5); color(dark);
+    tl.forEach(function (t, i) { doc.text(t, M + 12, y + 36 + i * 15); });
+
+    var rx = W - M - 230, ty = y + 14;
     var pct = Math.round(Number(inv.taxRate || 0) * 10000) / 100;
     [[T('Subtotal', 'Subtotal'), money(inv.subtotal)], [T('Impuesto', 'Tax') + ' (' + pct + '%)', money(inv.tax)]].forEach(function (r) {
-      doc.setTextColor(gray[0], gray[1], gray[2]); doc.text(r[0], tx, y);
-      doc.setTextColor(dark[0], dark[1], dark[2]); doc.text(r[1], W - M - 6, y, { align: 'right' }); y += 16;
+      font('normal', 10.5); color(dark); doc.text(r[0], rx, ty);
+      font('bold', 10.5); doc.text(r[1], W - M, ty, { align: 'right' });
+      doc.setDrawColor(229, 231, 235); doc.line(rx, ty + 10, W - M, ty + 10);
+      ty += 26;
     });
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
-    doc.text(T('Total', 'Total'), tx, y + 4); doc.text(money(inv.total), W - M - 6, y + 4, { align: 'right' });
-    y += 34;
-    // Terms
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(gray[0], gray[1], gray[2]);
-    doc.text(T('Términos de pago: ', 'Payment terms: ') + termsLabel(inv.paymentTerms) + ' · ' + T('Vence el ', 'Due ') + fmtDay(inv.dueDate), M, y);
-    doc.setFontSize(8);
-    doc.text(String(inv.companyName || ''), M, 760);
+    var paid = paidSum(inv);
+    if (paid > 0) {
+      font('normal', 10.5); color(dark); doc.text(T('Pagado', 'Paid'), rx, ty);
+      font('bold', 10.5); doc.text('-' + money(paid), W - M, ty, { align: 'right' });
+      ty += 26;
+    }
+    doc.setFillColor(navy[0], navy[1], navy[2]); doc.roundedRect(rx, ty - 8, W - M - rx, 50, 6, 6, 'F');
+    font('bold', 12); color([255, 255, 255]); doc.text(T('TOTAL A PAGAR', 'TOTAL DUE'), rx + 14, ty + 22);
+    font('bold', 19); doc.text(money(Math.max(0, Number(inv.total || 0) - paid)), W - M - 14, ty + 24, { align: 'right' });
+
+    // Footer on every page.
+    var pages = doc.internal.getNumberOfPages();
+    for (var pg = 1; pg <= pages; pg++) {
+      doc.setPage(pg);
+      doc.setDrawColor(229, 231, 235); doc.line(M, H - 48, W - M, H - 48);
+      font('bold', 9.5); color(navy); doc.text(coName.toUpperCase(), M, H - 30);
+      font('normal', 8.5); color(gray);
+      doc.text(T('Factura hecha con WalkCheck', 'Invoice made with WalkCheck') + (pages > 1 ? '  ·  ' + pg + '/' + pages : ''), W - M, H - 30, { align: 'right' });
+    }
     return doc;
   }
   function pdfName(inv) {
