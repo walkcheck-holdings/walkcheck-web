@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="/web/compania/pc.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/phone.css?v=20261029c">
 <link rel="stylesheet" href="/web/compania/billing.css?v=20261104b">
-<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112f">
+<link rel="stylesheet" href="/web/compania/jobs.css?v=20261112g">
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261112d">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261102a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
@@ -3074,7 +3074,36 @@ function jobCardHtml(j, extraClass, posStyle){
     </div>
     <div class="jcard-kind">${j.isTask===true?'📋 ':''}${esc(title)}</div>
     ${meta ? `<div class="jcard-meta">${esc(meta)}</div>` : ''}
+    ${jobCardMore(j, g.h)}
   </div>`;
+}
+/* Tall cards: fill the space with what the office wants to see at a glance. */
+function jobCardMore(j, h){
+  let rows = Math.floor((h - 70) / 17);
+  if (rows < 1) return '';
+  const en = loginLang()==='en';
+  const out = [];
+  const client = j.clientName || '';
+  const ten = j.tenantName || (j.payerSet ? j.contactName : (client ? '' : j.contactName)) || '';
+  const tel = j.tenantPhone || j.contactPhone || '';
+  if (client && rows > 0) { out.push(`<div class="jcard-x">💵 ${esc(client)}</div>`); rows--; }
+  if ((ten || tel) && rows > 0) { out.push(`<div class="jcard-x">👤 ${esc([ten, tel].filter(Boolean).join(' · '))}</div>`); rows--; }
+  const r = j.report || {};
+  const nPh = (typeof jobBeforePhotos === 'function' ? jobBeforePhotos(j).length + jobAfterPhotos(j).length : 0);
+  const nNotes = (j.notesLog || []).length;
+  const tags = [];
+  if (nPh) tags.push('📷 ' + nPh);
+  if (nNotes) tags.push('💬 ' + nNotes);
+  if (r.completed) tags.push('✓ Job Report');
+  const tagRow = tags.length ? 1 : 0;
+  const ins = String(j.instructions || j.description || '').trim();
+  if (ins && rows - tagRow > 0) {
+    const lines = Math.min(6, rows - tagRow);
+    out.push(`<div class="jcard-ins" style="-webkit-line-clamp:${lines}">📝 ${esc(ins)}</div>`);
+    rows -= lines;
+  }
+  if (tagRow && rows > 0) out.push(`<div class="jcard-tags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>`);
+  return out.join('');
 }
 function quarterSlotsHtml(extraAttr){
   const parts = [];

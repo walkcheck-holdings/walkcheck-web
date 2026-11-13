@@ -96,6 +96,13 @@ body.view-clients #officePane, body.view-requests #officePane, body.view-payment
 .jcard2 .jcard-top { align-items: center; }
 .jcard2 .jcard-when { flex: 1 1 auto; min-width: 0; font-size: 12px; font-weight: 800; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .jcard2 .jcard-kind { text-transform: none; font-size: 13.5px; letter-spacing: 0; flex: 0 0 auto; }
+/* Tall cards: client, tenant, instructions and counts. */
+.jcard2 .jcard-x { font-size: 12px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 17px; }
+.jcard2 .jcard-ins { font-size: 12px; color: #4B5563; line-height: 17px; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; margin-top: 2px; }
+.jcard2 .jcard-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.jcard2 .jcard-tags span { font-size: 11px; font-weight: 700; background: #F3F4F6; color: #374151; border-radius: 999px; padding: 1px 7px; line-height: 16px; }
+.jcard2.done .jcard-x, .jcard2.done .jcard-ins { color: #6B7280; }
+.jcard2.done .jcard-tags span { background: #E5E7EB; }
 /* Short jobs: one line with time + name, address below. */
 .jcard2.short { padding: 5px 8px 5px 12px; gap: 2px; justify-content: center; }
 .jcard2 .jcard-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
