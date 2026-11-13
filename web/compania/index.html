@@ -19,7 +19,7 @@
 <script src="/js/jobTemplates.js"></script>
 <script src="/js/paymentLinks.js"></script>
 <script src="/js/walkthroughGuide.js"></script>
-<script src="/web/entrar.js"></script>
+<script src="/web/entrar.js?v=20261113a"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="/web/compania/base.css?v=20261029c">
@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="/web/compania/jobview.css?v=20261112d">
 <link rel="stylesheet" href="/web/compania/dashboard.css?v=20261113a">
 <link rel="stylesheet" href="/web/compania/jobslist.css?v=20261102a">
-<link rel="stylesheet" href="/web/compania/team.css?v=20261104a">
+<link rel="stylesheet" href="/web/compania/team.css?v=20261113b">
 <link rel="stylesheet" href="/web/compania/lowvolt.css?v=20261111b">
 </head>
 <body class="tab-agenda">
@@ -664,7 +664,7 @@ async function openSubscription(){
   let used = null;
   try {
     const team = await db.collection('users').where('companyId', '==', cid()).get();
-    used = team.docs.filter(x => String(x.data().role || 'worker') !== 'owner').length;
+    used = team.docs.filter(x => String(x.data().role || 'worker') !== 'owner' && x.data().disabled !== true).length;
   } catch(_){}
   const teamLine = used == null ? '' : (limit
     ? (en ? `${used} of ${limit} workers` : `${used} de ${limit} trabajadores`) + (used >= limit ? (en ? ' — limit reached. Change plan to add more.' : ' — llegaste al límite. Cambia de plan para añadir más.') : '')
@@ -1318,7 +1318,8 @@ async function loadBoard(){
       startDate: u.startDate || '',
       notes: u.notes || '',
       mustChangePassword: u.mustChangePassword === true,
-      tempPassword: u.tempPassword || ''
+      tempPassword: u.tempPassword || '',
+      disabled: u.disabled === true
     });
   });
   const me = auth.currentUser && auth.currentUser.uid;
@@ -1330,7 +1331,8 @@ async function loadBoard(){
       email: String(profile.email || (auth.currentUser && auth.currentUser.email) || '').toLowerCase()
     });
   }
-  techs = tDocs;
+  teamAll = tDocs;
+  techs = tDocs.filter(t => !t.disabled);
   listenCompanyJobs(id);
   customTypes = [];
   const ts = await ctP;
@@ -1949,7 +1951,7 @@ async function setMemberRole(uid, role){
   } catch(e){ alert(e.message||e); }
 }
 function openWorker(uid){
-  const t = techs.find(x => x.uid === uid);
+  const t = teamOf(uid);
   if (!t) return;
   closeMore();
   document.body.classList.add('view-worker');
@@ -2001,7 +2003,7 @@ function openWorker(uid){
 }
 /* Edit a team member's info (owner/admin). Username and role stay as they are. */
 function openEditWorker(uid){
-  const t = techs.find(x => x.uid === uid);
+  const t = teamOf(uid);
   if (!t || !canManageRoles()) return;
   const en = loginLang() === 'en';
   const L = (es, e) => en ? e : es;
@@ -2023,7 +2025,7 @@ function openEditWorker(uid){
   </div>`;
 }
 async function saveWorkerInfo(uid){
-  const t = techs.find(x => x.uid === uid);
+  const t = teamOf(uid);
   if (!t) return;
   const en = loginLang() === 'en';
   const v = id => (($(id) && $(id).value) || '').trim();
@@ -2049,7 +2051,7 @@ async function saveWorkerInfo(uid){
 /* New temporary password for a worker (server function: the browser can't
    change someone else's password). They must change it when they sign in. */
 async function resetWorkerPassword(uid){
-  const t = techs.find(x => x.uid === uid);
+  const t = teamOf(uid);
   if (!t) return;
   const en = loginLang() === 'en';
   if (!confirm(en ? `Give ${t.name} a new temporary password? The old one stops working.` : `¿Darle a ${t.name} una contraseña temporal nueva? La anterior deja de funcionar.`)) return;
@@ -2070,7 +2072,11 @@ async function resetWorkerPassword(uid){
         <p><b>${esc(en ? 'Temporary password' : 'Contraseña temporal')}:</b> ${esc(j.tempPassword)}</p>
       </div>
       <p class="muted">${esc(en ? 'Send it to them. When they sign in they choose their own password.' : 'Pásasela. Al entrar, tendrá que poner su propia contraseña.')}</p>
-      <button class="btn" onclick="$('modal').classList.add('hidden');openWorker('${uid}')">${esc(en ? 'Done' : 'Listo')}</button></div>`;
+      ${t.phone ? `<a class="btn" style="background:#25D366" target="_blank" rel="noopener" href="${esc(waLink(t.phone, (en
+          ? `Hi ${t.name}, your WalkCheck access:\nUser: ${String(t.username || t.email || '').replace(/@workers\.walkcheck\.app$/, '')}\nTemporary password: ${j.tempPassword}\nSign in at walkcheck.app or in the WalkCheck app. It will ask you to choose your own password.`
+          : `Hola ${t.name}, tu acceso a WalkCheck:\nUsuario: ${String(t.username || t.email || '').replace(/@workers\.walkcheck\.app$/, '')}\nContraseña temporal: ${j.tempPassword}\nEntra en walkcheck.app o en la app WalkCheck. Te pedirá poner tu propia contraseña.`)))}">💬 ${esc(en ? 'Send by WhatsApp' : 'Mandar por WhatsApp')}</a>`
+        : `<p class="muted">${esc(en ? 'Add their phone to send it by WhatsApp.' : 'Ponle su teléfono para mandarlo por WhatsApp.')}</p>`}
+      <button class="btn ghost" onclick="$('modal').classList.add('hidden');if(document.body.classList.contains('view-roles'))openRolesPane();else openWorker('${uid}')">${esc(en ? 'Done' : 'Listo')}</button></div>`;
   } catch(e){
     alert((en ? 'Could not change it: ' : 'No se pudo cambiar: ') + (e.message || e));
   }
@@ -2086,10 +2092,127 @@ async function navNewQuote(){
   if (typeof openQuotes === 'function') await openQuotes();
   if (typeof openQuoteEditor === 'function') openQuoteEditor();
 }
-function openRolesPane(){
+/* ===== Workers page: cards with today's work, search, plan, deactivate, resend access ===== */
+let teamAll = [];
+let teamUi = { q: '', role: 'all' };
+function teamOf(uid){ return teamAll.find(x => x.uid === uid) || techs.find(x => x.uid === uid); }
+function teamToday(uid){
+  const now = new Date();
+  const src = typeof scheduleItems === 'function' ? scheduleItems() : jobs.filter(j => !jobArchived(j));
+  const today = ymd(now);
+  const list = src.filter(j => accountUidOf(j) === uid && String(j.scheduledDate || '').slice(0, 10) === today);
+  const done = list.filter(jobDone).length;
+  const late = list.filter(j => !jobDone(j) && jobEnd(j, jobTime(j)) < now).length;
+  let ms = 0;
+  list.forEach(j => {
+    const v = j._visit || {};
+    const toD = x => { if (!x) return null; const d = x.toDate ? x.toDate() : new Date(x); return isNaN(d) ? null : d; };
+    const a = toD(v.startedAt || v.visitStartedAt || j.visitStartedAt || j.startedAt);
+    if (!a || !sameDay(a, now)) return;
+    const b = toD(v.completedAt || j.completedAt || j.closedAt) || (jobDone(j) ? null : now);
+    if (b && b > a) ms += b - a;
+  });
+  return { n: list.length, done, late, hours: ms / 3600000 };
+}
+function waLink(phone, text){
+  const tel = String(phone || '').replace(/[^\d+]/g, '').replace(/^\+/, '').replace(/^(\d{10})$/, '1$1');
+  return 'https://wa.me/' + tel + (text ? '?text=' + encodeURIComponent(text) : '');
+}
+async function openRolesPane(){
   if (!canManageRoles()) return;
   document.body.classList.add('view-roles');
   document.body.classList.remove('view-hours', 'view-reports', 'view-companies');
+  const pane = $('rolesPane');
+  if (!pane) return;
+  const en = loginLang() === 'en';
+  const L = (es, e) => en ? e : es;
+  if (!teamAll.length) teamAll = techs.slice();
+  const q = teamUi.q.trim().toLowerCase();
+  const roleOf = t => String(t.role || 'worker').toLowerCase();
+  const people = teamAll.filter(t => !t.disabled && (teamUi.role === 'all' || roleOf(t) === teamUi.role)
+    && (!q || [t.name, t.phone, t.username, t.email].join(' ').toLowerCase().includes(q)));
+  const off = teamAll.filter(t => t.disabled);
+  const active = teamAll.filter(t => !t.disabled);
+  const count = r => active.filter(t => roleOf(t) === r).length;
+  const chip = (key, label, n) => `<button type="button" class="tm-chip${teamUi.role === key ? ' on' : ''}" onclick="teamUi.role='${key}';openRolesPane()">${esc(label)} <b>${n}</b></button>`;
+  const roleCls = r => ({ owner: 'own', admin: 'own', manager: 'mgr', supervisor: 'sup', dispatcher: 'dis' })[r] || 'wrk';
+  const card = t => {
+    const r = roleOf(t), locked = r === 'owner' || r === 'admin';
+    const ini = String(t.name || '?').trim().split(/\s+/).slice(0, 2).map(x => x.charAt(0).toUpperCase()).join('');
+    const d = teamToday(t.uid);
+    const today = d.n
+      ? `<span>${esc(L('Hoy', 'Today'))}: <b>${d.n}</b> ${esc(d.n === 1 ? L('trabajo', 'job') : L('trabajos', 'jobs'))}</span>` +
+        `<span class="ok">✓ ${d.done} ${esc(L('hechos', 'done'))}</span>` +
+        (d.late ? `<span class="late">⚠ ${d.late} ${esc(L('atrasado', 'late'))}${d.late > 1 ? 's' : ''}</span>` : '')
+      : `<span class="free">${esc(L('Libre hoy', 'Free today'))}</span>`;
+    const hrs = d.hours > 0.05 ? `<span>⏱ ${d.hours.toFixed(1)} h ${esc(L('hoy', 'today'))}</span>` : '';
+    const tel = String(t.phone || '').replace(/[^\d+]/g, '');
+    const never = t.mustChangePassword === true;
+    return `<div class="tm-card">
+      <button type="button" class="tm-main" onclick="openWorker('${t.uid}')">
+        <span class="tm-av ${roleCls(r)}">${esc(ini || '?')}</span>
+        <span class="tm-who"><b>${esc(t.name || '')}</b>
+          <span class="tm-role ${roleCls(r)}">${esc(roleWord(r))}</span>${never ? `<span class="tm-new">${esc(L('No ha entrado todavía', 'Has not signed in yet'))}</span>` : ''}</span>
+        <span class="tm-go">›</span>
+      </button>
+      <div class="tm-today">${today}${hrs}</div>
+      <div class="tm-acts">
+        ${tel ? `<a class="tm-act" href="tel:${esc(tel)}">📞 ${esc(L('Llamar', 'Call'))}</a><a class="tm-act" target="_blank" rel="noopener" href="${esc(waLink(tel))}">💬 WhatsApp</a>` : `<span class="tm-act off">${esc(L('Sin teléfono', 'No phone'))}</span>`}
+        ${!locked ? `<button type="button" class="tm-act" onclick="resetWorkerPassword('${t.uid}')">🔑 ${esc(L('Reenviar acceso', 'Resend access'))}</button>
+        <button type="button" class="tm-act danger" onclick="setWorkerActive('${t.uid}', false)">${esc(L('Desactivar', 'Deactivate'))}</button>` : ''}
+      </div>
+    </div>`;
+  };
+  let plan = '', limit = 0;
+  try {
+    const co = (await db.collection('companies').doc(cid()).get()).data() || {};
+    plan = (window.normalizePlan && normalizePlan(co.plan)) || co.plan || '';
+    limit = (window.PLAN_WORKER_LIMIT || {})[plan] || 0;
+  } catch(_){}
+  const used = active.filter(t => roleOf(t) !== 'owner').length;
+  const planLine = limit
+    ? `<div class="tm-plan${used >= limit ? ' full' : ''}"><div><b>${used}</b> ${esc(L('de', 'of'))} <b>${limit}</b> ${esc(L('trabajadores en tu plan', 'workers in your plan'))}</div><div class="tm-bar"><i style="width:${Math.min(100, Math.round(used * 100 / limit))}%"></i></div></div>`
+    : `<div class="tm-plan"><div><b>${used}</b> ${esc(L('trabajadores', 'workers'))}</div></div>`;
+  pane.innerHTML = `<div class="tm-page">
+    <div class="tm-head"><div><h2>${esc(L('Trabajadores', 'Workers'))}</h2>
+      <p class="muted">${esc(L('Tu equipo, lo que tiene cada uno hoy y su acceso.', 'Your team, what each one has today and their access.'))}</p></div>
+      ${canCreateWorkers() ? `<button class="tm-btn" onclick="openCreateWorker()">+ ${esc(L('Crear trabajador', 'Create worker'))}</button>` : ''}</div>
+    ${planLine}
+    <div class="tm-tools"><input id="tmSearch" type="search" placeholder="${esc(L('Buscar por nombre o teléfono…', 'Search by name or phone…'))}" value="${esc(teamUi.q)}" oninput="teamUi.q=this.value;openRolesPane()">
+      <div class="tm-chips">${chip('all', L('Todos', 'All'), active.length)}${chip('worker', L('Técnicos', 'Technicians'), count('worker'))}${count('supervisor') ? chip('supervisor', L('Supervisores', 'Supervisors'), count('supervisor')) : ''}${count('manager') ? chip('manager', 'Managers', count('manager')) : ''}${count('dispatcher') ? chip('dispatcher', L('Despachadores', 'Dispatchers'), count('dispatcher')) : ''}</div></div>
+    <div class="tm-grid">${people.map(card).join('') || `<p class="muted">${esc(q ? L('Nadie con ese nombre.', 'Nobody with that name.') : uiT('noTeam'))}</p>`}</div>
+    ${off.length ? `<details class="tm-off"><summary>${esc(L('Desactivados', 'Deactivated'))} (${off.length})</summary>
+      <p class="muted">${esc(L('No pueden entrar y no cuentan en tu plan. Su historial, fotos y trabajos se quedan.', 'They cannot sign in and do not count in your plan. Their history, photos and jobs stay.'))}</p>
+      ${off.map(t => `<div class="tm-offrow"><span><b>${esc(t.name || '')}</b> <span class="muted">· ${esc(roleWord(roleOf(t)))}</span></span>
+        <button type="button" class="tm-act" onclick="setWorkerActive('${t.uid}', true)">${esc(L('Activar otra vez', 'Activate again'))}</button></div>`).join('')}</details>` : ''}
+  </div>`;
+  if (q && $('tmSearch')) { const s = $('tmSearch'); s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+}
+/* Deactivate (or activate again) instead of deleting: history stays, plan seat frees up. */
+async function setWorkerActive(uid, on){
+  const t = teamOf(uid);
+  if (!t || !canManageRoles()) return;
+  const en = loginLang() === 'en';
+  const pending = jobs.filter(j => accountUidOf(j) === uid && !jobDone(j) && !jobArchived(j)).length;
+  const msg = on
+    ? (en ? `Activate ${t.name} again? They can sign in again and count in your plan.` : `¿Activar otra vez a ${t.name}? Podrá entrar de nuevo y vuelve a contar en tu plan.`)
+    : (en ? `Deactivate ${t.name}?\n\n• They can no longer sign in (web and app).\n• They no longer count in your plan.\n• Their history, photos and jobs STAY.` : `¿Desactivar a ${t.name}?\n\n• Ya no puede entrar (web ni app).\n• Ya no cuenta en tu plan.\n• Su historial, fotos y trabajos SE QUEDAN.`)
+      + (pending ? (en ? `\n\n⚠ They still have ${pending} unfinished job(s): move them to another technician.` : `\n\n⚠ Todavía tiene ${pending} trabajo(s) sin terminar: muévelos a otro técnico.`) : '');
+  if (!confirm(msg)) return;
+  try {
+    await db.collection('users').doc(uid).set({
+      disabled: !on,
+      disabledAt: on ? firebase.firestore.FieldValue.delete() : firebase.firestore.FieldValue.serverTimestamp(),
+      disabledBy: on ? firebase.firestore.FieldValue.delete() : ((auth.currentUser && auth.currentUser.uid) || ''),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    t.disabled = !on;
+    techs = teamAll.filter(x => !x.disabled);
+    openRolesPane();
+  } catch(e){ alert((en ? 'Could not change it: ' : 'No se pudo cambiar: ') + (e.message || e)); }
+}
+function openRolesPaneOld(){
+  if (!canManageRoles()) return;
   const pane = $('rolesPane');
   if (!pane) return;
   pane.innerHTML = `<h3>${esc(uiT('teamRoles'))}</h3>
@@ -2118,7 +2241,7 @@ function openCreateWorker(){
     <label class="muted">${esc(en ? 'Username * (e.g. juan.perez)' : 'Usuario * (ej: juan.perez)')}</label>
     <input id="cwUser" type="text" autocapitalize="none" spellcheck="false">
     <label class="muted">${esc(en ? 'Role' : 'Rol')}</label>
-    <select id="cwRole"><option value="worker">${esc(uiT('workerRole'))}</option><option value="supervisor">${esc(uiT('supervisor'))}</option><option value="manager">${esc(uiT('manager'))}</option></select>
+    <select id="cwRole"><option value="worker">${esc(uiT('workerRole'))}</option><option value="supervisor">${esc(uiT('supervisor'))}</option><option value="manager">${esc(uiT('manager'))}</option><option value="dispatcher">${esc(uiT('dispatcher'))}</option></select>
     <div class="err" id="cwErr"></div>
     <button class="btn" id="cwGo" onclick="createWorker()">${esc(en ? 'Create' : 'Crear')}</button>
     <button class="btn ghost" onclick="$('modal').classList.add('hidden')">${esc(uiT('close'))}</button>
@@ -2145,7 +2268,7 @@ async function createWorker(){
     const limit = (window.PLAN_WORKER_LIMIT || {})[plan];
     if (limit) {
       const team = await db.collection('users').where('companyId', '==', cid()).get();
-      const used = team.docs.filter(d => String(d.data().role || 'worker') !== 'owner').length;
+      const used = team.docs.filter(d => String(d.data().role || 'worker') !== 'owner' && d.data().disabled !== true).length;
       if (used >= limit) {
         err.textContent = en
           ? `Your plan allows up to ${limit} workers and you have ${used}. Change plan in My subscription to add more.`
@@ -2170,7 +2293,8 @@ async function createWorker(){
     try {
       await db.collection('companies').doc(cid()).collection('members').doc(wuid).set({ uid: wuid, role, email, displayName: name }, { merge: true });
     } catch(_){}
-    techs.push({ uid: wuid, name, role, email });
+    techs.push({ uid: wuid, name, role, email, username, mustChangePassword: true, tempPassword: temp });
+    teamAll.push(techs[techs.length - 1]);
     $('modal').innerHTML = `<div class="box">
       <h3>✅ ${esc(en ? 'Worker created' : 'Trabajador creado')}</h3>
       <div class="card" style="margin:10px 0">

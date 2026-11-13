@@ -29,6 +29,7 @@
     if (SUPER[String(email || '').toLowerCase()]) return true;
     if (!profileDoc || !profileDoc.exists) return false;
     var p = profileDoc.data() || {};
+    if (p.disabled === true) return false; // deactivated by the company
     return !!String(p.companyId || '').trim();
   };
   // No panel access until Stripe confirms payment (company status 'pending').
