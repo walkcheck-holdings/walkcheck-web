@@ -434,6 +434,7 @@ let companyType = 'property_management';
 let companyName = '';
 let companyLogo = '';
 let companyPhone = '';
+let companyInvoiceEmail = ''; // each company's own email on its invoices
 let companyTaxRate = 0;
 let companyLogoData = '';   // company logo (small PNG data URL) for invoices and PDFs
 let typePrices = {};
@@ -1268,6 +1269,7 @@ async function loadBoard(){
     companyName = (co.exists && co.data().name) || '';
     companyLogo = (co.exists && (co.data().logoUrl || co.data().logo || '')) || '';
     companyPhone = (co.exists && (co.data().phone || '')) || '';
+    companyInvoiceEmail = (co.exists && (co.data().invoiceEmail || '')) || '';
     companyTaxRate = (co.exists && Number(co.data().taxRate)) || 0;
     companyLogoData = (co.exists && co.data().logoData) || '';
     emptyStart = !!(co.exists && co.data().emptyStart);
@@ -3995,7 +3997,7 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261112a"></script>
+<script src="/web/compania/billing.js?v=20261112b"></script>
 <script src="/web/compania/quotes.js?v=20261105a"></script>
 <script src="/web/compania/jobs.js?v=20261112c"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>

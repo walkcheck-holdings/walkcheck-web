@@ -189,7 +189,7 @@
     var navy = [15, 42, 68], gray = [107, 114, 128], dark = [17, 24, 39], line = [209, 213, 219], zebra = [243, 246, 249];
     var c = { name: inv.client || '', email: inv.clientEmail || '', address: inv.clientAddress || '', phone: inv.clientPhone || '' };
     var coName = String(inv.companyName || companyName || '');
-    var coEmail = inv.companyEmail || (auth.currentUser && auth.currentUser.email) || '';
+    var coEmail = inv.companyEmail || companyInvoiceEmail || (auth.currentUser && auth.currentUser.email) || '';
     var coPhone = inv.companyPhone || companyPhone || '';
     function color(a) { doc.setTextColor(a[0], a[1], a[2]); }
     function font(style, size) { doc.setFont('helvetica', style); doc.setFontSize(size); }
@@ -457,6 +457,14 @@
         '<div style="flex:1;min-width:180px"><p class="muted" style="margin:0 0 6px">' + esc(T('Sale en tus facturas y en el PDF. Usa un PNG o JPG cuadrado.', 'Shown on your invoices and PDF. Use a square PNG or JPG.')) + '</p>' +
         '<input id="logoFile" type="file" accept="image/png,image/jpeg" onchange="saveCompanyLogo(this)"></div></div>' +
         '<div class="err" id="logoErr"></div></div>' +
+      '<div class="card"><h3 style="margin:0 0 8px">' + esc(T('Datos en tus facturas', 'Details on your invoices')) + '</h3>' +
+        '<p class="muted" style="margin:0 0 8px">' + esc(T('Salen en el cuadro "De" de cada factura. Cuando el cliente responde el correo de la factura, la respuesta llega a este correo.', 'Shown in the "From" box of every invoice. When the client replies to the invoice email, the reply goes to this email.')) + '</p>' +
+        '<label class="muted" for="coInvMail">' + esc(T('Correo para facturas', 'Invoice email')) + '</label>' +
+        '<input id="coInvMail" type="email" placeholder="info@tucompania.com" value="' + esc(companyInvoiceEmail || '') + '">' +
+        '<label class="muted" for="coInvPhone">' + esc(T('Teléfono de la compañía', 'Company phone')) + '</label>' +
+        '<input id="coInvPhone" type="text" inputmode="tel" placeholder="(305) 555-0100" value="' + esc(companyPhone || '') + '">' +
+        '<div class="err" id="coInvErr"></div>' +
+        '<button class="btn" style="margin-top:8px" id="coInvSave" onclick="saveInvoiceDetails()">' + esc(T('Guardar', 'Save')) + '</button></div>' +
       // Card payments: each company connects its own Stripe (money goes to it).
       '<div class="card" id="payCard"><h3 style="margin:0 0 8px">💳 ' + esc(T('Cobrar con tarjeta', 'Get paid by card')) + '</h3>' +
         '<p class="muted" style="margin:0 0 8px">' + esc(T('Conecta tu cuenta de Stripe y cada factura que envíes llevará el botón "Pagar en línea". El dinero va directo a tu cuenta y la factura se marca Pagada sola.', 'Connect your Stripe account and every invoice you send gets a "Pay online" button. The money goes straight to you and the invoice is marked Paid by itself.')) + '</p>' +
@@ -543,6 +551,25 @@
     };
     img.onerror = function () { if (err) err.textContent = T('No se pudo leer la imagen.', 'Could not read the image.'); };
     reader.readAsDataURL(f);
+  };
+
+  window.saveInvoiceDetails = async function () {
+    if (!canSeeMoney()) return;
+    var mail = (($('coInvMail') && $('coInvMail').value) || '').trim().toLowerCase();
+    var phone = (($('coInvPhone') && $('coInvPhone').value) || '').trim();
+    var err = $('coInvErr'), btn = $('coInvSave');
+    err.textContent = '';
+    if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { err.textContent = T('Revisa el correo.', 'Check the email.'); return; }
+    btn.disabled = true;
+    try {
+      await db.collection('companies').doc(cid()).set({ invoiceEmail: mail, phone: phone, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      companyInvoiceEmail = mail; companyPhone = phone;
+      btn.textContent = T('✓ Guardado', '✓ Saved');
+      setTimeout(function () { btn.disabled = false; btn.textContent = T('Guardar', 'Save'); }, 1500);
+    } catch (e) {
+      err.textContent = T('No se pudo guardar: ', 'Could not save: ') + (e.message || e);
+      btn.disabled = false;
+    }
   };
 
   window.saveBillingSettings = async function () {
@@ -1065,7 +1092,7 @@
       }
       var html = invoiceEmailHtml(inv, body, url, payUrl);
       if (payUrl) body = body + '\n\n' + T('Pagar en línea con tarjeta: ', 'Pay online by card: ') + payUrl;
-      var replyTo = (auth.currentUser && auth.currentUser.email) || '';
+      var replyTo = companyInvoiceEmail || (auth.currentUser && auth.currentUser.email) || '';
       var mailDoc = {
         to: [to],
         companyId: cid(),
