@@ -39,6 +39,16 @@ body.jv-open { overflow: hidden; }
 .jv-total { text-align: right; }
 .jv-actions { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; background: #fff; border-top: 1px solid #E5E7EB; margin: 0 -24px; padding: 12px 24px; }
 .jv-actions .btn, .jv-small { width: auto; margin: 0; }
+body.jv-open #modal { z-index: 950; }
+.jv-edit input, .jv-edit textarea { width: 100%; margin: 2px 0 10px; }
+.jv-ecols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.jv-eline { display: grid; grid-template-columns: 1.2fr 2fr 70px 100px 32px; gap: 8px; align-items: start; margin-bottom: 8px; }
+.jv-eline input, .jv-eline textarea { margin: 0; }
+.jv-eline-x { width: 32px; height: 32px; border-radius: 50%; border: 0; background: #FEE2E2; color: #B91C1C; font-size: 18px; font-weight: 800; cursor: pointer; margin-top: 4px; }
+.jv-sec > textarea#jvQNote { width: 100%; margin: 8px 0 0; }
+.jv-send input, .jv-send textarea { width: 100%; margin: 2px 0 10px; text-align: left; }
+.jv-send .jv-label { display: block; text-align: left; }
+@media (max-width: 640px) { .jv-ecols { grid-template-columns: 1fr; } .jv-eline { grid-template-columns: 1fr 70px 32px; } .jv-eline textarea { grid-column: 1 / -1; grid-row: 2; } }
 .jv-small { padding: 8px 12px; font-size: 14px; }
 .jv-label { font-weight: 700; display: block; margin-bottom: 6px; }
 .jv-newnote textarea { width: 100%; box-sizing: border-box; }

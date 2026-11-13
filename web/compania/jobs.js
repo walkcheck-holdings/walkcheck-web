@@ -769,7 +769,7 @@
     try {
       await db.collection('jobs').doc(id).update(patch);
       $('modal').classList.add('hidden');
-      openJobDetail(id);
+      if (!(typeof jvAfterJobChange === 'function' && jvAfterJobChange(id))) openJobDetail(id);
     } catch (e) { err.textContent = e.message || e; $('mvGo').disabled = false; }
   };
   function partiesViewHtml(j, phoneHtml) {

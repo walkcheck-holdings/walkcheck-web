@@ -182,8 +182,10 @@
         (x.beforePhotos || []).forEach(function (u) { add(src, u); });
       });
     } catch (_) {}
+    var wtData = null;
     try {
       var wt = await db.collection('walkthroughs').doc(j.id).get();
+      if (wt.exists) wtData = wt.data();
       if (wt.exists) (wt.data().findings || []).forEach(function (f) {
         var src = L('Recorrido', 'Walkthrough') + (f.itemLabel || f.location ? ' · ' + (f.itemLabel || f.location) : '');
         (f.photoUrls || []).forEach(function (u) { add(src, u); });
@@ -204,7 +206,7 @@
     });
     (j.notesLog || []).forEach(function (n) { if (n.photo && !/\.pdf(\?|$)/i.test(n.photo)) add(L('Nota', 'Note'), n.photo); });
     appNotes.forEach(function (n) { add(L('Nota', 'Note'), n.photo); });
-    return { insp: insp, appNotes: appNotes, photos: photos, lost: lost };
+    return { insp: insp, appNotes: appNotes, photos: photos, lost: lost, wt: wtData };
   }
 
   function photosHtml() {
@@ -234,7 +236,7 @@
     if (!j || S.id !== id) { if (!j) closeJobVisit(); return; }
     var ex = await loadExtras(j);
     if (S.id !== id) return;
-    S.job = j; S.insp = ex.insp; S.appNotes = ex.appNotes; S.photos = ex.photos; S.lost = ex.lost;
+    S.job = j; S.insp = ex.insp; S.appNotes = ex.appNotes; S.photos = ex.photos; S.lost = ex.lost; S.wt = ex.wt; S.editing = false; S.editForm = null; S.editLines = null;
     render();
   };
 
@@ -322,8 +324,10 @@
       b.push('<button type="button" class="btn ghost" onclick="closeJobVisit();askArchiveJob(\'' + id + '\')">' + esc(L('Archivar', 'Archive')) + '</button>');
       return '<div class="jv-actions">' + b.join('') + '</div>';
     }
+    b.push('<button type="button" class="btn ghost" onclick="jvReportPdf()">⬇ ' + esc(L('Descargar PDF', 'Download PDF')) + '</button>');
+    if (canSeeMoney()) b.push('<button type="button" class="btn ghost" onclick="jvSendReport()">✉️ ' + esc(L('Enviar', 'Send')) + '</button>');
     if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="openVisitDate(\'' + id + '\')">📅 ' + esc(L('Cambiar fecha', 'Change date')) + '</button>');
-    if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="jvEdit(\'' + id + '\')">' + esc(L('Editar trabajo', 'Edit job')) + '</button>');
+    if (!jobArchived(j)) b.push('<button type="button" class="btn ghost" onclick="jvEdit(\'' + id + '\')">' + esc(L('Página completa', 'Full page')) + '</button>');
     if (canSeeMoney() && !jobArchived(j)) b.push(j.invoiceId
       ? '<button type="button" class="btn ghost" onclick="closeJobVisit();openInvoice(\'' + esc(j.invoiceId) + '\')">' + esc(L('Ver factura', 'View invoice')) + '</button>'
       : '<button type="button" class="btn ghost" onclick="closeJobVisit();openInvoiceEditor(\'' + id + '\')">' + esc(L('Crear factura', 'Create invoice')) + '</button>');
@@ -336,6 +340,10 @@
 
   /* ---------- Info ---------- */
   function infoTabHtml(j) {
+    if (S.editing) return infoEditHtml(j);
+    return infoViewHtml(j) + infoNotesHtml(j);
+  }
+  function infoViewHtml(j) {
     var ins = String(j.instructions || j.description || (jobVisits(j)[0] || {}).instructions || '').trim();
     var done = completedInfo(j, S.insp);
     var vs = jobVisits(j);
@@ -355,19 +363,267 @@
         }).join('') + '</ul>' +
         (money && jobLineTotal(j) > 0 ? '<p class="jv-total">' + esc(L('Total', 'Total')) + ' <b>' + usd(jobLineTotal(j)) + '</b></p>' : '')
       : '<p class="muted">' + esc(L('Este trabajo no tiene líneas de producto o servicio.', 'This job has no product or service lines.')) + '</p>';
-    return '<section class="jv-sec"><h3>' + esc(L('Instrucciones', 'Instructions')) + '</h3>' +
+    var canEdit = canAssign() && !jobArchived(j);
+    var canMove = canEdit && !jobDone(j) && typeof openMoveJob === 'function';
+    return '<section class="jv-sec"><div class="jv-sec-head"><h3>' + esc(L('Instrucciones', 'Instructions')) + '</h3>' +
+        (canEdit ? '<button type="button" class="btn ghost jv-small" onclick="jvStartEdit()">✏️ ' + esc(L('Editar información', 'Edit information')) + '</button>' : '') + '</div>' +
         (ins ? '<p class="jv-pre jv-ins">' + esc(ins) + '</p>' : '<p class="muted">' + esc(L('Este trabajo no tiene instrucciones.', 'This job has no instructions.')) + '</p>') + '</section>' +
       '<section class="jv-sec"><h3>' + esc(L('Fotos del trabajo', 'Job photos')) + ' <span class="jv-count">' + (S.photos || []).length + '</span></h3>' + photosHtml() + '</section>' +
       '<div class="jv-cols">' +
         '<section class="jv-sec"><h3>' + esc(L('Trabajo', 'Job')) + '</h3><p>' + (j.jobNumber ? '<b>#' + esc(j.jobNumber) + '</b> · ' : '') + esc(j.title || j.kind || '') + '</p></section>' +
         '<section class="jv-sec"><h3>' + esc(L('Equipo', 'Team')) + '</h3>' +
           (team.length ? '<p>' + team.map(esc).join('<br>') + '</p>' : '<p class="muted">' + esc(L('Sin asignar.', 'Not assigned.')) + '</p>') +
+          (canMove ? '<button type="button" class="btn ghost jv-small" onclick="openMoveJob(\'' + j.id + '\')">⇄ ' + esc(L('Mover a otro técnico', 'Move to another technician')) + '</button>' : '') +
           (done ? '<p class="muted">' + esc(L('Completado', 'Completed')) + (done.at ? ' ' + esc(fmtDateTime(done.at)) : '') + (done.by ? ' ' + esc(L('por', 'by')) + ' ' + esc(done.by) : '') + '</p>' : '') +
         '</section>' +
         '<section class="jv-sec"><h3>' + esc(L('Recordatorios', 'Reminders')) + '</h3><p class="muted">' + esc(L('No hay recordatorios programados.', 'No reminders scheduled.')) + '</p></section>' +
       '</div>' +
       '<section class="jv-sec"><h3>' + esc(L('Líneas del trabajo', 'Line items')) + '</h3>' + linesHtml + '</section>';
   }
+
+  /* Edit the job right here: title, instructions, place, tenant and lines. */
+  function infoEditHtml(j) {
+    var c = clientInfo(j), money = canSeeMoney();
+    var ins = String(j.instructions || j.description || (jobVisits(j)[0] || {}).instructions || '');
+    var F = S.editForm || {};
+    if (F.ins != null) ins = F.ins;
+    var real = (Array.isArray(j.lines) && j.lines.length) ? j.lines : [];
+    S.editLines = (S.editLines || real.map(function (l) { return Object.assign({}, l); }));
+    if (!S.editLines.length) S.editLines.push({ name: '', description: '', qty: 1, unitPrice: 0 });
+    function f(id, label, val, type) {
+      if (F[id] != null) val = F[id];
+      return '<label class="jv-label" for="' + id + '">' + esc(label) + '</label><input id="' + id + '" type="text"' + (type === 'tel' ? ' inputmode="tel" autocomplete="tel"' : '') + ' value="' + esc(val || '') + '">';
+    }
+    var linesHtml = S.editLines.map(function (l, i) {
+      return '<div class="jv-eline">' +
+        '<input type="text" data-en="' + i + '" placeholder="' + esc(L('Producto o servicio', 'Product or service')) + '" value="' + esc(l.name || '') + '">' +
+        '<textarea data-ed="' + i + '" rows="2" placeholder="' + esc(L('Descripción', 'Description')) + '">' + esc(l.description || '') + '</textarea>' +
+        '<input type="number" min="0" step="1" data-eq="' + i + '" aria-label="' + esc(L('Cantidad', 'Quantity')) + '" value="' + esc(l.qty || 1) + '">' +
+        (money ? '<input type="number" min="0" step="0.01" data-ep="' + i + '" aria-label="' + esc(L('Precio', 'Price')) + '" placeholder="$" value="' + (l.unitPrice != null && l.unitPrice !== '' ? esc(l.unitPrice) : '') + '">' : '') +
+        '<button type="button" class="jv-eline-x" onclick="jvDelLine(' + i + ')" aria-label="' + esc(L('Quitar línea', 'Remove line')) + '">×</button></div>';
+    }).join('');
+    return '<section class="jv-sec jv-edit"><h3>✏️ ' + esc(L('Editar información', 'Edit information')) + '</h3>' +
+        f('jeTitle', L('Título del trabajo', 'Job title'), j.title) +
+        '<label class="jv-label" for="jeIns">' + esc(L('Instrucciones', 'Instructions')) + '</label><textarea id="jeIns" rows="4">' + esc(ins) + '</textarea>' +
+        '<div class="jv-ecols">' + '<div>' + f('jeAddr', L('Dirección', 'Address'), j.address || c.address) + '</div><div>' + f('jeUnit', L('Unidad', 'Unit'), j.unit || c.unit) + '</div></div>' +
+        '<div class="jv-ecols">' + '<div>' + f('jeTen', L('Inquilino / contacto', 'Tenant / contact'), j.tenantName || j.contactName) + '</div><div>' + f('jeTenPh', L('Teléfono', 'Phone'), j.tenantPhone || j.contactPhone, 'tel') + '</div></div>' +
+      '</section>' +
+      '<section class="jv-sec jv-edit"><h3>' + esc(L('Líneas del trabajo', 'Line items')) + '</h3>' + linesHtml +
+        '<button type="button" class="btn ghost jv-small" onclick="jvAddLine()">+ ' + esc(L('Línea', 'Line')) + '</button>' +
+        '<div class="err" id="jeErr"></div>' +
+        '<div class="jv-noterow"><button type="button" class="btn ghost jv-small" onclick="jvCancelEdit()">' + esc(L('Cancelar', 'Cancel')) + '</button>' +
+        '<button type="button" class="btn jv-small" id="jeSave" onclick="jvSaveEdit()">' + esc(L('Guardar cambios', 'Save changes')) + '</button></div>' +
+      '</section>';
+  }
+  function readEditLines() {
+    var m = $('jvModal') || document;
+    return (S.editLines || []).map(function (l, i) {
+      var q = m.querySelector('[data-eq="' + i + '"]'), pr = m.querySelector('[data-ep="' + i + '"]');
+      var name = ((m.querySelector('[data-en="' + i + '"]') || {}).value || '').trim();
+      var desc = ((m.querySelector('[data-ed="' + i + '"]') || {}).value || '').trim();
+      var qty = Number((q && q.value) || 1) || 1;
+      var price = pr ? Number(pr.value || 0) || 0 : Number(l.unitPrice || 0);
+      return Object.assign({}, l, { name: name, description: desc, qty: qty, unitPrice: price, total: Math.round(qty * price * 100) / 100 });
+    });
+  }
+  // Keep what was typed when the form is drawn again (add / remove a line).
+  function keepEditForm() {
+    var F = {};
+    ['jeTitle', 'jeAddr', 'jeUnit', 'jeTen', 'jeTenPh'].forEach(function (id) { if ($(id)) F[id] = $(id).value; });
+    if ($('jeIns')) F.ins = $('jeIns').value;
+    S.editForm = F;
+    S.editLines = readEditLines();
+  }
+  window.jvStartEdit = function () { S.editing = true; S.editLines = null; S.editForm = null; render(); };
+  window.jvCancelEdit = function () { S.editing = false; S.editLines = null; S.editForm = null; render(); };
+  window.jvAddLine = function () { keepEditForm(); S.editLines.push({ name: '', description: '', qty: 1, unitPrice: 0 }); render(); };
+  window.jvDelLine = function (i) { keepEditForm(); S.editLines.splice(i, 1); render(); };
+  window.jvSaveEdit = async function () {
+    var j = S.job; if (!j) return;
+    var err = $('jeErr'), btn = $('jeSave');
+    var title = ($('jeTitle').value || '').trim();
+    if (!title) { err.textContent = L('Pon el título del trabajo.', 'Type the job title.'); return; }
+    var ins = ($('jeIns').value || '').trim();
+    var lines = readEditLines().filter(function (l) { return l.name || l.description; });
+    var vs = jobVisits(j).slice();
+    if (Array.isArray(j.visits) && j.visits.length) vs = j.visits.map(function (v, i) { return i ? v : Object.assign({}, v, { instructions: ins }); });
+    var ten = ($('jeTen').value || '').trim(), tenPh = ($('jeTenPh').value || '').trim();
+    var patch = {
+      title: title, instructions: ins,
+      address: ($('jeAddr').value || '').trim(), unit: ($('jeUnit').value || '').trim(),
+      tenantName: ten, tenantPhone: tenPh, contactName: ten, contactPhone: tenPh,
+      lines: lines,
+      editLog: firebase.firestore.FieldValue.arrayUnion({ byUid: uid(), byName: who(), at: new Date().toISOString(), what: 'info' }),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (Array.isArray(j.visits) && j.visits.length) patch.visits = vs;
+    btn.disabled = true; btn.textContent = L('Guardando…', 'Saving…');
+    try {
+      await db.collection('jobs').doc(j.id).set(patch, { merge: true });
+      var fresh = await loadJob(j.id);
+      if (fresh) S.job = fresh;
+      S.editing = false; S.editLines = null; S.editForm = null;
+      render();
+    } catch (e) {
+      err.textContent = L('No se pudo guardar: ', 'Could not save: ') + (e.message || e);
+      btn.disabled = false; btn.textContent = L('Guardar cambios', 'Save changes');
+    }
+  };
+
+  /* Notes right on the Info tab (same notes as the Notas tab). */
+  function infoNotesHtml(j) {
+    var list = allNotes(j);
+    return '<section class="jv-sec"><h3>' + esc(L('Notas', 'Notes')) + ' <span class="jv-count">' + list.length + '</span></h3>' +
+      list.slice(0, 3).map(function (n) {
+        return '<div class="jv-note"><div class="muted">' + esc(n.by || L('Equipo', 'Team')) + (n.at ? ' · ' + esc(fmtDateTime(n.at)) : '') + '</div>' +
+          (n.text ? '<div class="jv-pre">' + esc(n.text) + '</div>' : '') + '</div>';
+      }).join('') +
+      (list.length > 3 ? '<button type="button" class="btn ghost jv-small" onclick="jvTab(\'notes\')">' + esc(L('Ver todas las notas', 'See all notes')) + '</button>' : '') +
+      '<textarea id="jvQNote" rows="2" placeholder="' + esc(L('Escribe una nota…', 'Write a note…')) + '"></textarea>' +
+      '<div class="jv-noterow"><span id="jvQErr" class="err"></span><button type="button" class="btn jv-small" id="jvQBtn" onclick="jvQuickNote()">' + esc(L('Agregar nota', 'Add note')) + '</button></div>' +
+      '</section>';
+  }
+  window.jvQuickNote = async function () {
+    var j = S.job; if (!j) return;
+    var text = (($('jvQNote') && $('jvQNote').value) || '').trim();
+    if (!text) { $('jvQErr').textContent = L('Escribe la nota.', 'Write the note.'); return; }
+    var btn = $('jvQBtn'); btn.disabled = true;
+    try {
+      var fresh = await loadJob(j.id) || j;
+      var log = (fresh.notesLog || []).slice();
+      log.push({ text: text, photo: '', authorName: who(), authorUid: uid(), at: new Date().toISOString() });
+      await db.collection('jobs').doc(j.id).set({ notesLog: log, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      fresh.notesLog = log; S.job = fresh;
+      render();
+    } catch (e) {
+      $('jvQErr').textContent = L('No se pudo guardar la nota: ', 'Could not save the note: ') + (e.message || e);
+      btn.disabled = false;
+    }
+  };
+
+  /* ---------- Job report: PDF and email ---------- */
+  function reportData(j) {
+    var c = clientInfo(j), v = jobVisits(j)[0] || {}, r = j.report || {};
+    var team = [];
+    jobVisits(j).forEach(function (x) { var n = techName(x.assignedUid); if (n && team.indexOf(n) < 0) team.push(n); });
+    if (!team.length && techName(assignedOf(j))) team.push(techName(assignedOf(j)));
+    var hidden = j.hiddenPhotos || [];
+    var ok = function (u) { return /^https?:/.test(String(u)) && hidden.indexOf(u) < 0; };
+    var groups = [];
+    var before = jobBeforePhotos(j).filter(ok), after = jobAfterPhotos(j).filter(ok);
+    if (before.length) groups.push([L('Fotos de antes', 'Before photos'), before]);
+    if (after.length) groups.push([L('Fotos de después', 'After photos'), after]);
+    var findings = ((S.wt && S.wt.findings) || []).map(function (f) {
+      return { where: [f.floor ? L('Piso ', 'Floor ') + f.floor : '', f.location || ''].filter(Boolean).join(' · '), what: f.itemLabel || '', desc: f.description || '', urgent: !!f.urgent, photos: (f.photoUrls || []).filter(ok) };
+    });
+    var used = before.concat(after, receiptPhotosOf(j));
+    findings.forEach(function (f) { used = used.concat(f.photos); });
+    var other = (S.photos || []).filter(function (p) { return used.indexOf(p.url) < 0 && p.kind === 'other' && !/^(Nota|Note)/.test(p.src); });
+    var bySrc = {};
+    other.forEach(function (p) { (bySrc[p.src] = bySrc[p.src] || []).push(p.url); });
+    Object.keys(bySrc).forEach(function (k) { groups.push([k, bySrc[k]]); });
+    return {
+      company: companyName || '', logo: (typeof companyLogo !== 'undefined' && companyLogo) || '',
+      title: j.title || j.kind || '', num: j.jobNumber || '', client: c.name || '', address: c.address || '', unit: c.unit || '',
+      when: [ymdLabel(v.scheduledDate || j.scheduledDate), realTimes(j, v)].filter(Boolean).join(' · '),
+      team: team.join(', '), ins: String(j.instructions || v.instructions || '').trim(),
+      lines: (Array.isArray(j.lines) ? j.lines : []).filter(function (l) { return String(l.name || l.description || '').trim(); }),
+      problem: r.problem || '', solution: r.solution || '', finalNotes: r.finalNotes || '',
+      start: r.actualStart || '', end: r.actualEnd || '', groups: groups, findings: findings
+    };
+  }
+  function reportBodyHtml(d, forEmail) {
+    var img = function (u) {
+      return forEmail
+        ? '<a href="' + esc(u) + '"><img src="' + esc(u) + '" width="150" height="150" style="width:150px;height:150px;object-fit:cover;border-radius:6px;margin:0 6px 6px 0"></a>'
+        : '<img src="' + esc(u) + '">';
+    };
+    var row = function (k, v) { return v ? '<tr><td class="k" style="color:#6B7280;padding:3px 12px 3px 0;vertical-align:top">' + esc(k) + '</td><td style="padding:3px 0">' + esc(v) + '</td></tr>' : ''; };
+    var h = function (t) { return '<h3 style="font-size:15px;margin:20px 0 6px;border-bottom:1px solid #E5E7EB;padding-bottom:4px">' + esc(t) + '</h3>'; };
+    var p = function (t) { return '<p style="white-space:pre-wrap;margin:4px 0">' + esc(t) + '</p>'; };
+    return (d.logo && !forEmail ? '<img class="logo" src="' + esc(d.logo) + '" alt="">' : '') +
+      '<h1 style="font-size:22px;margin:0 0 2px">' + esc(L('Reporte del trabajo', 'Job report')) + '</h1>' +
+      '<div style="color:#6B7280">' + esc(d.company) + '</div>' +
+      '<table style="border-collapse:collapse;margin-top:12px">' +
+        row(L('Trabajo', 'Job'), (d.num ? '#' + d.num + ' · ' : '') + d.title) +
+        row(L('Cliente', 'Client'), d.client) +
+        row(L('Dirección', 'Address'), d.address + (d.unit ? ' · Unit ' + d.unit : '')) +
+        row(L('Fecha', 'Date'), d.when) +
+        row(L('Técnico', 'Technician'), d.team) +
+        row(L('Hora de inicio / fin', 'Start / end time'), [d.start, d.end].filter(Boolean).join(' – ')) +
+      '</table>' +
+      (d.ins ? h(L('Instrucciones', 'Instructions')) + p(d.ins) : '') +
+      (d.lines.length ? h(L('Trabajo realizado', 'Work done')) + d.lines.map(function (l) {
+        return '<p style="margin:4px 0"><b>' + esc(l.name || '') + '</b>' + (Number(l.qty || 1) !== 1 ? ' × ' + esc(l.qty) : '') + (l.description ? '<br><span style="color:#4B5563;white-space:pre-wrap">' + esc(l.description) + '</span>' : '') + '</p>';
+      }).join('') : '') +
+      (d.problem ? h(L('Problema encontrado', 'Problem found')) + p(d.problem) : '') +
+      (d.solution ? h(L('Lo que se hizo', 'What was done')) + p(d.solution) : '') +
+      (d.findings.length ? h(L('Hallazgos del walkthrough', 'Walkthrough findings') + ' (' + d.findings.length + ')') + d.findings.map(function (f, i) {
+        return '<div style="margin:8px 0 12px"><b>' + (i + 1) + '. ' + esc(f.what) + '</b>' + (f.urgent ? ' <span style="color:#B3261E;font-weight:700">' + esc(L('URGENTE', 'URGENT')) + '</span>' : '') +
+          (f.where ? '<br><span style="color:#6B7280">' + esc(f.where) + '</span>' : '') + (f.desc ? p(f.desc) : '') +
+          (f.photos.length ? '<div class="ph">' + f.photos.map(img).join('') + '</div>' : '') + '</div>';
+      }).join('') : '') +
+      d.groups.map(function (g) { return h(g[0] + ' (' + g[1].length + ')') + '<div class="ph">' + g[1].map(img).join('') + '</div>'; }).join('') +
+      (d.finalNotes ? h(L('Notas finales', 'Final notes')) + p(d.finalNotes) : '');
+  }
+  window.jvReportPdf = function () {
+    var j = S.job; if (!j) return;
+    var d = reportData(j);
+    var w = window.open('', '_blank');
+    if (!w) { alert(L('Permite las ventanas emergentes para descargar el PDF.', 'Allow pop-ups to download the PDF.')); return; }
+    var name = (L('Reporte', 'Report') + ' ' + (d.num ? '#' + d.num + ' ' : '') + d.title).replace(/[\\/:*?"<>|]/g, '');
+    w.document.open();
+    w.document.write('<!doctype html><html lang="' + L('es', 'en') + '"><head><meta charset="utf-8"><title>' + esc(name) + '</title>' +
+      '<style>body{font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;color:#111827;margin:32px}.logo{max-height:60px;max-width:200px;float:right}' +
+      '.ph{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.ph img{width:150px;height:150px;object-fit:cover;border-radius:6px;break-inside:avoid}' +
+      '.tip{background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;border-radius:8px;padding:8px 12px;margin-bottom:16px}@media print{.tip{display:none}body{margin:12mm}}</style></head><body>' +
+      '<div class="tip">' + esc(L('En la ventana de imprimir escoge "Guardar como PDF" y toca Guardar.', 'In the print window pick "Save as PDF" and press Save.')) + '</div>' +
+      reportBodyHtml(d, false) +
+      '<script>window.onload=function(){setTimeout(function(){window.print()},700)}<\/script></body></html>');
+    w.document.close();
+  };
+  window.jvSendReport = function () {
+    var j = S.job; if (!j) return;
+    var c = clientInfo(j);
+    var bg = document.createElement('div');
+    bg.className = 'jr-sheet-bg';
+    bg.innerHTML = '<div class="jr-sheet jv-send" role="dialog" aria-modal="true"><div class="grab"></div>' +
+      '<h3>✉️ ' + esc(L('Enviar reporte del trabajo', 'Send job report')) + '</h3>' +
+      '<label class="jv-label" for="jsTo">' + esc(L('Correo', 'Email')) + '</label><input id="jsTo" type="email" value="' + esc(c.email || '') + '" placeholder="cliente@correo.com">' +
+      '<label class="jv-label" for="jsMsg">' + esc(L('Mensaje (opcional)', 'Message (optional)')) + '</label><textarea id="jsMsg" rows="2"></textarea>' +
+      '<div class="err" id="jsErr"></div>' +
+      '<button type="button" class="btn-ok" id="jsGo">' + esc(L('Enviar', 'Send')) + '</button>' +
+      '<button type="button" class="btn-edit">' + esc(L('Cancelar', 'Cancel')) + '</button></div>';
+    document.body.appendChild(bg);
+    var close = function () { bg.remove(); };
+    bg.querySelector('.btn-edit').onclick = close;
+    bg.onclick = function (e) { if (e.target === bg) close(); };
+    bg.querySelector('#jsGo').onclick = async function () {
+      var to = (bg.querySelector('#jsTo').value || '').trim().toLowerCase();
+      var err = bg.querySelector('#jsErr'), go = bg.querySelector('#jsGo');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { err.textContent = L('Revisa el correo.', 'Check the email.'); return; }
+      var d = reportData(j), note = (bg.querySelector('#jsMsg').value || '').trim();
+      var html = '<div style="font:14px/1.45 Arial,sans-serif;color:#111827;max-width:680px">' +
+        (note ? '<p style="white-space:pre-wrap">' + esc(note) + '</p><hr style="border:0;border-top:1px solid #E5E7EB">' : '') +
+        reportBodyHtml(d, true) + '</div>';
+      go.disabled = true; go.textContent = L('Enviando…', 'Sending…');
+      try {
+        await db.collection('mail').add({
+          to: [to], companyId: cid(), jobId: j.id,
+          message: { subject: L('Reporte del trabajo', 'Job report') + (d.num ? ' #' + d.num : '') + ' — ' + d.title, html: html },
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection('jobs').doc(j.id).set({
+          reportSentLog: firebase.firestore.FieldValue.arrayUnion({ to: to, byUid: uid(), byName: who(), at: new Date().toISOString() })
+        }, { merge: true });
+        close();
+        alert(L('Reporte enviado a ', 'Report sent to ') + to);
+      } catch (e) {
+        err.textContent = L('No se pudo enviar: ', 'Could not send: ') + (e.message || e);
+        go.disabled = false; go.textContent = L('Enviar', 'Send');
+      }
+    };
+  };
 
   /* ---------- Cliente ---------- */
   function clientTabHtml(j) {
