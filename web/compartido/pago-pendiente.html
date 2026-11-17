@@ -28,7 +28,7 @@
 <div class="card">
   <div class="pp-ic">⏳</div>
   <h3 id="ppTitle">Tu compañía está pendiente de pago</h3>
-  <p class="muted" id="ppText">El panel se abre en cuanto Stripe confirma el pago de tu plan. Si ya pagaste, toca "Ya pagué" en un minuto.</p>
+  <p class="muted" id="ppText">Si ya pusiste tu tarjeta, estamos confirmando con Stripe y el panel se abre solo en unos segundos.</p>
   <div class="pp-plan" id="ppPlan"></div>
   <div class="pp-actions">
     <a class="btn" id="ppPay" href="#">Pagar y activar mi plan</a>
@@ -69,10 +69,37 @@ async function check(manual) {
     $('ppErr').textContent = 'No se pudo revisar: ' + (e.message || e);
   }
 }
-$('ppCheck').onclick = function () { check(true); };
+// Ask Stripe directly (confirmCheckout) so the company opens right after
+// paying, without waiting for the webhook.
+var CONFIRM_URL = 'https://us-central1-walkcheck-a4f1e.cloudfunctions.net/confirmCheckout';
+async function confirmNow() {
+  var user = auth.currentUser;
+  if (!user) return false;
+  try {
+    var token = await user.getIdToken();
+    var r = await fetch(CONFIRM_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+    var j = await r.json().catch(function () { return {}; });
+    if (j.active) { location.replace('/web/entrar.html'); return true; }
+  } catch (e) {}
+  return false;
+}
+async function autoConfirm() {
+  for (var i = 0; i < 12; i++) {
+    if (await confirmNow()) return;
+    await new Promise(function (ok) { setTimeout(ok, 5000); });
+  }
+}
+$('ppCheck').onclick = async function () {
+  $('ppErr').textContent = '';
+  $('ppCheck').disabled = true;
+  var ok = await confirmNow();
+  $('ppCheck').disabled = false;
+  if (!ok) check(true);
+};
 auth.onAuthStateChanged(function (user) {
   if (!user) { location.replace('/web/compartido/login.html'); return; }
   check(false);
+  autoConfirm();
 });
 </script>
 </body>

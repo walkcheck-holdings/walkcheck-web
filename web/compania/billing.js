@@ -1200,6 +1200,76 @@
     $('modal').classList.add('hidden');
     openInvoice(id || inv.id);
   };
+  // "Recordar pago" (Pagos): email or WhatsApp to a client that has not
+  // paid, with the invoice PDF and, if the company takes cards, the pay link.
+  window.remindInvoice = async function (id, channel, ev) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    var ref = db.collection('companies').doc(cid()).collection('invoices').doc(id);
+    var inv;
+    try { var snap = await ref.get(); inv = Object.assign({ id: id }, snap.data() || {}); }
+    catch (e) { alert(T('No se pudo abrir la factura: ', 'Could not open the invoice: ') + (e.message || e)); return; }
+    var en = loginLang() === 'en';
+    var co = inv.companyName || companyName || '';
+    var bal = Math.max(0, Number(inv.total || 0) - paidSum(inv));
+    if (bal <= 0.009) { alert(T('Esta factura ya está pagada.', 'This invoice is already paid.')); return; }
+    var today = ymd(new Date());
+    var late = inv.dueDate && String(inv.dueDate).slice(0, 10) < today
+      ? Math.round((new Date(today) - new Date(String(inv.dueDate).slice(0, 10))) / 86400000) : 0;
+    try {
+      var url = inv.pdfUrl || '';
+      if (!url) {
+        var blob = buildInvoicePdf(inv).output('blob');
+        var sref = storage.ref('reports/' + cid() + '/invoices/' + (inv.number || id) + '_' + Date.now() + '.pdf');
+        await sref.put(blob, { contentType: 'application/pdf' });
+        url = await sref.getDownloadURL();
+      }
+      var payUrl = '';
+      try { var ps0 = await connectCall('status'); window.companyCanTakeCards = !!ps0.chargesEnabled; } catch (_) {}
+      if (window.companyCanTakeCards) {
+        var tok = inv.payToken || randToken();
+        if (!inv.payToken) { await ref.set({ payToken: tok, lang: loginLang() }, { merge: true }); inv.payToken = tok; }
+        payUrl = payLink(id, tok);
+      }
+      var subject = (en ? 'Payment reminder: Invoice #' : 'Recordatorio de pago: Factura #') + (inv.number || '') + ' — ' + co;
+      var body = en
+        ? ('Hello ' + (inv.client || '') + ',\nThis is a friendly reminder that invoice #' + (inv.number || '') + ' for ' + money(bal) + ' is still pending' +
+           (late ? ' (it was due on ' + fmtDay(inv.dueDate) + ', ' + late + ' days ago)' : (inv.dueDate ? ' (due on ' + fmtDay(inv.dueDate) + ')' : '')) +
+           '.\nIf you already paid, thank you and please ignore this message.\n\n' + co)
+        : ('Hola ' + (inv.client || '') + ',\nLe recordamos que la factura #' + (inv.number || '') + ' por ' + money(bal) + ' sigue pendiente' +
+           (late ? ' (venció el ' + fmtDay(inv.dueDate) + ', hace ' + late + ' días)' : (inv.dueDate ? ' (vence el ' + fmtDay(inv.dueDate) + ')' : '')) +
+           '.\nSi ya pagó, muchas gracias y disculpe la molestia.\n\n' + co);
+      var reminders = (inv.reminders || []).slice();
+      if (channel === 'wa') {
+        var phone = String(inv.clientPhone || '').replace(/[^\d+]/g, '').replace(/^\+/, '').replace(/^(\d{10})$/, '1$1');
+        var text = body + '\n\n' + T('Factura: ', 'Invoice: ') + url + (payUrl ? '\n' + T('Pagar con tarjeta: ', 'Pay by card: ') + payUrl : '');
+        window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(text), '_blank');
+        reminders.push({ channel: 'whatsapp', at: new Date().toISOString() });
+      } else {
+        var to = inv.clientEmail || '';
+        if (!to) { alert(T('Esta factura no tiene correo del cliente. Usa WhatsApp o agrégale el correo.', 'This invoice has no client email. Use WhatsApp or add the email.')); return; }
+        var html = invoiceEmailHtml(inv, body, url, payUrl);
+        var mailDoc = {
+          to: [to], companyId: cid(), invoiceId: id,
+          message: {
+            subject: subject,
+            text: body + (payUrl ? '\n\n' + T('Pagar en línea con tarjeta: ', 'Pay online by card: ') + payUrl : '') + '\n\n' + url,
+            html: html,
+            attachments: [{ filename: pdfName(inv), path: url, contentType: 'application/pdf' }]
+          },
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        var replyTo = companyInvoiceEmail || (auth.currentUser && auth.currentUser.email) || '';
+        if (replyTo) mailDoc.replyTo = replyTo;
+        await db.collection('mail').add(mailDoc);
+        reminders.push({ channel: 'email', to: to, at: new Date().toISOString() });
+        alert(T('Recordatorio enviado a ', 'Reminder sent to ') + to + '.');
+      }
+      await ref.set({ reminders: reminders, lastReminderAt: new Date().toISOString(), pdfUrl: url }, { merge: true });
+      if (typeof openPayments === 'function' && document.body.classList.contains('view-payments')) openPayments();
+    } catch (e) {
+      alert(T('No se pudo enviar el recordatorio: ', 'Could not send the reminder: ') + (e.message || e));
+    }
+  };
   window.sendInvoiceSms = async function (id) {
     var inv = $('billingPane')._inv || {};
     var j = jobs.find(function (x) { return x.id === inv.jobId; }) || {};

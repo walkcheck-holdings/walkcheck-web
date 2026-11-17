@@ -399,6 +399,8 @@
     };
     var parties = readPartiesForm('nj', b);
     if (parties.error) { err.textContent = parties.error; return; }
+    var typedAddr = ($('njAddr').value || '').trim();
+    if (!bid && typedAddr && typeof ensureBuildingFor === 'function') bid = await ensureBuildingFor(typedAddr);
     var payload = Object.assign({
       companyId: cid(), companyName: companyName,
       buildingId: bid || '',
@@ -489,6 +491,10 @@
     var b = buildings.find(function (x) { return x.id === $('tkB').value; });
     var cl = CLIENTS.find(function (x) { return x.id === $('tkClient').value; });
     var addr = ($('tkAddr').value || '').trim() || (b && (b.address || b.name)) || '';
+    if (!b && addr && typeof ensureBuildingFor === 'function') {
+      var nb = await ensureBuildingFor(addr);
+      if (nb) b = buildings.find(function (x) { return x.id === nb; });
+    }
     var visit = {
       id: 'v1', scheduledDate: day, startClock: toClock(start), endClock: toClock(end),
       hour: start.getHours(), minute: start.getMinutes(), endHour: end.getHours(), endMinute: end.getMinutes(),

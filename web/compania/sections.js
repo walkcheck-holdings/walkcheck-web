@@ -52,6 +52,7 @@
       '<div class="jobs-toolbar"><h2>' + esc(T('Clientes', 'Clients')) + '</h2>' +
         '<button class="btn" onclick="openClientEditorNew()">' + esc(T('+ Cliente', '+ Client')) + '</button></div>' +
       '<div class="jobs-toolbar"><input id="clientSearch" type="search" placeholder="' + esc(T('Buscar cliente…', 'Search clients…')) + '" value="' + esc(window.clientUi.q || '') + '" oninput="openClients(this.value)"></div>' +
+      '<style>.pay-rem{width:auto;display:inline-block;padding:6px 10px;margin:2px 4px 2px 0;font-size:12.5px;min-height:0}</style>' +
       '<table class="jobs-table"><thead><tr><th>' + esc(T('Nombre', 'Name')) + '</th><th>' + esc(T('Teléfono', 'Phone')) + '</th><th>' + esc(T('Correo', 'Email')) + '</th><th>' + esc(T('Edificios', 'Buildings')) + '</th></tr></thead><tbody>' + rows + '</tbody></table>';
   };
   window.openClientEditorNew = function (existing) {
@@ -185,11 +186,11 @@
     var rows = shown.map(function (r) {
       var b = (buildings || []).find(function (x) { return x.id === r.buildingId; });
       return '<tr onclick="openRequest(\'' + r.id + '\')"><td>' + esc(r.client || '—') + '</td><td>' + esc(r.createdDay || '—') + '</td><td>' + esc(r.description || '') + '</td><td>' + esc((b && b.name) || '—') + '</td><td>' + esc(reqLabel(r.status || 'new')) + '</td></tr>';
-    }).join('') || '<tr><td colspan="5" class="muted">' + esc(list.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin solicitudes', 'No requests')) + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="muted">' + esc(list.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin solicitudes', 'No requests')) + '</td></tr>';
     box.innerHTML =
       '<div class="jobs-toolbar"><h2>' + esc(T('Solicitudes', 'Requests')) + '</h2><button class="btn" onclick="openRequestEditor()">' + esc(T('+ Solicitud', '+ Request')) + '</button></div>' +
       '<div class="chip-row">' + chip('new', reqLabel('new'), n('new')) + chip('review', reqLabel('review'), n('review')) + chip('converted', reqLabel('converted'), n('converted')) + chip('rejected', reqLabel('rejected'), n('rejected')) + chip('all', T('Todas', 'All'), list.length) + '</div>' +
-      '<table class="jobs-table"><thead><tr><th>' + esc(T('Cliente', 'Client')) + '</th><th>' + esc(T('Fecha', 'Date')) + '</th><th>' + esc(T('Descripción', 'Description')) + '</th><th>' + esc(T('Edificio', 'Building')) + '</th><th>' + esc(T('Estado', 'Status')) + '</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      '<table class="jobs-table"><thead><tr><th>' + esc(T('Cliente', 'Client')) + '</th><th>' + esc(T('Fecha', 'Date')) + '</th><th>' + esc(T('Descripción', 'Description')) + '</th><th>' + esc(T('Edificio', 'Building')) + '</th><th>' + esc(T('Estado', 'Status')) + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
   };
   window.openRequestEditor = function () {
     if (!canAssign()) return;
@@ -301,7 +302,7 @@
         rows.push({ kind: 'paid', client: inv.client || '', invoice: inv.number || '', id: inv.id, date: inv.issueDate || '', amount: Number(inv.total || 0), status: 'paid' });
       }
       var due = Math.max(0, Number(inv.total || 0) - paidAmt);
-      if (st !== 'paid' && due > 0) rows.push({ kind: st === 'overdue' ? 'overdue' : 'pending', client: inv.client || '', invoice: inv.number || '', id: inv.id, date: inv.dueDate || inv.issueDate || '', amount: due, status: st === 'overdue' ? 'overdue' : 'pending' });
+      if (st !== 'paid' && due > 0) rows.push({ kind: st === 'overdue' ? 'overdue' : 'pending', client: inv.client || '', invoice: inv.number || '', id: inv.id, date: inv.dueDate || inv.issueDate || '', amount: due, status: st === 'overdue' ? 'overdue' : 'pending', last: inv.lastReminderAt || '' });
     });
     var shown = rows.filter(function (r) { return tab === 'all' || r.kind === tab || (tab === 'pending' && r.kind === 'pending'); });
     var count = function (k) { return rows.filter(function (r) { return r.kind === k; }).length; };
@@ -310,7 +311,11 @@
     };
     var body = shown.map(function (r) {
       var label = r.status === 'paid' ? T('Pagado', 'Paid') : r.status === 'overdue' ? T('Vencido', 'Overdue') : T('Pendiente', 'Pending');
-      return '<tr onclick="openInvoice(\'' + r.id + '\')"><td>' + esc(r.client || '—') + '</td><td>#' + esc(r.invoice || '') + '</td><td>' + esc(r.date || '—') + '</td><td>' + money(r.amount) + '</td><td>' + esc(label) + '</td></tr>';
+      var act = r.status === 'paid' ? '' :
+        '<button type="button" class="btn ghost pay-rem" onclick="remindInvoice(\'' + r.id + '\', \'email\', event)">🔔 ' + esc(T('Recordar', 'Remind')) + '</button>' +
+        '<button type="button" class="btn ghost pay-rem" onclick="remindInvoice(\'' + r.id + '\', \'wa\', event)">WhatsApp</button>' +
+        (r.last ? '<div class="muted" style="font-size:11px">' + esc(T('Último aviso: ', 'Last reminder: ') + String(r.last).slice(0, 10)) + '</div>' : '');
+      return '<tr onclick="openInvoice(\'' + r.id + '\')"><td>' + esc(r.client || '—') + '</td><td>#' + esc(r.invoice || '') + '</td><td>' + esc(r.date || '—') + '</td><td>' + money(r.amount) + '</td><td>' + esc(label) + '</td><td>' + act + '</td></tr>';
     }).join('') || '<tr><td colspan="5" class="muted">' + esc(rows.length ? T('Nada en este filtro.', 'Nothing in this filter.') : T('Sin pagos', 'No payments')) + '</td></tr>';
     box.innerHTML =
       '<div class="jobs-toolbar"><h2>' + esc(T('Pagos', 'Payments')) + '</h2></div>' +

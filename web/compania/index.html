@@ -17,7 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="/js/jobTemplates.js"></script>
-<script src="/js/paymentLinks.js"></script>
+<script src="/js/paymentLinks.js?v=20261116a"></script>
 <script src="/js/walkthroughGuide.js"></script>
 <script src="/web/entrar.js?v=20261113a"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1260,8 +1260,8 @@ async function loadBoard(){
   }
   // Start every read at once (they don't depend on each other).
   const coP = db.collection('companies').doc(id).get();
-  const b1P = colGet(db.collection('buildings').where('companyId','==',id).limit(50).get());
-  const b2P = colGet(db.collection('companies').doc(id).collection('buildings').limit(50).get());
+  const b1P = colGet(db.collection('buildings').where('companyId','==',id).limit(500).get());
+  const b2P = colGet(db.collection('companies').doc(id).collection('buildings').limit(500).get());
   const usP = colGet(db.collection('users').where('companyId','==',id).limit(50).get());
   const ctP = colGet(db.collection('companies').doc(id).collection('customJobTypes').limit(50).get());
   const tpP = (typeof loadTypePrices === 'function') ? loadTypePrices() : null;
@@ -1414,7 +1414,7 @@ async function toggleCompany(id){
     u.forEach(d => users.push(d.data()));
   } catch(_){}
   try {
-    const b = await db.collection('buildings').where('companyId','==',id).limit(50).get();
+    const b = await db.collection('buildings').where('companyId','==',id).limit(500).get();
     b.forEach(d => buildings.push(d.data()));
   } catch(_){}
   companyLoaded[id] = true;
@@ -2173,7 +2173,7 @@ async function openRolesPane(){
   } catch(_){}
   const used = active.filter(t => roleOf(t) !== 'owner').length;
   const planLine = limit
-    ? `<div class="tm-plan${used >= limit ? ' full' : ''}"><div><b>${used}</b> ${esc(L('de', 'of'))} <b>${limit}</b> ${esc(L('trabajadores en tu plan', 'workers in your plan'))}</div><div class="tm-bar"><i style="width:${Math.min(100, Math.round(used * 100 / limit))}%"></i></div></div>`
+    ? `<div class="tm-plan${used >= limit ? ' full' : ''}"><div><b>${used}</b> ${esc(L('de', 'of'))} <b>${limit}</b> ${esc(L('trabajadores en tu plan', 'workers in your plan'))}</div><div class="tm-bar"><i style="width:${Math.min(100, Math.round(used * 100 / limit))}%"></i></div>${used >= limit && window.limitMessage ? `<div style="margin-top:8px;font-weight:700;color:#B45309">${esc(limitMessage(limit, loginLang() === 'en'))} ${(window.billingPortalHref && billingPortalHref((auth.currentUser && auth.currentUser.email) || '')) ? `<a href="${esc(billingPortalHref((auth.currentUser && auth.currentUser.email) || ''))}" target="_blank" rel="noopener">${esc(L('Subir de plan', 'Change plan'))} →</a>` : ''}</div>` : ''}</div>`
     : `<div class="tm-plan"><div><b>${used}</b> ${esc(L('trabajadores', 'workers'))}</div></div>`;
   pane.innerHTML = `<div class="tm-page">
     <div class="tm-head"><div><h2>${esc(L('Trabajadores', 'Workers'))}</h2>
@@ -2272,9 +2272,9 @@ async function createWorker(){
       const team = await db.collection('users').where('companyId', '==', cid()).get();
       const used = team.docs.filter(d => String(d.data().role || 'worker') !== 'owner' && d.data().disabled !== true).length;
       if (used >= limit) {
-        err.textContent = en
-          ? `Your plan allows up to ${limit} workers and you have ${used}. Change plan in My subscription to add more.`
-          : `Tu plan permite hasta ${limit} trabajadores y ya tienes ${used}. Cambia de plan en Mi suscripción para añadir más.`;
+        const portal = (window.billingPortalHref && billingPortalHref((auth.currentUser && auth.currentUser.email) || '')) || '';
+        err.innerHTML = esc(window.limitMessage ? limitMessage(limit, en) : '') +
+          (portal ? ` <a href="${esc(portal)}" target="_blank" rel="noopener" style="font-weight:800">${esc(en ? 'Change plan' : 'Subir de plan')} →</a>` : '');
         $('cwGo').disabled = false; return;
       }
     }
@@ -3774,9 +3774,10 @@ async function saveAssign(){
     if (!ok) return;
   }
   const title = (b && b.name) || addrIn || kind || 'Job';
+  const savedBid = bid || (addrIn ? await ensureBuildingFor(addrIn) : '');
   const payload = {
     companyId: cid(), companyName: companyName,
-    buildingId: bid || '',
+    buildingId: savedBid || '',
     ...assignmentPatch(uid),
     title, address: addrIn || title, kind,
     unit: ($('ajUnit')&&$('ajUnit').value.trim()) || '',
@@ -4182,6 +4183,28 @@ async function saveMoney(){
   } catch(e) { err.textContent = e.message || 'No se guardó.'; }
 }
 
+// A job with an address typed by hand saves that address as a building, so
+// it shows in the list next time. Same address (ignoring commas, case,
+// accents) → the building that already exists.
+async function ensureBuildingFor(addr){
+  addr = String(addr || '').trim();
+  if (!addr || !cid()) return '';
+  const k = siteKey(addr);
+  const hit = buildings.find(b => siteKey(b.name) === k || (b.address && siteKey(b.address) === k));
+  if (hit) return hit.id;
+  if (!canAssign()) return '';
+  try {
+    const ref = db.collection('buildings').doc();
+    const data = { id: ref.id, name: addr, address: addr, floors: 1, companyId: cid(),
+      kind: isPm() ? 'Inspections' : 'Site', companyType, fromJob: true };
+    await ref.set(data);
+    try { await db.collection('companies').doc(cid()).collection('buildings').doc(ref.id).set({ id: ref.id, name: addr, address: addr, floors: 1, companyId: cid() }); } catch(_){}
+    buildings.push(data);
+    return ref.id;
+  } catch(_) { return ''; }
+}
+window.ensureBuildingFor = ensureBuildingFor;
+
 async function addBuilding(){
   if (!canAssign()) return;
   const name = $('nbName').value.trim();
@@ -4245,10 +4268,10 @@ async function loadMonths(buildingId){
   $('viewMonths').innerHTML = html;
 }
 </script>
-<script src="/web/compania/billing.js?v=20261112d"></script>
+<script src="/web/compania/billing.js?v=20261116a"></script>
 <script src="/web/compania/quotes.js?v=20261105a"></script>
-<script src="/web/compania/jobs.js?v=20261112c"></script>
-<script src="/web/compania/sections.js?v=20261104b"></script>
+<script src="/web/compania/jobs.js?v=20261116a"></script>
+<script src="/web/compania/sections.js?v=20261116a"></script>
 <script src="/web/compania/jobview.js?v=20261116a"></script>
 <script src="/web/compania/dashboard.js?v=20261116b"></script>
 <script src="/web/compania/jobslist.js?v=20261105a"></script>

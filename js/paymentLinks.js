@@ -17,6 +17,16 @@ window.billingPortalHref = function (email) {
   if (!base) return '';
   return email ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'prefilled_email=' + encodeURIComponent(email) : base;
 };
+/** Team full: which plan to move up to (same text as the app). */
+window.limitMessage = function (limit, en) {
+  if (limit <= 5) return en
+    ? "You reached 5 workers. Move up to CREW 10 ($149.99/mo) to add up to 10."
+    : "Ya llegaste a 5 trabajadores. Sube a CREW 10 ($149.99/mes) pa' meter hasta 10.";
+  if (limit <= 10) return en
+    ? "You reached 10 workers. Move up to UNLIMITED ($299.99/mo) to add as many as you want."
+    : "Ya llegaste a 10 trabajadores. Sube a UNLIMITED ($299.99/mes) pa' meter los que quieras.";
+  return en ? 'You reached ' + limit + ' workers.' : 'Ya llegaste a ' + limit + ' trabajadores.';
+};
 window.PLAN_LABELS = {
   crew5: 'CREW 5 $99.99',
   crew10: 'CREW 10 $149.99',
