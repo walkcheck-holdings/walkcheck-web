@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reporte · WalkCheck</title>
+<meta name="robots" content="noindex">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="/web/compartido/firebase.js"></script>
+<!-- Public report a company sends its client by WhatsApp (link next to the
+     PDF). The app saves the report in sharedReports/{id}; the id is the key
+     (long and random, readable by link only). The design lives here, so a
+     change on the web shows in every report, old and new. -->
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#E5E7EB;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font:15px/1.5 "DejaVu Sans",Verdana,"Segoe UI",sans-serif;color:#1F2937}
+  .bar{max-width:860px;margin:14px auto;display:flex;gap:10px;justify-content:flex-end;padding:0 12px}
+  .btn{border:0;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;background:#16A34A;color:#fff}
+  .msg{max-width:860px;margin:40px auto;text-align:center;color:#6B7280;padding:0 16px}
+  .page{max-width:860px;margin:0 auto 24px;background:#FAF6EC;border:3px double #16324F;outline:2px solid #16324F;outline-offset:-10px;padding:34px 34px 0}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .brand{display:flex;align-items:center;gap:16px;min-width:0}
+  .brand img{width:72px;height:72px;object-fit:contain;flex:none}
+  .ini{width:72px;height:72px;border-radius:14px;color:#fff;font:700 30px Verdana,sans-serif;display:flex;align-items:center;justify-content:center;flex:none}
+  .co{font:700 32px/1.05 Georgia,"DejaVu Serif",serif;color:#16324F;text-transform:uppercase}
+  .co-sub{color:#1E9E4A;font-weight:700;font-size:11.5px;letter-spacing:.8px;margin-top:6px;text-transform:uppercase}
+  .rt{text-align:right}.rt .big{font:700 44px/1 Georgia,"DejaVu Serif",serif;color:#16324F}
+  .rt .g{color:#1E9E4A;font-weight:700;letter-spacing:.8px;margin-top:8px}.rt .d{font-size:13.5px;margin-top:4px}
+  .rule{border-top:3px solid #16324F;border-bottom:1px solid #16324F;height:5px;margin:22px 0}
+  .info{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .lab{color:#1E9E4A;font-weight:700;font-size:11.5px;letter-spacing:.8px;margin-bottom:6px}.info b{font-size:15.5px}
+  .sum{background:#EEF3EC;border:1px solid #16324F;padding:14px 20px;margin:24px 0 20px}
+  .sum h2{margin:0 0 4px;font-size:18px;color:#16324F}.cnt{font-weight:700;font-size:12px;letter-spacing:.6px}.clean{font-size:13px;margin-top:6px}
+  .card{display:flex;justify-content:space-between;gap:20px;background:#fff;border:1px solid #16324F;border-left:9px solid;padding:20px 20px 16px 24px;margin:0 0 22px;break-inside:avoid;page-break-inside:avoid}
+  .card .k{color:#1E9E4A;font-weight:700;font-size:12px;letter-spacing:.8px}
+  .pill{color:#fff;border-radius:999px;padding:4px 12px;margin-left:12px;font-size:11.5px}
+  .card h3{font-size:19px;color:#16324F;margin:12px 0 14px}.card p{margin:0;max-width:390px}.txt{flex:1;min-width:0}
+  .ph{width:172px;flex:none;text-align:center}
+  .ph img{width:172px;height:228px;object-fit:cover;border:1px solid #16324F;display:block;cursor:zoom-in}
+  .cap{color:#6B7280;font-size:12.5px;margin-top:6px}
+  .gen{text-align:center;color:#6B7280;font-size:12.5px;margin:30px 0 8px}
+  .foot{background:#16324F;color:#fff;text-align:center;font-weight:700;padding:18px;margin:0 -34px}
+  @media (max-width:640px){
+    .page{padding:20px 16px 0}.top{flex-direction:column}.rt{text-align:left}.co{font-size:24px}.rt .big{font-size:34px}
+    .info{grid-template-columns:1fr}.card{flex-direction:column}.ph,.ph img{width:100%}.ph img{height:auto;max-height:420px}.foot{margin:0 -16px}
+  }
+  @media print{html,body{background:#FAF6EC}.bar{display:none}.page{margin:0;max-width:none}@page{margin:10mm}}
+</style>
+</head>
+<body>
+<div class="bar" id="bar" style="display:none"><button class="btn" onclick="window.print()" id="pdfBtn">⬇ Descargar PDF</button></div>
+<div id="out"><p class="msg" id="msg">Cargando el reporte…</p></div>
+<script>
+(function () {
+  var en = /(^|[?&])lang=en\b/.test(location.search);
+  function T(es, e) { return en ? e : es; }
+  var PRIO = { alta: ['ALTA', 'HIGH', '#C0392B'], media: ['MEDIA', 'MEDIUM', '#C77C0E'], baja: ['BAJA', 'LOW', '#1E9E4A'] };
+  function pr(k) { return PRIO[k] || PRIO.media; }
+  function initials(name) {
+    var w = String(name || '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+    var main = w.filter(function (x) { return ['llc', 'inc', 'corp', 'co', 'ltd', 'llp', 'pllc', 'pa', 'lc'].indexOf(x.toLowerCase()) < 0; });
+    var use = main.length ? main : w;
+    if (!use.length) return 'W';
+    if (use.length === 1) return use[0].slice(0, 2).toUpperCase();
+    return (use[0][0] + use[1][0]).toUpperCase();
+  }
+  function longDate(d) {
+    return d.toLocaleDateString(en ? 'en-US' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function fail(t) { $('msg').textContent = t; }
+
+  var id = (location.search.match(/[?&]r=([A-Za-z0-9_-]{20,})/) || [])[1];
+  if (!id) { fail(T('Este link no es válido.', 'This link is not valid.')); return; }
+
+  db.collection('sharedReports').doc(id).get().then(function (snap) {
+    if (!snap.exists) { fail(T('Este reporte ya no está disponible.', 'This report is no longer available.')); return; }
+    render(snap.data() || {});
+  }).catch(function () { fail(T('No se pudo abrir el reporte. Revisa tu conexión.', 'Could not open the report. Check your connection.')); });
+
+  function render(r) {
+    var co = r.company || {};
+    var name = co.name || '';
+    var color = /^#[0-9a-f]{6}$/i.test(co.brandColor || '') ? co.brandColor : '#E8772E';
+    var contact = [co.phone, co.email].filter(Boolean);
+    var items = Array.isArray(r.items) ? r.items : [];
+    var counts = { alta: 0, media: 0, baja: 0 };
+    items.forEach(function (f) { counts[f.priority] = (counts[f.priority] || 0) + 1; });
+    var made = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : new Date();
+    document.title = T('Reporte', 'Report') + ' · ' + (r.address || name);
+    $('pdfBtn').textContent = '⬇ ' + T('Descargar PDF', 'Download PDF');
+
+    var cards = items.map(function (f, i) {
+      var p = pr(f.priority), ph = (f.photos || [])[0];
+      return '<div class="card" style="border-left-color:' + p[2] + '"><div class="txt">' +
+        '<div class="k">' + esc(T('HALLAZGO ', 'FINDING ') + (i + 1)) + ' <span class="pill" style="background:' + p[2] + '">' + esc(en ? p[1] : p[0]) + '</span></div>' +
+        '<h3>' + esc([f.area, f.title].filter(Boolean).join(' — ')) + '</h3>' +
+        (f.desc ? '<p>' + esc(f.desc) + '</p>' : '') + '</div>' +
+        (ph ? '<div class="ph"><a href="' + esc(ph) + '" target="_blank" rel="noopener"><img src="' + esc(ph) + '" alt=""></a><div class="cap">' + esc(f.refs || '') + '</div></div>' : '') +
+        '</div>';
+    }).join('');
+
+    var head = items.length === 0
+      ? T('Sin hallazgos: no se encontró nada que haya que arreglar en esta visita', 'No findings: nothing needs repair from this visit')
+      : items.length + ' ' + (items.length === 1 ? T('hallazgo que necesita reparación', 'finding that needs repair') : T('hallazgos que necesitan reparación', 'findings that need repair'));
+
+    $('out').innerHTML = '<div class="page">' +
+      '<div class="top"><div class="brand">' +
+        (co.logoData ? '<img src="' + esc(co.logoData) + '" alt="">' : '<div class="ini" style="background:' + esc(color) + '">' + esc(initials(name)) + '</div>') +
+        '<div style="min-width:0"><div class="co">' + esc(name) + '</div>' + (contact.length ? '<div class="co-sub">' + esc(contact.join(' · ')) + '</div>' : '') + '</div></div>' +
+        '<div class="rt"><div class="big">' + esc(T('REPORTE', 'REPORT')) + '</div><div class="g">WALKTHROUGH' + (r.jobNo ? ' #' + esc(r.jobNo) : '') + '</div>' +
+        '<div class="d">' + esc(longDate(made)) + '</div></div></div>' +
+      '<div class="rule"></div>' +
+      '<div class="info"><div><div class="lab">' + esc(T('EDIFICIO', 'BUILDING')) + '</div><b>' + esc(r.address || '—') + '</b>' +
+          '<div>' + esc(T('Técnico: ', 'Technician: ') + (r.tech || '—')) + '</div><div>' + esc(T('Compañía: ', 'Company: ') + name) + '</div></div>' +
+        '<div><div class="lab">WALKTHROUGH</div><b>' + esc(r.when || '—') + '</b>' +
+          (r.to ? '<div>' + esc(T('Para: ', 'To: ') + r.to) + '</div>' : '') +
+          '<div>' + esc(T('Fotos: ', 'Photos: ') + (r.photosCount || 0)) + '</div></div></div>' +
+      '<div class="sum"><h2>' + esc(head) + '</h2>' +
+        (items.length ? '<div class="cnt">' + ['alta', 'media', 'baja'].filter(function (k) { return counts[k]; }).map(function (k) {
+          return '<span style="color:' + pr(k)[2] + '">' + counts[k] + ' ' + esc(en ? pr(k)[1] : pr(k)[0]) + '</span>';
+        }).join(' &nbsp;·&nbsp; ') + '</div>' : '') +
+        (r.clean ? '<div class="clean">' + esc(T('Áreas revisadas sin hallazgos: ', 'Areas checked with no findings: ') + r.clean) + '</div>' : '') + '</div>' +
+      cards +
+      '<div class="gen">' + esc(T('Reporte generado con WalkCheck', 'Report made with WalkCheck')) + '</div>' +
+      '<div class="foot">' + esc([name].concat(contact.slice().reverse()).filter(Boolean).join('  ·  ')) + '</div>' +
+      '</div>';
+    $('bar').style.display = 'flex';
+  }
+})();
+</script>
+</body>
+</html>
