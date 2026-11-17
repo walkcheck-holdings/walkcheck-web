@@ -435,6 +435,7 @@ let companyName = '';
 let companyLogo = '';
 let companyPhone = '';
 let companyInvoiceEmail = ''; // each company's own email on its invoices
+let companyBrandColor = ''; // color of the initials box when there is no logo
 let companyTaxRate = 0;
 let companyLogoData = '';   // company logo (small PNG data URL) for invoices and PDFs
 let typePrices = {};
@@ -1272,6 +1273,7 @@ async function loadBoard(){
     companyInvoiceEmail = (co.exists && (co.data().invoiceEmail || '')) || '';
     companyTaxRate = (co.exists && Number(co.data().taxRate)) || 0;
     companyLogoData = (co.exists && co.data().logoData) || '';
+    companyBrandColor = (co.exists && co.data().brandColor) || '';
     emptyStart = !!(co.exists && co.data().emptyStart);
     fillCompanyHeader();
     const raw = (co.exists && (co.data().companyType || co.data().industry || co.data().trade)) || 'property_management';
@@ -2798,28 +2800,44 @@ async function openReports(){
     const inspected = blds.filter(b => siteInspectedInMonth(b, ym));
     let openN = 0;
     blds.forEach(b => findingsFor(b, ym).forEach(f => { if (!findingIsResolved(f)) openN++; }));
-    const prefer = ($('rptBld') && $('rptBld').value) || (blds[0] || {}).id;
-    const bopts = blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('')
-      || `<option value="">${esc(uiT('noSites'))}</option>`;
+    const en = loginLang()==='en';
+    const prefer = $('rptBld') ? $('rptBld').value : '';
+    const cPrefer = ($('rptClient') && $('rptClient').value) || '';
+    const bopts = `<option value="">${esc(en ? 'All buildings' : 'Todos los edificios')}</option>` +
+      blds.map(b => `<option value="${esc(b.id)}" ${String(b.id)===String(prefer)?'selected':''}>${esc(b.name||b.address||b.id)}</option>`).join('');
+    const cNames = (typeof monthlyClientNames === 'function') ? monthlyClientNames() : [];
+    const copts = `<option value="">${esc(en ? 'All clients' : 'Todos los clientes')}</option>` +
+      cNames.map(n => `<option value="${esc(n)}" ${n===cPrefer?'selected':''}>${esc(n)}</option>`).join('');
     pane.innerHTML = `<div class="rpt-kpis">
         <div class="rpt-kpi"><span>${esc(uiT('inspectedBld'))}</span><b>${inspected.length} ${loginLang()==='en'?'of':'de'} ${blds.length}</b></div>
         <div class="rpt-kpi"><span>${esc(uiT('pendingBld'))}</span><b>${Math.max(0, blds.length - inspected.length)}</b></div>
         <div class="rpt-kpi"><span>${esc(uiT('openFindings'))}</span><b>${openN}</b></div>
       </div>
       <div class="rpt-form">
-        <h3 style="margin:0 0 10px">${esc(uiT('reports'))}</h3>
-        <p class="muted">${esc(uiT('pickBuildingMonth'))}</p>
+        <h3 style="margin:0 0 10px">${esc(en ? 'Monthly report for the client' : 'Reporte mensual del cliente')}</h3>
+        <p class="muted">${esc(en ? 'Every job of the month for a client or a building, with its findings and photos.' : 'Todos los trabajos del mes de un cliente o de un edificio, con sus hallazgos y fotos.')}</p>
+        <label class="muted">${esc(en ? 'Client' : 'Cliente')}</label>
+        <select id="rptClient">${copts}</select>
         <label class="muted">${esc(siteT('title'))}</label>
         <select id="rptBld">${bopts}</select>
         <label class="muted">${esc(uiT('reportMonth'))}</label>
         <input id="rptMonth" type="month" value="${esc(ym)}" onchange="openReports()">
         <button class="btn" style="margin-top:12px" onclick="generateClientReport()">${esc(uiT('genReport'))}</button>
       </div>
+      ${(typeof canSeeMoney === 'function' && canSeeMoney() && typeof openPnl === 'function') ? `<div class="rpt-form">
+        <h3 style="margin:0 0 10px">${esc(loginLang()==='en' ? 'Money in and out' : 'Entradas y gastos')}</h3>
+        <p class="muted">${esc(loginLang()==='en'
+          ? 'PDF with everything that came in (paid invoices) and everything spent (job expenses and materials with their receipts) in the month, and the profit.'
+          : 'PDF con todo lo que entró (facturas pagadas) y todo lo que se gastó (gastos y materiales de los trabajos, con sus recibos) en el mes, y la ganancia.')}</p>
+        <button class="btn" style="margin-top:4px" onclick="openPnlFor(($('rptMonth')||{}).value)">⬇ ${esc(loginLang()==='en' ? 'Profit & loss of the month (PDF)' : 'Ganancias y gastos del mes (PDF)')}</button>
+      </div>` : ''}
       <div id="rptOut"></div>`;
-    applyPanelLang();
+    // Do not call applyPanelLang() here: it re-opens Reports and the screen
+    // kept redrawing itself (the building picker reset on every tap).
   };
   paint();
   try { await loadReportWalks(); } catch(_){}
+  try { if (typeof loadMonthlyClients === 'function') await loadMonthlyClients(); } catch(_){}
   paint();
 }
 function findingStatusHtml(f){
@@ -4216,9 +4234,10 @@ async function loadMonths(buildingId){
 <script src="/web/compania/quotes.js?v=20261105a"></script>
 <script src="/web/compania/jobs.js?v=20261112c"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>
-<script src="/web/compania/jobview.js?v=20261112d"></script>
-<script src="/web/compania/dashboard.js?v=20261113a"></script>
+<script src="/web/compania/jobview.js?v=20261116a"></script>
+<script src="/web/compania/dashboard.js?v=20261116a"></script>
 <script src="/web/compania/jobslist.js?v=20261105a"></script>
 <script src="/web/compania/lowvolt.js?v=20261111b"></script>
+<script src="/web/compania/monthly.js?v=20261116a"></script>
 </body>
 </html>

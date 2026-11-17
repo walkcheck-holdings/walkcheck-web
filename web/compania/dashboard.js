@@ -183,6 +183,12 @@
       '<button class="btn" id="pnlGo" onclick="downloadPnl()">⬇ ' + esc(T('Descargar PDF', 'Download PDF')) + '</button>' +
       '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(T('Cancelar', 'Cancel')) + '</button></div>';
   };
+  // From Reports: same PDF, already set to the month picked there.
+  window.openPnlFor = function (ym) {
+    window.openPnl();
+    var sel = $('pnlPer');
+    if (sel && ym && Array.prototype.some.call(sel.options, function (o) { return o.value === ym; })) sel.value = ym;
+  };
   window.downloadPnl = async function () {
     var period = $('pnlPer').value, err = $('pnlErr'), go = $('pnlGo');
     err.textContent = '';

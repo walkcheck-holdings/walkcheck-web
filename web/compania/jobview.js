@@ -730,9 +730,24 @@
   function longDate(d) {
     return d ? d.toLocaleDateString(L('es-ES', 'en-US'), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   }
+  // Same initials as the app: "Pegao App LLC" → "PA", one word → first 2 letters.
+  function coInitials(name) {
+    var w = String(name || '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+    var main = w.filter(function (x) { return ['llc', 'inc', 'corp', 'co', 'ltd', 'llp', 'pllc', 'pa', 'lc'].indexOf(x.toLowerCase()) < 0; });
+    var use = main.length ? main : w;
+    if (!use.length) return 'W';
+    if (use.length === 1) return use[0].slice(0, 2).toUpperCase();
+    return (use[0][0] + use[1][0]).toUpperCase();
+  }
+  // Findings for the PDF: the ones the office put together or, if none yet,
+  // the ones the technician marked in the app (same as the app does).
+  function reportList(j) {
+    var list = findingsOf(j);
+    return list.length ? list : appFindings();
+  }
   function walkReportHtml(j) {
     var c = clientInfo(j), v = jobVisits(j)[0] || {}, meta = j.reportMeta || {};
-    var list = findingsOf(j);
+    var list = reportList(j);
     var day = v.scheduledDate || j.scheduledDate;
     var dObj = day ? new Date(day + 'T12:00:00') : new Date();
     var win = [fmtClock(v.startClock || j.startClock), fmtClock(v.endClock || j.endClock)].filter(Boolean);
@@ -746,6 +761,7 @@
     var coMail = (typeof companyInvoiceEmail !== 'undefined' && companyInvoiceEmail) || '';
     var coPhone = (typeof companyPhone !== 'undefined' && companyPhone) || '';
     var logo = (typeof companyLogoData !== 'undefined' && companyLogoData) || (typeof companyLogo !== 'undefined' && companyLogo) || '';
+    var coColor = (typeof companyBrandColor !== 'undefined' && /^#[0-9a-f]{6}$/i.test(companyBrandColor || '')) ? companyBrandColor : '#E8772E';
     var nPhotos = (S.photos || []).length;
     var to = meta.to || [c.contact && c.contact !== c.name ? c.contact : '', c.name].filter(Boolean).join(', ');
     var cards = list.map(function (f, i) {
@@ -763,7 +779,7 @@
       '.tip{max-width:860px;margin:14px auto;background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;border-radius:8px;padding:10px 14px;font-size:14px}' +
       '.page{max-width:860px;margin:0 auto 24px;background:#FAF6EC;border:3px double #16324F;outline:2px solid #16324F;outline-offset:-10px;padding:34px 34px 0}' +
       '.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.brand{display:flex;align-items:center;gap:16px}' +
-      '.brand img{width:72px;height:72px;object-fit:contain}.mono{width:72px;height:72px;border-radius:14px;background:#16324F;color:#fff;font:700 36px Georgia,serif;display:flex;align-items:center;justify-content:center}' +
+      '.brand img{width:72px;height:72px;object-fit:contain}.mono{width:72px;height:72px;border-radius:14px;background:#16324F;color:#fff;font:700 30px "DejaVu Sans",Verdana,sans-serif;display:flex;align-items:center;justify-content:center}' +
       '.co{font:700 36px/1.05 Georgia,"DejaVu Serif",serif;color:#16324F;letter-spacing:.5px;text-transform:uppercase}.co-sub{color:#1E9E4A;font-weight:700;font-size:11.5px;letter-spacing:.8px;margin-top:6px;text-transform:uppercase}' +
       '.rt{text-align:right}.rt .big{font:700 44px/1 Georgia,"DejaVu Serif",serif;color:#16324F}.rt .g{color:#1E9E4A;font-weight:700;letter-spacing:.8px;margin-top:8px}.rt .d{font-size:13.5px;margin-top:4px}' +
       '.rule{border-top:3px solid #16324F;border-bottom:1px solid #16324F;height:5px;margin:22px 0}' +
@@ -779,7 +795,7 @@
       '</style></head><body>' +
       '<div class="tip">' + esc(L('Para mandarlo por WhatsApp: en la ventana de imprimir escoge "Guardar como PDF", guárdalo y mándalo como documento.', 'To send it by WhatsApp: in the print window pick "Save as PDF", save it and send it as a document.')) + '</div>' +
       '<div class="page">' +
-        '<div class="top"><div class="brand">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '<div class="mono">' + esc((coName.charAt(0) || 'W').toUpperCase()) + '</div>') +
+        '<div class="top"><div class="brand">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '<div class="mono" style="background:' + esc(coColor) + '">' + esc(coInitials(coName)) + '</div>') +
           '<div><div class="co">' + esc(coName) + '</div>' + (coPhone || coMail ? '<div class="co-sub">' + esc([coPhone, coMail].filter(Boolean).join(' · ')) + '</div>' : '') + '</div></div>' +
           '<div class="rt"><div class="big">' + esc(L('REPORTE', 'REPORT')) + '</div><div class="g">WALKTHROUGH' + (j.jobNumber ? ' #' + esc(j.jobNumber) : '') + '</div><div class="d">' + esc(longDate(new Date())) + '</div></div></div>' +
         '<div class="rule"></div>' +
@@ -800,7 +816,17 @@
 
   window.jvReportPdf = function () {
     var j = S.job; if (!j) return;
-    if (isWalkJob(j) && findingsOf(j).length) {
+    if (isWalkJob(j) && reportList(j).length) {
+      // Each finding goes with its photo next to it: no photo, no report.
+      var rl = reportList(j);
+      for (var k = 0; k < rl.length; k++) {
+        if (!(rl[k].photos || []).length) {
+          alert(L('Falta foto del Hallazgo ', 'Missing photo for Finding ') + (k + 1) + '\n' +
+            [rl[k].area, rl[k].title].filter(Boolean).join(' — ') + '\n\n' +
+            L('Cada hallazgo tiene que llevar su foto. Agrégale la foto y vuelve a generar el reporte.', 'Each finding needs its photo. Add it and generate the report again.'));
+          return;
+        }
+      }
       var ww = window.open('', '_blank');
       if (!ww) { alert(L('Permite las ventanas emergentes para descargar el PDF.', 'Allow pop-ups to download the PDF.')); return; }
       ww.document.open(); ww.document.write(walkReportHtml(j)); ww.document.close();
