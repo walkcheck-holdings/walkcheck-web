@@ -2830,6 +2830,13 @@ async function openReports(){
           ? 'PDF with everything that came in (paid invoices) and everything spent (job expenses and materials with their receipts) in the month, and the profit.'
           : 'PDF con todo lo que entró (facturas pagadas) y todo lo que se gastó (gastos y materiales de los trabajos, con sus recibos) en el mes, y la ganancia.')}</p>
         <button class="btn" style="margin-top:4px" onclick="openPnlFor(($('rptMonth')||{}).value)">⬇ ${esc(loginLang()==='en' ? 'Profit & loss of the month (PDF)' : 'Ganancias y gastos del mes (PDF)')}</button>
+      </div>
+      <div class="rpt-form">
+        <h3 style="margin:0 0 10px">${esc(loginLang()==='en' ? 'Company performance' : 'Rendimiento de la compañía')}</h3>
+        <p class="muted">${esc(loginLang()==='en'
+          ? 'Owner only: money, what you are owed, jobs, each technician and each client, compared with last month.'
+          : 'Solo para el dueño: dinero, lo que te deben, trabajos, cada técnico y cada cliente, comparado con el mes anterior.')}</p>
+        <button class="btn" style="margin-top:4px" onclick="generatePerfReport()">📊 ${esc(loginLang()==='en' ? 'Performance report of the month' : 'Reporte de rendimiento del mes')}</button>
       </div>` : ''}
       <div id="rptOut"></div>`;
     // Do not call applyPanelLang() here: it re-opens Reports and the screen
@@ -4235,9 +4242,10 @@ async function loadMonths(buildingId){
 <script src="/web/compania/jobs.js?v=20261112c"></script>
 <script src="/web/compania/sections.js?v=20261104b"></script>
 <script src="/web/compania/jobview.js?v=20261116a"></script>
-<script src="/web/compania/dashboard.js?v=20261116a"></script>
+<script src="/web/compania/dashboard.js?v=20261116b"></script>
 <script src="/web/compania/jobslist.js?v=20261105a"></script>
 <script src="/web/compania/lowvolt.js?v=20261111b"></script>
 <script src="/web/compania/monthly.js?v=20261116a"></script>
+<script src="/web/compania/perf.js?v=20261116a"></script>
 </body>
 </html>

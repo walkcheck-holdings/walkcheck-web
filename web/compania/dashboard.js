@@ -183,6 +183,11 @@
       '<button class="btn" id="pnlGo" onclick="downloadPnl()">⬇ ' + esc(T('Descargar PDF', 'Download PDF')) + '</button>' +
       '<button class="btn ghost" onclick="$(\'modal\').classList.add(\'hidden\')">' + esc(T('Cancelar', 'Cancel')) + '</button></div>';
   };
+  // For the performance report: money in/out of a month and every invoice.
+  window.perfMoney = async function (ym) {
+    var invoices = await loadInvoices(true);
+    return { moves: movesFor(ym, invoices), invoices: invoices };
+  };
   // From Reports: same PDF, already set to the month picked there.
   window.openPnlFor = function (ym) {
     window.openPnl();
