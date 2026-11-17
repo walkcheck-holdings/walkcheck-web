@@ -61,6 +61,34 @@
         out.push({ uid: uid, day: day, hrs: hrs, real: real, job: (j.jobNumber ? '#' + j.jobNumber + ' ' : '') + (j.kind || j.title || ''), addr: (typeof cardAddr === 'function' ? cardAddr(j) : (j.address || '')) });
       });
     });
+    // Building walkthroughs the tech does from his list of buildings are not
+    // jobs: add them too (skip one already counted as a job that same day at
+    // the same address).
+    function ampm(t, dayStr) {
+      var m = String(t || '').trim().match(/^(\d{1,2}):(\d{2})\s*([AaPp])?/);
+      if (!m) return null;
+      var h = +m[1] % 12; if (m[3] && /p/i.test(m[3])) h += 12; if (!m[3] && +m[1] === 12) h = 12;
+      return h * 60 + (+m[2]);
+    }
+    var key = function (s) { return typeof siteKey === 'function' ? siteKey(s) : String(s || '').toLowerCase(); };
+    (typeof reportWalks !== 'undefined' ? reportWalks : []).forEach(function (w) {
+      var uid = w.assignedUid || '';
+      if (!uid) return;
+      var a = toD(w.startedAt || w.createdAt), b = toD(w.closedAt || w.completedAt);
+      var d = b || a;
+      if (!d) return;
+      var day = ymdOf(d);
+      if (day < from || day > to) return;
+      var addr = w.address || w.title || w.buildingName || '';
+      if (out.some(function (e) { return e.uid === uid && e.day === day && addr && key(e.addr).indexOf(key(addr).slice(0, 12)) >= 0; })) return;
+      var hrs = 0, real = false;
+      if (a && b && b > a && (b - a) < 16 * 3600000 && ymdOf(a) === day) { hrs = (b - a) / 3600000; real = true; }
+      else {
+        var s1 = ampm(w.appointmentStart), e1 = ampm(w.appointmentEnd);
+        hrs = s1 != null && e1 != null && e1 > s1 ? (e1 - s1) / 60 : 1;
+      }
+      out.push({ uid: uid, day: day, hrs: hrs, real: real, job: 'Walkthrough', addr: addr });
+    });
     return out;
   }
 
@@ -101,6 +129,7 @@
     if (!out) return;
     out.innerHTML = '<p class="muted">' + esc(T('Calculando horas…', 'Adding up hours…')) + '</p>';
     if (!P.rates) await loadRates();
+    try { if (typeof loadReportWalks === 'function') await loadReportWalks(); } catch (e) {}
     paint();
     out.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
