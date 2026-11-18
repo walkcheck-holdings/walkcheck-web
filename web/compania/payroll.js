@@ -210,7 +210,6 @@
 
   window.openPayroll = async function () {
     if (typeof canSeeMoney !== 'function' || !canSeeMoney()) return;
-    var orig = window.openReports && window.openReports.__py ? null : null;
     if (!document.body.classList.contains('view-reports') && typeof openReports === 'function') await openReports();
     document.body.classList.add('view-payroll');
     payrollRailOn(true);

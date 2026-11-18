@@ -2154,6 +2154,10 @@ async function openRolesPane(){
   const count = r => active.filter(t => roleOf(t) === r).length;
   const chip = (key, label, n) => `<button type="button" class="tm-chip${teamUi.role === key ? ' on' : ''}" onclick="teamUi.role='${key}';openRolesPane()">${esc(label)} <b>${n}</b></button>`;
   const roleCls = r => ({ owner: 'own', admin: 'own', manager: 'mgr', supervisor: 'sup', dispatcher: 'dis' })[r] || 'wrk';
+  // Hourly rate for the payroll (owner/admin only; lives in payRates, not in the profile).
+  const showRate = canSeeMoney() && typeof window.payrollLoadRates === 'function';
+  let rates = {};
+  if (showRate) { try { rates = (window.payrollRates && Object.keys(payrollRates()).length) ? payrollRates() : await payrollLoadRates(); } catch(_){} }
   const card = t => {
     const r = roleOf(t), locked = r === 'owner' || r === 'admin';
     const ini = String(t.name || '?').trim().split(/\s+/).slice(0, 2).map(x => x.charAt(0).toUpperCase()).join('');
@@ -2174,6 +2178,7 @@ async function openRolesPane(){
         <span class="tm-go">›</span>
       </button>
       <div class="tm-today">${today}${hrs}</div>
+      ${showRate && !['owner'].includes(r) ? `<label class="tm-rate">${esc(L('Tarifa por hora', 'Hourly rate'))} <span>$<input type="number" min="0" step="0.25" inputmode="decimal" placeholder="0.00" value="${rates[t.uid] ? esc(String(rates[t.uid])) : ''}" onchange="payrollRate('${t.uid}', this.value, true);this.classList.add('saved')"> /h</span>${rates[t.uid] ? '' : `<em>${esc(L('Falta para la nómina', 'Needed for payroll'))}</em>`}</label>` : ''}
       <div class="tm-acts">
         ${tel ? `<a class="tm-act" href="tel:${esc(tel)}">📞 ${esc(L('Llamar', 'Call'))}</a><a class="tm-act" target="_blank" rel="noopener" href="${esc(waLink(tel))}">💬 WhatsApp</a>` : `<span class="tm-act off">${esc(L('Sin teléfono', 'No phone'))}</span>`}
         ${!locked ? `<button type="button" class="tm-act" onclick="resetWorkerPassword('${t.uid}')">🔑 ${esc(L('Reenviar acceso', 'Resend access'))}</button>
@@ -2966,13 +2971,31 @@ async function reportPdfBlob(){
   lastReportPdf.blob = blob;
   return blob;
 }
-async function downloadReportPdf(){
-  const blob = await reportPdfBlob();
-  if (!blob) return;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = lastReportPdf.name;
-  a.click();
+async function downloadReportPdf(ev){
+  // The button says it is working; any error is shown (it used to fail silently).
+  const btn = (ev && ev.target && ev.target.closest && ev.target.closest('button')) || (window.event && window.event.target && window.event.target.closest && window.event.target.closest('button'));
+  const label = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.textContent = loginLang()==='en' ? 'Making PDF…' : 'Haciendo PDF…'; }
+  try {
+    for (let i = 0; i < 25 && typeof html2pdf === 'undefined'; i++) await new Promise(r => setTimeout(r, 200));
+    const blob = await reportPdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = lastReportPdf.name || 'reporte.pdf';
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    // iPhone/iPad home-screen app: no downloads there, open the PDF instead.
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && window.navigator.standalone) window.open(url, '_blank');
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60000);
+  } catch (e) {
+    alert((loginLang()==='en' ? 'Could not make the PDF: ' : 'No se pudo hacer el PDF: ') + (e && e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
+  }
 }
 async function uploadReportPdf(){
   if (lastReportPdf.url) return lastReportPdf.url;
