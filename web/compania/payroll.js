@@ -180,7 +180,7 @@
   (function () {
     var st = document.createElement('style');
     st.textContent = 'body.view-payroll #reportsPane>:not(#rptOut){display:none!important}' +
-      'body.view-payroll #reportsPane{padding:16px}';
+      'body.view-payroll #reportsPane{padding:16px}body.view-payroll #sidebar{display:none!important}';
     document.head.appendChild(st);
   })();
   function payrollRailOn(on) {

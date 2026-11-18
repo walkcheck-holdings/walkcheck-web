@@ -72,12 +72,24 @@
         return { name: l.name || '', description: l.description || l.desc || '', qty: qty, unitPrice: unit, total: +(qty * unit).toFixed(2) };
       });
     }
-    if (j && Array.isArray(j.lines) && j.lines.length) return j.lines;
+    if (j && Array.isArray(j.lines) && j.lines.length) {
+      // Jobs made in the app come with $0 lines: use the price saved for that
+      // type of job (Facturación → Precios por tipo) until someone sets one.
+      return j.lines.map(function (l) {
+        var unit = Number(l.unitPrice || 0), tot = Number(l.total != null ? l.total : (l.amount || 0));
+        if (unit > 0 || tot > 0 || typeof priceOfKind !== 'function') return l;
+        var p = priceOfKind(l.name || j.kind || '') || priceOfKind(j.kind || '');
+        if (!(p > 0)) return l;
+        var qty = Number(l.qty || 1);
+        return Object.assign({}, l, { unitPrice: p, total: +(qty * p).toFixed(2), fromTypePrice: true });
+      });
+    }
     if (!j) return [];
     var name = j.kind || j.title || '';
     if (!name) return [];
     var qty = Number(j.qty || 1);
     var unit = Number(j.unitPrice != null ? j.unitPrice : 0);
+    if (!(unit > 0) && typeof priceOfKind === 'function') unit = priceOfKind(name) || 0;
     return [{ name: name, description: j.description || '', qty: qty, unitPrice: unit, total: +(qty * unit).toFixed(2) }];
   };
   window.jobBeforePhotos = function (j) {

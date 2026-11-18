@@ -97,9 +97,14 @@
     try { clientsCache = typeof loadClientsList === 'function' ? await loadClientsList() : []; } catch (_) { clientsCache = []; }
     return clientsCache;
   }
-  function clientOf(b) {
+  function clientOf(b, js) {
     var c = (clientsCache || []).find(function (x) { return (x.buildingIds || []).indexOf(b.id) >= 0; });
-    return (c && c.name) || b.clientName || '';
+    if (c && c.name) return c.name;
+    if (b.clientName) return b.clientName;
+    // Else: who the latest job there was for.
+    var withClient = (js || []).filter(function (j) { return j.clientName; })
+      .sort(function (x, y) { return String(x.scheduledDate || '') < String(y.scheduledDate || '') ? 1 : -1; });
+    return withClient.length ? withClient[0].clientName : '';
   }
   window.openBuildingsPage = async function (q) {
     if (typeof canAssign === 'function' && !canAssign()) return;
@@ -111,7 +116,7 @@
     var rows = list.map(function (b) {
       var js = jobsOf(b);
       var last = js.map(function (j) { return String(j.scheduledDate || '').slice(0, 10); }).filter(Boolean).sort().pop() || '';
-      return { b: b, n: js.length, last: last, client: clientOf(b) };
+      return { b: b, n: js.length, last: last, client: clientOf(b, js) };
     }).filter(function (r) {
       return !query || [r.b.name, r.b.address, r.client].join(' ').toLowerCase().indexOf(query) >= 0;
     });
@@ -311,7 +316,7 @@
     return '<style>' +
             '.pl-page{max-width:1100px;margin:0 auto}.pl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}' +
       '.pl-head h2{margin:0 0 4px}.pl-head p{margin:0}.pl-btn{width:auto!important;padding:10px 16px}' +
-      '.pl-search{max-width:520px}.pl-count{margin:2px 0 8px;font-size:13px}.pl-h3{margin:18px 0 8px}' +
+      '.pl-search{width:100%;max-width:520px;padding:11px 12px;margin:4px 0 6px;border:1px solid #D1D1D6;border-radius:10px;font-size:15px;background:#fff}.pl-count{margin:2px 0 8px;font-size:13px}.pl-h3{margin:18px 0 8px}' +
       '.pl-tbl-wrap{background:#fff;border-radius:12px;overflow:auto;border:1px solid #E5E7EB}' +
       '.pl-tbl{width:100%;border-collapse:collapse;font-size:14px}.pl-tbl th{text-align:left;background:#F9FAFB;color:#6B7280;font-size:12px;padding:9px 10px;border-bottom:1px solid #E5E7EB;white-space:nowrap}' +
       '.pl-tbl td{padding:10px;border-top:1px solid #F3F4F6;vertical-align:top}.pl-tbl .r{text-align:right}.pl-tbl .muted{font-size:12.5px}' +

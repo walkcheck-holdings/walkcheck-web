@@ -504,3 +504,11 @@
   body.view-companies #companiesPane { display: block; }
   #empBoard { flex: 1; display: flex; flex-direction: column; min-height: 0; background: #fff; }
   #empRows { overflow: auto; flex: 1; }
+/* Loading: a spinner while the panel signs in and reads the company (it used
+   to stay white for several seconds). */
+body:not(.ready)::before { content: ''; position: fixed; left: 50%; top: 46%; width: 38px; height: 38px; margin: -19px 0 0 -19px;
+  border: 4px solid #D7E3EE; border-top-color: #22A559; border-radius: 50%; animation: wkspin .8s linear infinite; z-index: 50; }
+body:not(.ready)::after { content: 'Cargando tu panel…'; position: fixed; left: 0; right: 0; top: calc(46% + 34px); text-align: center;
+  font: 600 15px -apple-system, 'Segoe UI', Roboto, sans-serif; color: #4B5563; z-index: 50; }
+html[lang="en"] body:not(.ready)::after { content: 'Loading your panel…'; }
+@keyframes wkspin { to { transform: rotate(360deg); } }

@@ -38,3 +38,4 @@
   .jl-table td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; color: #9CA3AF; text-transform: uppercase; }
   .jl-table td { padding: 3px 0; }
 }
+.jl-noprice { color: #B45309; font-weight: 700; font-size: 12.5px; }

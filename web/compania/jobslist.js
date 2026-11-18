@@ -159,7 +159,7 @@
         '<td data-l="' + esc(L('Dirección', 'Property')) + '">' + esc(addr(j) || '—') + '</td>' +
         '<td data-l="' + esc(L('Fecha', 'Schedule')) + '">' + when + '</td>' +
         '<td data-l="' + esc(L('Estado', 'Status')) + '"><span class="jl-pill ' + st.c + '"><i></i>' + esc(st.t) + '</span></td>' +
-        (money ? '<td data-l="Total" class="jl-tot">' + usd(jobLineTotal(j)) + '</td>' : '') + '</tr>';
+        (money ? '<td data-l="Total" class="jl-tot">' + (jobLineTotal(j) > 0 ? usd(jobLineTotal(j)) : '<span class="jl-noprice" title="' + esc(L('Ponle precio en el trabajo o en Facturación → Precios por tipo', 'Set a price on the job or in Billing → Prices by type')) + '">' + esc(L('Sin precio', 'No price')) + '</span>') + '</td>' : '') + '</tr>';
     }).join('') || '<tr><td colspan="6" class="muted">' + esc(L('Sin trabajos', 'No jobs')) + '</td></tr>';
 
     pane.innerHTML =

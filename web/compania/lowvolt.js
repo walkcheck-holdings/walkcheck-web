@@ -151,9 +151,11 @@
   var lastCid = null;
   async function syncGate() {
     var id = curCid();
-    if (id === lastCid) return;
-    lastCid = id;
-    lvOn = await isLowVolt(id);
+    if (id !== lastCid) {
+      lastCid = id;
+      lvOn = await isLowVolt(id);
+    }
+    // Every tick: the role may load after the company (buttons must match).
     document.body.classList.toggle('lv-co', !!lvOn && canOffice());
     if (!lvOn && document.body.classList.contains('view-lv')) leave();
   }
@@ -171,7 +173,7 @@
     }
     return p;
   }
-  var VIEW_CLASSES = ['view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived',
+  var VIEW_CLASSES = ['view-places', 'view-payroll', 'view-hours', 'view-roles', 'view-reports', 'view-worker', 'view-companies', 'view-billing', 'view-archived',
     'view-home', 'view-search', 'sites-open', 'view-jobs', 'view-job', 'view-payments',
     'view-requests', 'view-clients', 'view-quotes'];
   var stopLive = null;
@@ -276,8 +278,18 @@
   var dispDay = null, dispZone = '', dispQuery = '';
   // Live tech status (users/{uid}.techStatus, set from the tech's phone).
   var techNow = [];
-  window.lvOpenDispatch = function () {
-    if (!lvOn || !canOffice()) return;
+  // Never a dead button: if the company or the role is not ready yet, check
+  // again; if it really is not Low Voltage, say why.
+  async function lvReady() {
+    if (!lvOn) { lastCid = null; await syncGate(); }
+    if (lvOn && canOffice()) return true;
+    alert(!lvOn
+      ? T('Despacho y Equipos son para compañías de Low Voltage. Cámbialo en Facturación → Tipo de compañía.', 'Dispatch and Equipment are for Low Voltage companies. Change it in Billing → Company type.')
+      : T('Solo la oficina (dueño, admin, manager o despachador) usa Despacho y Equipos.', 'Only the office (owner, admin, manager or dispatcher) uses Dispatch and Equipment.'));
+    return false;
+  }
+  window.lvOpenDispatch = async function () {
+    if (!lvOn || !canOffice()) { if (!(await lvReady())) return; }
     var p = enter('lvRailDispatch');
     if (!dispDay) dispDay = ymdOf(new Date());
     renderDispatch(p);
@@ -1001,7 +1013,7 @@
   // ====================================================== EQUIPOS (inventario)
   var invFilter = 'all', invQuery = '';
   window.lvOpenInventory = async function () {
-    if (!lvOn || !canOffice()) return;
+    if (!lvOn || !canOffice()) { if (!(await lvReady())) return; }
     var p = enter('lvRailEquip');
     p.innerHTML = '<p class="muted">' + h(T('Cargando…', 'Loading…')) + '</p>';
     var users = await loadUsers();

@@ -6,8 +6,18 @@
 <title>Walkcheck</title>
 <meta http-equiv="refresh" content="0;url=/web/entrar.html">
 <script>location.replace('/web/entrar.html');</script>
+<style>
+html,body{height:100%;margin:0}
+body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#0F3A5F;background:#F5F7FA;display:flex;align-items:center;justify-content:center}
+.wk-load{display:flex;flex-direction:column;align-items:center;gap:14px;font-weight:700}
+.wk-load b{font-size:22px;letter-spacing:.3px;color:#0F3A5F}
+.wk-spin{width:38px;height:38px;border:4px solid #D7E3EE;border-top-color:#22A559;border-radius:50%;animation:wkspin .8s linear infinite}
+.wk-load span{font-size:15px;color:#4B5563;font-weight:600}
+@keyframes wkspin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-<p>Entrando…</p>
+<div class="wk-load" role="status" aria-live="polite"><b>WalkCheck</b><div class="wk-spin"></div><span id="wkLoadTxt">Entrando…</span></div>
+<script>try{var l=localStorage.getItem('walkcheck_lang')||localStorage.getItem('wkLang')||((navigator.language||'').slice(0,2)==='en'?'en':'es');if(l==='en')document.getElementById('wkLoadTxt').textContent='Signing in…';}catch(e){}</script>
 </body>
 </html>
