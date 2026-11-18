@@ -22,8 +22,56 @@
     var list = [];
     var snap = await col('clients').limit(500).get();
     snap.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
+    try { list = list.concat(await backfillClients(list)); } catch (_) {}
     list.sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
     return list;
+  }
+  /* Jobs and invoices made before clients were saved only kept the client's
+     name inside them: add those clients once (matched by email or name, no
+     duplicates), with the buildings of their jobs. */
+  var backfilledFor = '';
+  async function backfillClients(have) {
+    var id = cid();
+    if (!id || backfilledFor === id) return [];
+    backfilledFor = id;
+    var key = function (s) { return String(s || '').trim().toLowerCase().replace(/\s+/g, ' '); };
+    var names = {}, mails = {};
+    have.forEach(function (c) { if (c.name) names[key(c.name)] = 1; if (c.email) mails[key(c.email)] = 1; });
+    var found = {};
+    function take(name, email, phone, address, bid) {
+      name = String(name || '').trim(); email = key(email);
+      if (!name && !email) return;
+      if ((name && names[key(name)]) || (email && mails[email])) return;
+      var k = email || key(name);
+      var f = found[k];
+      if (!f && name) { for (var x in found) if (key(found[x].name) === key(name)) { f = found[x]; break; } }
+      if (!f) f = found[k] = { name: name || email, email: email, phone: '', address: '', buildingIds: [] };
+      if (email && !f.email) f.email = email;
+      if (phone && !f.phone) f.phone = String(phone).trim();
+      if (address && !f.address) f.address = String(address).trim();
+      if (bid && f.buildingIds.indexOf(bid) < 0) f.buildingIds.push(bid);
+    }
+    (typeof jobs !== 'undefined' ? jobs : []).forEach(function (j) {
+      if (!j) return;
+      take(j.clientName || j.billToName, j.clientEmail || j.billToEmail, j.clientPhone, j.clientAddress, j.buildingId);
+    });
+    try {
+      var inv = await col('invoices').limit(500).get();
+      inv.forEach(function (d) { var v = d.data() || {}; take(v.clientName, v.clientEmail, v.clientPhone, v.clientAddress, v.buildingId); });
+    } catch (_) {}
+    var out = [];
+    var keys = Object.keys(found);
+    for (var i = 0; i < keys.length && i < 200; i++) {
+      var c = found[keys[i]];
+      try {
+        var ref = await col('clients').add(Object.assign({}, c, {
+          companyId: id, fromHistory: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }));
+        out.push(Object.assign({ id: ref.id }, c));
+      } catch (_) { break; }
+    }
+    return out;
   }
   window.openClients = async function (q) {
     if (typeof canSeeClients === 'function' && !canSeeClients()) return;

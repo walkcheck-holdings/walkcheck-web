@@ -232,6 +232,18 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-4.5M12 16V8M16 16v-2.5"/></svg>
         <span class="rail-label" data-i18n="reports">Reportes</span>
       </button>
+      <button type="button" class="rail-item hidden" id="railPayroll" onclick="openPayroll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>
+        <span class="rail-label" data-i18n="payrollMenu">Nómina</span>
+      </button>
+      <button type="button" class="rail-item hidden" id="railBuildings" onclick="openBuildingsPage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10M3 21h18M8 8h3M8 12h3M8 16h3"/></svg>
+        <span class="rail-label" data-i18n="buildingsMenu">Edificios</span>
+      </button>
+      <button type="button" class="rail-item hidden" id="railMaterials" onclick="openMaterialsPage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3.5 7.5 12 12l8.5-4.5z"/><path d="M3.5 7.5v9L12 21l8.5-4.5v-9M12 12v9"/></svg>
+        <span class="rail-label" data-i18n="materialsMenu">Materiales</span>
+      </button>
       <button type="button" class="rail-item" id="railHours" onclick="navHours()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>
         <span class="rail-label" data-i18n="railTimesheets">Horas</span>
@@ -782,7 +794,7 @@ const UI_I18N = {
     createJob:'+ Crear trabajo', createTask:'📋 + Crear tarea', createQuote:'📝 + Crear cotización', teamMenu:'Trabajadores',
     todaySummary:'Resumen de hoy', upcoming:'Próximos',
     allBuildings:'Todos los edificios', newInvoice:'Nueva factura', invoices:'Facturas',
-    jobsMenu:'Trabajos', paymentsMenu:'Pagos', clientsMenu:'Clientes', requestsMenu:'Solicitudes', quotesMenu:'Cotizaciones',
+    jobsMenu:'Trabajos', paymentsMenu:'Pagos', clientsMenu:'Clientes', payrollMenu:'Nómina', buildingsMenu:'Edificios', materialsMenu:'Materiales', requestsMenu:'Solicitudes', quotesMenu:'Cotizaciones',
     jobsToday:'Trabajos hoy', completedLbl:'Completados', pendingLbl:'Pendientes',
     jobsScheduled:'trabajos', completedOne:'completado', pendingOne:'pendiente',
     noJobsCol:'Sin trabajos', freeDay:'Este trabajador está libre hoy.',
@@ -846,7 +858,7 @@ const UI_I18N = {
     createJob:'+ Create job', createTask:'📋 + Create task', createQuote:'📝 + Create quote', teamMenu:'Workers',
     todaySummary:"Today's summary", upcoming:'Upcoming',
     allBuildings:'All buildings', newInvoice:'New invoice', invoices:'Invoices',
-    jobsMenu:'Jobs', paymentsMenu:'Payments', clientsMenu:'Clients', requestsMenu:'Requests', quotesMenu:'Quotes',
+    jobsMenu:'Jobs', paymentsMenu:'Payments', clientsMenu:'Clients', payrollMenu:'Payroll', buildingsMenu:'Buildings', materialsMenu:'Materials', requestsMenu:'Requests', quotesMenu:'Quotes',
     jobsToday:'Jobs today', completedLbl:'Completed', pendingLbl:'Pending',
     jobsScheduled:'jobs scheduled', completedOne:'completed', pendingOne:'pending',
     noJobsCol:'No jobs scheduled', freeDay:'This worker has a free day.',
@@ -1174,8 +1186,12 @@ function renderTodaySummary(){
   }
   const ban = $('dayBanner');
   if (ban) {
-    ban.textContent = dayLong(selectedDay) + ' — ' + list.length + ' ' + uiT('jobsScheduled') +
-      ' · ' + done + ' ' + uiT('completedOne') + ' · ' + pend + ' ' + uiT('pendingOne');
+    const en1 = loginLang() === 'en';
+    const pl = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+    ban.textContent = dayLong(selectedDay) + ' — ' +
+      pl(list.length, en1 ? 'job scheduled' : 'trabajo', en1 ? 'jobs scheduled' : 'trabajos') +
+      ' · ' + pl(done, en1 ? 'completed' : 'completado', en1 ? 'completed' : 'completados') +
+      ' · ' + pl(pend, en1 ? 'pending' : 'pendiente', en1 ? 'pending' : 'pendientes');
   }
   const up = $('upcomingList');
   if (up) {
@@ -1300,7 +1316,7 @@ async function loadBoard(){
   s = await b2P;
   if (s) s.forEach(d => { if (!bDocs.some(x=>x.id===d.id)) bDocs.push({id:d.id, ...d.data()}); });
   bDocs.sort((a,b)=> String(a.name||'').localeCompare(String(b.name||'')));
-  buildings = bDocs.slice(0,50);
+  buildings = bDocs;
 
   const tDocs = [];
   s = await usP;
@@ -2385,11 +2401,6 @@ function todayJobs(){
   // on selectedDay, so comparing it could list every job as "today".
   return src.filter(jobDayOk);
 }
-function workerNameOf(j){
-  const uid = accountUidOf(j);
-  const t = techs.find(x => x.uid === uid);
-  return (t && t.name) || j.assignedName || '';
-}
 let homeFilter = 'all';
 /* "Necesita atención" (same as the app's Inicio): late jobs with the tech's
    reason, need-to-return, rescheduled by a tech, and jobs with no tech. */
@@ -2685,10 +2696,12 @@ function matchSite(rec, b){
   return bk.includes(rk) || rk.includes(bk) || siteKey(b.name).includes(rk) || rk.includes(siteKey(b.name));
 }
 function workerNameOf(rec){
-  if (rec.assignedName) return rec.assignedName;
-  const uid = rec.assignedUid || rec.workerId || rec.assignedTo || rec.assignedUserId;
-  const t = techs.find(x => x.uid === uid);
-  return (t && t.name) || rec.workerName || '';
+  // The account's current name wins over the name saved in the job, so one
+  // person never shows twice (e.g. "Maikel" and "Maikel Ramirez").
+  let uid = rec.assignedUid || rec.workerId || rec.assignedTo || rec.assignedUserId;
+  try { if (typeof accountUidOf === 'function') uid = accountUidOf(rec) || uid; } catch(_){}
+  const t = techs.find(x => x.uid === uid) || (typeof teamAll !== 'undefined' ? teamAll.find(x => x.uid === uid) : null);
+  return (t && t.name) || rec.assignedName || rec.workerName || '';
 }
 function photosOf(obj){
   const urls = obj.photoUrls || obj.photos || obj.images || [];
