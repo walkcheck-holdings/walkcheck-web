@@ -74,6 +74,9 @@ nav.main a:hover{background:rgba(255,255,255,.08);color:#fff}
 .hd-ig:hover{background:rgba(255,255,255,.1)}
 nav.main a{white-space:nowrap}
 @media(max-width:1360px){.hd-call span{display:none}.hd-call{font-size:18px}}
+/* Laptops (1001-1200px): keep every header link and Entrar whole. */
+@media(max-width:1200px){.hd{gap:14px}nav.main a{padding:8px 8px;font-size:14px}.hd-right{gap:6px}.btn-enter{padding:8px 11px}}
+@media(max-width:1100px){.hd-ig{display:none}}
 
 /* ===== Hero ===== */
 .hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(1200px 600px at 85% -10%,rgba(122,193,66,.18),transparent 60%),linear-gradient(165deg,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);padding:84px 0 110px}
@@ -167,8 +170,11 @@ a.store-badge:hover{transform:translateY(-2px);border-color:#fff}
 .hcap span{display:none;background:rgba(10,31,54,.94);color:#fff;font-weight:800;font-size:17px;line-height:1.25;text-align:center;border-radius:14px;padding:12px 14px;min-height:72px;width:100%;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .hcap span.on{display:flex;animation:rise .35s ease}
 .hcap span:last-child{background:var(--green);color:#0A1F36}
-.hphone .float-tag.t1{left:-90px;top:60px}
-.hphone .float-tag.t2{right:-70px;bottom:120px}
+.hphone .float-tag.t1{left:-70px;top:-16px}
+.hphone .float-tag.t2{right:-56px;bottom:-22px;top:auto}
+/* Spanish title over the English one inside the video (seconds 2–4.75). */
+.hlbl{position:absolute;display:none;background:#fff;color:#0F3A5F;font-weight:800;letter-spacing:.2px;white-space:nowrap;align-items:center;z-index:2;pointer-events:none;text-transform:uppercase}
+.hlbl.on{display:flex}
 .hphone .float-tag{z-index:3}
 .float-tag em{font-style:normal;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--green-bg)}
 
@@ -533,6 +539,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
         <span class="hphone-notch"></span>
         <video id="heroVid" src="/assets/hero.mp4" poster="/assets/hero-poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
         <!-- Sharp captions over the video (the video's own text is too small). -->
+        <span class="hlbl" id="heroLbl" data-i18n="hvTitle">Inspección semestral</span>
         <div class="hcap" id="heroCap">
           <span data-i18n="hv1">¿Papeles por todos lados?</span>
           <span data-i18n="hv2">Trabajo terminado → creas la factura en un toque</span>
@@ -915,7 +922,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <span data-i18n="fl3">WalkCheck, facturas y fotos incluidos</span>
       <span data-i18n="fl4">Sin contratos</span>
     </div>
-    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Funciona en cualquier teléfono o computadora: tus técnicos entran desde el navegador del teléfono, sin descargar nada.</p>
+    <p class="fine" data-i18n="prTrial">15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Funciona en cualquier teléfono o computadora: tus técnicos usan la app de Android (Google Play) o entran desde el navegador del teléfono.</p>
   </div>
 </section>
 
@@ -928,7 +935,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
       <details><summary data-i18n="fq3">¿Mis técnicos necesitan computadora?</summary><div class="a" data-i18n="fa3">No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.</div></details>
       <details><summary data-i18n="fq9">¿Mis técnicos necesitan saber de tecnología?</summary><div class="a" data-i18n="fa9">No. Cada técnico ve solo su agenda del día en el teléfono: toca para marcar inicio, toma las fotos y deja sus notas. No necesita computadora.</div></details>
       <details><summary data-i18n="fq10">¿Cuánto tarda mi compañía en empezar?</summary><div class="a" data-i18n="fa10">Poco. Al registrarte eliges tu oficio y el panel llega listo con tus tipos de trabajo, pasos y fotos. En el plan UNLIMITED te ayudamos a activar tu compañía.</div></details>
-      <details><summary data-i18n="fq4">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa4">Sí. WalkCheck funciona en cualquier teléfono, iPhone o Android, y en cualquier computadora, desde el navegador. La app para descargar de las tiendas sale muy pronto.</div></details>
+      <details><summary data-i18n="fq4">¿Funciona en iPhone?</summary><div class="a" data-i18n="fa4">Sí. En iPhone funciona desde el navegador (Safari), igual que en cualquier computadora. En Android también puedes bajar la app de Google Play.</div></details>
       <details><summary data-i18n="fq5">¿Puedo cambiar de plan o cancelar?</summary><div class="a" data-i18n="fa5">Sí, cuando quieras. Sin contratos ni penalidades.</div></details>
       <details><summary data-i18n="fq6">¿Mis datos están seguros?</summary><div class="a" data-i18n="fa6">Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.</div></details>
       <details><summary data-i18n="fq7">¿El precio va a subir?</summary><div class="a" data-i18n="fa7">No para ti. Con el precio de fundador mantienes el precio con el que te registraste mientras tu suscripción siga activa sin interrupción, y sin cobro extra por usuario. Si cancelas y vuelves después, aplica el precio de ese momento.</div></details>
@@ -938,7 +945,7 @@ footer{background:var(--navy2);color:#BCD2EC;padding:60px 0 30px}
 </section>
 
 <div class="wrap">
-  <div class="cta-final rv">
+  <div class="cta-final">
     <h2 data-i18n="ctaT">Tu próximo trabajo, de principio a fin en WalkCheck</h2>
     <p data-i18n="ctaS">Crea tu cuenta hoy y prueba el flujo completo con tu equipo durante 15 días.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
@@ -1027,7 +1034,7 @@ heroT:'Del trabajo a la factura, <span class="hl">sin papeles ni llamadas</span>
 heroS:"Creas el trabajo, lo agendas, tu técnico deja notas y fotos desde el teléfono y la factura sale con los materiales que registró el técnico. Todo en un solo lugar.",
 heroMain:"Empezar 15 días gratis",heroCta2:"Ver cómo funciona",heroNote:"Activas tu plan con tarjeta · No se cobra hasta el día 16 · Cancela cuando quieras",
 c1:"Trabajos",c2:"Visitas",c3:"Notas con fotos",c4:"Facturas",c5:"Cotizaciones",c6:"Cobro con tarjeta",c7:"Lo que entra y lo que sale",
-ft1:"3 fotos nuevas",ft2:"Factura enviada",
+ft1:"3 fotos nuevas",ft2:"Factura enviada",hvTitle:"Inspección semestral",
 hv1:"¿Papeles por todos lados?",hv2:"Trabajo terminado → creas la factura en un toque",hv3:"✓ Factura enviada al cliente",hv4:"Todo sin salir de WalkCheck",hv5:"Prueba 15 días gratis",
 mkTitle:"Trabajo #1048",mkLive:"En vivo",s1:"Trabajo",s2:"Visita",s3:"Notas",s4:"Factura",
 j1t:"Reparar fuga en el baño · Casa López",j1st:"Nuevo",kClient:"Cliente",kType:"Tipo",kPrio:"Prioridad",kSrc:"Pedido por",j1type:"Plomería",j1prio:"Alta",j1src:"Llamada del cliente",j1btn:"＋ Asignar visita",
@@ -1059,14 +1066,14 @@ coreD:"Hasta 5 trabajadores",core1:"Trabajos, visitas y horario",core2:"Notas co
 connD:"Hasta 10 trabajadores",conn1:"Todo lo de CREW 5",conn2:"Plantillas por tipo de trabajo",conn3:"Reportes mensuales para tus clientes",conn4:"Soporte prioritario",
 growD:"Trabajadores ilimitados",grow1:"Todo lo de CREW 10",grow2:"Trabajadores ilimitados",grow3:"Soporte prioritario",grow4:"Te ayudamos a activar tu compañía",
 planCta:"Empezar 15 días gratis",
-prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Funciona en cualquier teléfono o computadora: tus técnicos entran desde el navegador del teléfono, sin descargar nada.",
+prTrial:"15 días gratis. Al terminar eliges CREW 5, CREW 10 o UNLIMITED. Funciona en cualquier teléfono o computadora: tus técnicos usan la app de Android (Google Play) o entran desde el navegador del teléfono.",
 faqT:"Preguntas frecuentes",
 fq1:"¿Cómo empiezo?",fa1:"Crea tu cuenta en esta página, elige tu plan y empiezas tus 15 días gratis. Si necesitas ayuda, escríbenos a soporte@walkcheck.app.",
 fq2:"¿Necesito tarjeta de crédito?",fa2:"Sí. Al registrarte activas tu plan con tarjeta en Stripe. Tienes 15 días gratis: no se cobra nada hasta el día 16 y, si cancelas antes, no pagas.",
 fq3:"¿Mis técnicos necesitan computadora?",fa3:"No. Ven su agenda, toman fotos y dejan notas desde el teléfono. La oficina usa el panel web.",
 fq9:"¿Mis técnicos necesitan saber de tecnología?",fa9:"No. Cada técnico ve solo su agenda del día en el teléfono: toca para marcar inicio, toma las fotos y deja sus notas. No necesita computadora.",
 fq10:"¿Cuánto tarda mi compañía en empezar?",fa10:"Poco. Al registrarte eliges tu oficio y el panel llega listo con tus tipos de trabajo, pasos y fotos. En el plan UNLIMITED te ayudamos a activar tu compañía.",
-fq4:"¿Funciona en iPhone?",fa4:"Sí. WalkCheck funciona en cualquier teléfono, iPhone o Android, y en cualquier computadora, desde el navegador. La app para descargar de las tiendas sale muy pronto.",
+fq4:"¿Funciona en iPhone?",fa4:"Sí. En iPhone funciona desde el navegador (Safari), igual que en cualquier computadora. En Android también puedes bajar la app de Google Play.",
 fq5:"¿Puedo cambiar de plan o cancelar?",fa5:"Sí, cuando quieras. Sin contratos ni penalidades.",
 fq6:"¿Mis datos están seguros?",fa6:"Tus trabajos, fotos y facturas se guardan en la nube y solo tu compañía puede verlos.",
 ctaT:"Tu próximo trabajo, de principio a fin en WalkCheck",ctaS:"Crea tu cuenta hoy y prueba el flujo completo con tu equipo durante 15 días.",ctaB:"Empezar 15 días gratis",
@@ -1128,14 +1135,14 @@ coreD:"Up to 5 workers",core1:"Jobs, visits and schedule",core2:"Notes with phot
 connD:"Up to 10 workers",conn1:"Everything in CREW 5",conn2:"Templates by job type",conn3:"Monthly reports for your clients",conn4:"Priority support",
 growD:"Unlimited workers",grow1:"Everything in CREW 10",grow2:"Unlimited workers",grow3:"Priority support",grow4:"Help activating your company",
 planCta:"Start 15-day free trial",
-prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. Works on any phone or computer: your techs sign in from their phone's browser, nothing to download.",
+prTrial:"15 days free. Then choose CREW 5, CREW 10 or UNLIMITED. Works on any phone or computer: your techs use the Android app (Google Play) or sign in from their phone's browser.",
 faqT:"Frequently asked questions",
 fq1:"How do I start?",fa1:"Create your account on this page, choose your plan and start your 15 free days. If you need help, email soporte@walkcheck.app.",
 fq2:"Do I need a credit card?",fa2:"Yes. You activate your plan with a card in Stripe when you sign up. You get 15 days free: nothing is charged until day 16, and if you cancel before then you pay nothing.",
 fq3:"Do my techs need a computer?",fa3:"No. They see their schedule, take photos and leave notes from their phone. The office uses the web panel.",
 fq9:"Do my techs need to be good with technology?",fa9:"No. Each tech sees only their schedule for the day on their phone: tap to mark the start, take the photos and leave notes. No computer needed.",
 fq10:"How long does it take my company to get started?",fa10:"Not long. When you sign up you choose your trade and the panel comes ready with your job types, steps and photos. On the UNLIMITED plan we help you set up your company.",
-fq4:"Does it work on iPhone?",fa4:"Yes. WalkCheck works on any phone, iPhone or Android, and any computer, from the browser. The downloadable app is coming to the stores very soon.",
+fq4:"Does it work on iPhone?",fa4:"Yes. On iPhone it works from the browser (Safari), like on any computer. On Android you can also get the app on Google Play.",
 fq5:"Can I change plans or cancel?",fa5:"Yes, anytime. No contracts or penalties.",
 fq6:"Is my data safe?",fa6:"Your jobs, photos and invoices are stored in the cloud and only your company can see them.",
 ctaT:"Your next job, start to finish in WalkCheck",ctaS:"Create your account today and try the full flow with your team for 15 days.",ctaB:"Start 15-day free trial",
@@ -1155,6 +1162,11 @@ function applyLang(){
   document.documentElement.lang = lang;
   document.querySelector(".lang-toggle").textContent = (lang === "es") ? "EN" : "ES";
   try { localStorage.setItem("wkLang", lang); } catch (e) {}
+  document.querySelectorAll('a[href^="/register/"]').forEach(function(a){
+    var u = new URL(a.getAttribute("href"), location.origin);
+    u.searchParams.set("lang", lang);
+    a.setAttribute("href", u.pathname + u.search);
+  });
 }
 function toggleLang(){ lang = (lang === "es") ? "en" : "es"; applyLang(); }
 try { var saved = localStorage.getItem("wkLang"); if (saved === "en" || saved === "es") lang = saved; } catch (e) {}
@@ -1188,20 +1200,48 @@ var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-moti
   tick(); setInterval(tick, 1000);
 })();
 
+/* Logo → very top of the page, every time and in every browser (a second
+   click on the same #top link does nothing in some browsers). */
+document.querySelectorAll('a.logo[href="#top"]').forEach(function(a){
+  a.addEventListener("click", function(e){
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  });
+});
+
 /* Hero video: show the caption that matches each part of the video
    (stress → create invoice → invoice sent → happy → end card). */
 (function(){
   var v = document.getElementById("heroVid"), cap = document.getElementById("heroCap");
   if (!v || !cap) return;
   var spans = cap.querySelectorAll("span");
+  var lbl = document.getElementById("heroLbl");
   var cuts = [2, 4.75, 6.5, 8.5, 99];
   var cur = -1;
+  // The video says "SEMI ANNUAL INSPECTION" (seconds 2-4.75): cover it with the
+  // Spanish title when the page is in Spanish, placed over the video's own text.
+  function placeLbl(){
+    if (!lbl) return;
+    var fr = v.parentNode.getBoundingClientRect(), vr = v.getBoundingClientRect();
+    lbl.style.left = (vr.left - fr.left + vr.width * 0.055) + "px";
+    lbl.style.top = (vr.top - fr.top + vr.height * 0.300) + "px";
+    lbl.style.width = (vr.width * 0.64) + "px";
+    lbl.style.height = (vr.height * 0.05) + "px";
+    lbl.style.fontSize = Math.max(9, vr.width * 0.05) + "px";
+  }
   function sync(){
     var t = v.currentTime || 0, n = 0;
     while (t >= cuts[n]) n++;
     if (n !== cur) { cur = n; spans.forEach(function(s, k){ s.classList.toggle("on", k === n); }); }
+    if (lbl) {
+      var show = lang === "es" && t >= 1.9 && t < 4.8;
+      if (show) placeLbl();
+      lbl.classList.toggle("on", show);
+    }
     if (!v.paused) requestAnimationFrame(sync);
   }
+  window.addEventListener("resize", function(){ if (lbl && lbl.classList.contains("on")) placeLbl(); });
   v.addEventListener("play", sync);
   v.addEventListener("seeked", sync);
   if (reduceMotion) { v.removeAttribute("autoplay"); v.pause(); v.currentTime = 3; }

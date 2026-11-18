@@ -27,49 +27,59 @@
   .gp small { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
   .gp b { font-size: 18px; }
   .app-box { margin-top: 16px; padding-top: 14px; border-top: 1px solid #E5E5EA; text-align: center; }
+  .hdr-r { display: flex; align-items: center; gap: 12px; }
+  .lang { display: inline-flex; border: 1.5px solid rgba(255,255,255,.7); border-radius: 10px; overflow: hidden; }
+  .lang button { background: transparent; color: #fff; border: 0; padding: 6px 10px; font-weight: 800; font-size: 13px; cursor: pointer; min-height: 32px; }
+  .lang button.on { background: #fff; color: #1F8A3B; }
 </style>
 </head>
 <body>
 <header>
   <h1>Walkcheck <small style="font-size:10px;letter-spacing:.18em;opacity:.85">HOLDINGS LLC</small></h1>
-  <a href="/app/">Entrar</a>
+  <div class="hdr-r">
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button type="button" id="lgEs" onclick="setLang('es')">ES</button>
+      <button type="button" id="lgEn" onclick="setLang('en')">EN</button>
+    </div>
+    <a href="/app/" data-t="signIn">Entrar</a>
+  </div>
 </header>
 <div class="card">
-  <h2>Crear mi cuenta</h2>
-  <p class="muted">Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99 al mes. Al crear la cuenta te llevamos a Stripe para registrar tu tarjeta. <b>Tienes 15 días gratis:</b> no se cobra nada hasta el día 16 y, si cancelas antes desde Mi suscripción, no pagas. Después se cobra el plan cada mes hasta que canceles. Tu panel se abre en cuanto Stripe confirma.</p>
-  <label>Plan</label>
+  <h2 data-t="title">Crear mi cuenta</h2>
+  <p class="muted" data-t="intro">Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99 al mes. Al crear la cuenta te llevamos a Stripe para registrar tu tarjeta. <b>Tienes 15 días gratis:</b> no se cobra nada hasta el día 16 y, si cancelas antes desde Mi suscripción, no pagas. Después se cobra el plan cada mes hasta que canceles. Tu panel se abre en cuanto Stripe confirma.</p>
+  <label data-t="plan">Plan</label>
   <select id="plan">
     <option value="crew5">CREW 5 $99.99</option>
     <option value="crew10">CREW 10 $149.99</option>
     <option value="unlimited">UNLIMITED $299.99</option>
   </select>
-  <label>Nombre de la compañía</label>
+  <label data-t="company">Nombre de la compañía</label>
   <input id="name" type="text" required>
-  <label>Tu nombre</label>
+  <label data-t="yourName">Tu nombre</label>
   <input id="fullName" type="text" required>
-  <label>Correo</label>
+  <label data-t="email">Correo</label>
   <input id="email" type="email" required>
-  <label>Contraseña</label>
+  <label data-t="password">Contraseña</label>
   <input id="password" type="password" minlength="6" required>
-  <label>¿A qué se dedica tu compañía? *</label>
-  <p class="muted" style="margin:0 0 4px">Tu panel llega listo para tu oficio: tipos de trabajo, pasos del técnico, fotos y materiales.</p>
+  <label data-t="trade">¿A qué se dedica tu compañía? *</label>
+  <p class="muted" style="margin:0 0 4px" data-t="tradeHelp">Tu panel llega listo para tu oficio: tipos de trabajo, pasos del técnico, fotos y materiales.</p>
   <select id="companyType" required>
-    <option value="">Selecciona…</option>
+    <option value="" data-t="pick">Selecciona…</option>
   </select>
-  <label>Código de referido (opcional)</label>
+  <label data-t="ref">Código de referido (opcional)</label>
   <input id="refCode" type="text" placeholder="WC-XXXX" autocapitalize="characters" spellcheck="false">
   <p class="muted" id="refNote" style="margin:-4px 0 8px;display:none"></p>
   <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;color:#111;font-size:14px;margin:6px 0 12px">
     <input id="agree" type="checkbox" style="width:auto;margin:3px 0 0">
-    <span>Acepto los <a href="/terminos/" target="_blank">Términos del servicio</a> y la <a href="/privacidad/" target="_blank">Política de privacidad</a>, y entiendo que al terminar los 15 días gratis se cobra el plan cada mes hasta que cancele.</span>
+    <span data-t="agree" data-html="1">Acepto los <a href="/terminos/" target="_blank">Términos del servicio</a> y la <a href="/privacidad/" target="_blank">Política de privacidad</a>, y entiendo que al terminar los 15 días gratis se cobra el plan cada mes hasta que cancele.</span>
   </label>
-  <button class="btn" id="go" style="font-size:18px;min-height:56px">Crear mi cuenta y activar mi plan</button>
+  <button class="btn" id="go" style="font-size:18px;min-height:56px" data-t="go">Crear mi cuenta y activar mi plan</button>
   <div class="err" id="err"></div>
-  <p class="muted">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
-  <p class="muted">¿Dudas? Escríbenos a <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a></p>
+  <p class="muted" data-t="have" data-html="1">¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a></p>
+  <p class="muted" data-t="help" data-html="1">¿Dudas? Escríbenos a <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a></p>
   <div class="app-box">
-    <p class="muted" style="margin:0 0 10px">Cuando tu plan esté activo, tú y tus técnicos descargan la app en Android y entran con su correo. En iPhone, próximamente; mientras tanto usan el panel web.</p>
-    <a class="gp" href="https://play.google.com/store/apps/details?id=app.walkcheck" target="_blank" rel="noopener" aria-label="Disponible en Google Play"><svg viewBox="0 0 24 26" width="24" height="26" aria-hidden="true"><path fill="#4285F4" d="M1.6 1.2 13 13 1.6 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#34A853" d="M1.6 1.2c.5-.4 1.2-.5 1.9-.1L17.6 9.2 13 13z"/><path fill="#EA4335" d="M1.6 24.8 13 13l4.6 3.8-14.1 8.1c-.7.4-1.4.3-1.9-.1z"/><path fill="#FBBC04" d="m17.6 9.2 4.2 2.4c1.1.6 1.1 2.2 0 2.8l-4.2 2.4L13 13z"/></svg><span><small>Disponible en</small><b>Google Play</b></span></a>
+    <p class="muted" style="margin:0 0 10px" data-t="appBox">Cuando tu plan esté activo, tú y tus técnicos descargan la app en Android y entran con su correo. En iPhone, próximamente; mientras tanto usan el panel web.</p>
+    <a class="gp" href="https://play.google.com/store/apps/details?id=app.walkcheck" target="_blank" rel="noopener" aria-label="Disponible en Google Play"><svg viewBox="0 0 24 26" width="24" height="26" aria-hidden="true"><path fill="#4285F4" d="M1.6 1.2 13 13 1.6 24.8c-.4-.3-.6-.8-.6-1.4V2.6c0-.6.2-1.1.6-1.4z"/><path fill="#34A853" d="M1.6 1.2c.5-.4 1.2-.5 1.9-.1L17.6 9.2 13 13z"/><path fill="#EA4335" d="M1.6 24.8 13 13l4.6 3.8-14.1 8.1c-.7.4-1.4.3-1.9-.1z"/><path fill="#FBBC04" d="m17.6 9.2 4.2 2.4c1.1.6 1.1 2.2 0 2.8l-4.2 2.4L13 13z"/></svg><span><small data-t="gpSmall">Disponible en</small><b>Google Play</b></span></a>
   </div>
 </div>
 <script>
@@ -82,6 +92,89 @@ const firebaseConfig = {
   appId: "1:827762473021:web:ff71afbe72df3a96ad5254"
 };
 firebase.initializeApp(firebaseConfig);
+// Language: the one picked on the landing (?lang= or the same wkLang it
+// saves), with its own ES/EN switch here.
+const TXT = {
+  es: {
+    signIn: 'Entrar', title: 'Crear mi cuenta',
+    intro: 'Planes: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99 al mes. Al crear la cuenta te llevamos a Stripe para registrar tu tarjeta. <b>Tienes 15 días gratis:</b> no se cobra nada hasta el día 16 y, si cancelas antes desde Mi suscripción, no pagas. Después se cobra el plan cada mes hasta que canceles. Tu panel se abre en cuanto Stripe confirma.',
+    plan: 'Plan', company: 'Nombre de la compañía', yourName: 'Tu nombre', email: 'Correo', password: 'Contraseña',
+    trade: '¿A qué se dedica tu compañía? *', tradeHelp: 'Tu panel llega listo para tu oficio: tipos de trabajo, pasos del técnico, fotos y materiales.',
+    pick: 'Selecciona…', ref: 'Código de referido (opcional)',
+    agree: 'Acepto los <a href="/terminos/" target="_blank">Términos del servicio</a> y la <a href="/privacidad/" target="_blank">Política de privacidad</a>, y entiendo que al terminar los 15 días gratis se cobra el plan cada mes hasta que cancele.',
+    go: 'Crear mi cuenta y activar mi plan',
+    have: '¿Ya tienes cuenta? <a href="/app/">Entrar al panel</a>',
+    help: '¿Dudas? Escríbenos a <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a>',
+    appBox: 'Cuando tu plan esté activo, tú y tus técnicos descargan la app en Android y entran con su correo. En iPhone, próximamente; mientras tanto usan el panel web.',
+    gpSmall: 'Disponible en',
+    errFields: 'Completa todos los campos, incluido Tipo de compañía.',
+    errAgree: 'Para continuar, acepta los Términos y la Política de privacidad.',
+    errRef: 'El código de referido tiene la forma WC-XXXX. Déjalo vacío si no tienes uno.',
+    errGeneric: 'No se pudo registrar.', invited: 'Te invitó otra compañía con el código ',
+    docTitle: 'Walkcheck · Registro'
+  },
+  en: {
+    signIn: 'Sign in', title: 'Create my account',
+    intro: 'Plans: CREW 5 $99.99 · CREW 10 $149.99 · UNLIMITED $299.99 per month. After you create the account we take you to Stripe to add your card. <b>You get 15 days free:</b> nothing is charged until day 16 and, if you cancel before that from My subscription, you pay nothing. After that the plan is charged every month until you cancel. Your panel opens as soon as Stripe confirms.',
+    plan: 'Plan', company: 'Company name', yourName: 'Your name', email: 'Email', password: 'Password',
+    trade: 'What does your company do? *', tradeHelp: 'Your panel comes ready for your trade: job types, technician steps, photos and materials.',
+    pick: 'Select…', ref: 'Referral code (optional)',
+    agree: 'I accept the <a href="/terms/" target="_blank">Terms of Service</a> and the <a href="/privacy/" target="_blank">Privacy Policy</a>, and I understand that after the 15 free days the plan is charged every month until I cancel.',
+    go: 'Create my account and start my plan',
+    have: 'Already have an account? <a href="/app/">Sign in to the panel</a>',
+    help: 'Questions? Email us at <a href="mailto:soporte@walkcheck.app">soporte@walkcheck.app</a>',
+    appBox: 'When your plan is active, you and your technicians download the Android app and sign in with their email. iPhone app coming soon; meanwhile they use the web panel.',
+    gpSmall: 'Get it on',
+    errFields: 'Fill in every field, including Company type.',
+    errAgree: 'To continue, accept the Terms and the Privacy Policy.',
+    errRef: 'The referral code looks like WC-XXXX. Leave it empty if you do not have one.',
+    errGeneric: 'Could not sign up.', invited: 'Another company invited you with the code ',
+    docTitle: 'Walkcheck · Sign up'
+  }
+};
+let lang = 'es';
+(function () {
+  const q = String(new URLSearchParams(location.search).get('lang') || '').toLowerCase();
+  let saved = '';
+  try { saved = localStorage.getItem('wkLang') || ''; } catch (e) {}
+  lang = (q === 'en' || q === 'es') ? q : ((saved === 'en' || saved === 'es') ? saved : ((navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en'));
+})();
+function t(k) { return (TXT[lang] || TXT.es)[k] || TXT.es[k] || ''; }
+function fillTrades() {
+  const sel = document.getElementById('companyType');
+  const cur = sel.value;
+  sel.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = ''; first.textContent = t('pick'); sel.appendChild(first);
+  (window.COMPANY_TYPE_GROUPS || [{ id: '', label: '' }]).forEach(g => {
+    const list = (window.COMPANY_TYPE_OPTIONS||[]).filter(o => !g.id || o.group === g.id);
+    if (!list.length) return;
+    const box = g.id ? document.createElement('optgroup') : sel;
+    if (g.id) box.label = (lang === 'en' && g.labelEn) ? g.labelEn : g.label;
+    list.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id; opt.textContent = (lang === 'en' && o.labelEn) ? o.labelEn : o.label; box.appendChild(opt);
+    });
+    if (g.id) sel.appendChild(box);
+  });
+  sel.value = cur;
+}
+function setLang(l) {
+  lang = l === 'en' ? 'en' : 'es';
+  try { localStorage.setItem('wkLang', lang); } catch (e) {}
+  document.documentElement.lang = lang;
+  document.title = t('docTitle');
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const v = t(el.getAttribute('data-t'));
+    if (!v) return;
+    if (el.getAttribute('data-html')) el.innerHTML = v; else el.innerHTML = v;
+  });
+  document.getElementById('lgEs').classList.toggle('on', lang === 'es');
+  document.getElementById('lgEn').classList.toggle('on', lang === 'en');
+  if (window.COMPANY_TYPE_OPTIONS) fillTrades();
+  const n = document.getElementById('refNote');
+  if (n && n.dataset.code) n.textContent = t('invited') + n.dataset.code + '.';
+}
 const planSel = document.getElementById('plan');
 if (typeof fillPlanSelect === 'function') fillPlanSelect(planSel);
 const fromUrl = (typeof normalizePlan === 'function' ? normalizePlan(new URLSearchParams(location.search).get('plan')) : '') || '';
@@ -92,23 +185,14 @@ const refUrl = String(new URLSearchParams(location.search).get('ref') || '').tri
 if (/^WC-[A-Z0-9]{4,8}$/.test(refUrl)) {
   refIn.value = refUrl;
   const n = document.getElementById('refNote');
-  n.textContent = 'Te invitó otra compañía con el código ' + refUrl + '.';
+  n.dataset.code = refUrl;
+  n.textContent = t('invited') + refUrl + '.';
   n.style.display = 'block';
 }
 const sel = document.getElementById('companyType');
 // Trades grouped in sections; each one brings its own job types, steps,
 // photos and materials (js/jobTemplates.js).
-(window.COMPANY_TYPE_GROUPS || [{ id: '', label: '' }]).forEach(g => {
-  const list = (window.COMPANY_TYPE_OPTIONS||[]).filter(o => !g.id || o.group === g.id);
-  if (!list.length) return;
-  const box = g.id ? document.createElement('optgroup') : sel;
-  if (g.id) box.label = g.label;
-  list.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o.id; opt.textContent = o.label; box.appendChild(opt);
-  });
-  if (g.id) sel.appendChild(box);
-});
+setLang(lang);
 document.getElementById('go').onclick = async () => {
   const err = document.getElementById('err');
   err.textContent = '';
@@ -118,16 +202,16 @@ document.getElementById('go').onclick = async () => {
   const password = document.getElementById('password').value;
   const companyType = sel.value;
   if (!name || !fullName || !email || !password || !companyType) {
-    err.textContent = 'Completa todos los campos, incluido Tipo de compañía.';
+    err.textContent = t('errFields');
     return;
   }
   if (!document.getElementById('agree').checked) {
-    err.textContent = 'Para continuar, acepta los Términos y la Política de privacidad.';
+    err.textContent = t('errAgree');
     return;
   }
   const referredBy = String(refIn.value || '').trim().toUpperCase();
   if (referredBy && !/^WC-[A-Z0-9]{4,8}$/.test(referredBy)) {
-    err.textContent = 'El código de referido tiene la forma WC-XXXX. Déjalo vacío si no tienes uno.';
+    err.textContent = t('errRef');
     return;
   }
   try {
@@ -143,7 +227,7 @@ document.getElementById('go').onclick = async () => {
     await ref.set({
       id: ref.id, name, companyType, industry: label, panel: 'walkcheck', plan,
       status: 'pending', adminUid: uid,
-      termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-25',
+      termsAcceptedAt: new Date().toISOString(), termsVersion: '2026-10-25', lang,
       referredBy: referredBy || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       is_paid: false
@@ -173,7 +257,7 @@ document.getElementById('go').onclick = async () => {
     }
     location.replace(pay);
   } catch (e) {
-    err.textContent = e.message || 'No se pudo registrar.';
+    err.textContent = e.message || t('errGeneric');
   }
 };
 </script>
